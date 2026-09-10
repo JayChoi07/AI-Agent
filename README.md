@@ -14,10 +14,11 @@ AI-Agent/
 │   ├── AGENTS.template.md   # 새 프로젝트용 빈칸 채우기 템플릿
 │   ├── task-plan.md         # 작업 분해 템플릿 (목표 → 검증 기준)
 │   └── report.md            # 블라인드 리포트 템플릿 (심사 제출용)
-└── docs/
-    ├── cofathon.md      # 코파톤 조사 결과 + 시사점
-    ├── checklist.md     # 사전 준비 체크리스트 (D-7 ~ 당일)
-    └── workflow.md      # 당일 운영 플레이북
+├── docs/
+│   ├── cofathon.md      # 코파톤 조사 결과 + 시사점
+│   ├── checklist.md     # 사전 준비 체크리스트 (D-7 ~ 당일)
+│   └── workflow.md      # 당일 운영 플레이북
+└── android/             # Android 그린필드 표준 팩 (스킬 android-standards) — [android/README.md](android/README.md)
 ```
 
 ## 빠른 시작
@@ -26,9 +27,15 @@ AI-Agent/
 # 새 프로젝트에 하네스 설치
 ./bootstrap.sh /path/to/new-project
 
+# Android 프로젝트면 표준 팩까지 함께 주입 (harness/android/ + AGENTS.md 섹션)
+./bootstrap.sh /path/to/new-project --pack android
+
 # 설치되는 것: AGENTS.md, CLAUDE.md, WORKLOG.md, templates/{task-plan,report}.md,
 #              .gitignore, git init (없을 때만 — 기존 파일은 절대 덮어쓰지 않음)
 ```
+
+`bootstrap.sh` 는 bash 4 이상에서 돌린다. Windows 에서는 **Git Bash** 를 쓴다(PowerShell·cmd 불가).
+Android 팩의 설치·사용법은 [android/README.md](android/README.md) 에 있다.
 
 ## 핵심 설계
 
