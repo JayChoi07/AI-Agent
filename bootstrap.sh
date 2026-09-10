@@ -6,7 +6,7 @@ set -euo pipefail
 shopt -u patsub_replacement 2>/dev/null || true
 
 KIT_DIR="$(cd "$(dirname "$0")" && pwd)"
-# --pack <name> 옵션 (위치 인자 뒤에 둔다). 현재 지원: android
+# --pack <name> 옵션. 킷 루트의 <name>/SKILL.md 가 있는 디렉터리를 팩으로 인식한다
 PACK=""
 args=()
 while [ $# -gt 0 ]; do
@@ -19,6 +19,19 @@ done
 set -- ${args[@]+"${args[@]}"}
 TARGET="${1:?사용법: ./bootstrap.sh /path/to/project [프로젝트명] [--pack android]}"
 NAME="${2:-$(basename "$TARGET")}"
+
+# 팩 이름은 코어를 설치하기 전에 검증한다 — 틀린 팩 이름으로 코어만 반쯤 깔리지 않게
+if [ -n "$PACK" ]; then
+  # 아래에서 "$TARGET/harness/$PACK" 을 rm -rf 하므로 경로 조각을 이름 하나로 제한한다
+  case "$PACK" in */*|*\\*|.|..) echo "error: 팩 이름에 경로를 쓸 수 없다 '$PACK'" >&2; exit 1;; esac
+  if [ ! -d "$KIT_DIR/$PACK" ] || [ ! -f "$KIT_DIR/$PACK/SKILL.md" ]; then
+    available=""
+    for d in "$KIT_DIR"/*/; do
+      [ -f "$d/SKILL.md" ] && available="$available $(basename "$d")"
+    done
+    echo "error: 알 수 없는 팩 '$PACK' (지원:${available:- 없음})" >&2; exit 1
+  fi
+fi
 
 mkdir -p "$TARGET/templates"
 
@@ -41,7 +54,7 @@ else
   echo "ok:   CLAUDE.md 생성"
 fi
 
-# WORKLOG.md — 리포트 원재료
+# WORKLOG.md — 결정·검증 기록
 if [ -e "$TARGET/WORKLOG.md" ]; then
   echo "skip: WORKLOG.md 이미 존재"
 else
@@ -55,7 +68,7 @@ else
 fi
 
 # 템플릿 복사 — cp -n은 POSIX 아님: 존재 검사 후 일반 cp, 실패는 그대로 전파
-for f in task-plan.md report.md; do
+for f in task-plan.md; do
   if [ -e "$TARGET/templates/$f" ]; then
     echo "skip: templates/$f 이미 존재"
   else
@@ -78,19 +91,14 @@ fi
 
 # 도메인 팩 설치
 if [ -n "$PACK" ]; then
-  # 아래에서 "$TARGET/harness/$PACK" 을 rm -rf 하므로 경로 조각을 이름 하나로 제한한다
-  case "$PACK" in */*|*\\*|.|..) echo "error: 팩 이름에 경로를 쓸 수 없다 '$PACK'" >&2; exit 1;; esac
-  if [ ! -d "$KIT_DIR/$PACK" ] || [ ! -f "$KIT_DIR/$PACK/SKILL.md" ]; then
-    echo "error: 알 수 없는 팩 '$PACK' (지원: android)" >&2; exit 1
-  fi
   if [ -e "$TARGET/harness/$PACK" ]; then
     # 필수 파일/디렉터리 검사 — 이전 실행이 중간에 끊겨 반쪽만 남았으면 '설치됨'으로 넘기지 않는다
-    incomplete=0
+    missing=""
     for req in SKILL.md README.md references checklists templates; do
-      [ -e "$TARGET/harness/$PACK/$req" ] || incomplete=1
+      [ -e "$TARGET/harness/$PACK/$req" ] || missing="$missing $req"
     done
-    if [ "$incomplete" -eq 1 ]; then
-      echo "error: harness/$PACK 이(가) 불완전하다 (SKILL.md 없음). 지우고 다시 실행: rm -rf '$TARGET/harness/$PACK'" >&2
+    if [ -n "$missing" ]; then
+      echo "error: harness/$PACK 이(가) 불완전하다 (없음:$missing). 지우고 다시 실행: rm -rf '$TARGET/harness/$PACK'" >&2
       exit 1
     fi
     echo "skip: harness/$PACK 이미 존재"
@@ -121,8 +129,19 @@ if [ -n "$PACK" ]; then
     mv "$tmp" "$TARGET/AGENTS.md"
     echo "ok:   AGENTS.md에 '$marker' 섹션 추가"
   fi
+  # Android 빌드 산출물·로컬 설정은 기본 .gitignore 에 없다 — 이미 있는 줄은 건너뛰고 없는 줄만 뒤에 붙인다
+  if [ "$PACK" = "android" ]; then
+    added=0
+    for line in .gradle/ .kotlin/ .idea/ '*.iml' local.properties captures/ '*.apk' '*.aab'; do
+      if ! grep -q -x -F -- "$line" "$TARGET/.gitignore" 2>/dev/null; then
+        printf '%s
+' "$line" >> "$TARGET/.gitignore"; added=1
+      fi
+    done
+    [ "$added" -eq 1 ] && echo "ok:   .gitignore 에 Android 항목 추가"
+  fi
 fi
 
 echo ""
 echo "설치 완료: $TARGET"
-echo "다음 할 일: AGENTS.md의 '프로젝트 개요'와 '명령어' 빈칸 채우기 (특히 배포 명령)"
+echo "다음 할 일: AGENTS.md의 '프로젝트 개요'와 '명령어' 빈칸 채우기"

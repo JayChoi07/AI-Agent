@@ -50,7 +50,8 @@ ktlintCheck → detektDebug → 테스트 → assembleDebug 순서로 게이트�
 **언제** — 팀 저장소에 규칙 사본을 넣어 도구와 무관하게 같은 표준을 쓰게 할 때.
 **하는 일** — `./bootstrap.sh /path/to/project --pack android`
 **무엇이 나오는지** — 팩이 `<프로젝트>/harness/android/`로 복사되고(조사 노트 `research/`는 제외), `AGENTS.md`에
-"## Android 표준" 섹션이 추가돼 Android 작업 전에 `harness/android/SKILL.md`를 읽도록 지시한다.
+"## Android 표준" 섹션이 추가돼 Android 작업 전에 `harness/android/SKILL.md`를 읽도록 지시한다. `.gitignore`에는
+`.gradle/`·`.kotlin/`·`.idea/`·`local.properties` 같은 Android 항목이 없을 때만 덧붙는다.
 멱등이라 다시 실행해도 기존 파일을 덮어쓰지 않고, 이전 실행이 끊겨 반쪽만 남은 `harness/android`는 에러로 잡아 다시 설치하게 한다.
 
 ### D. 기존 앱에 적용
