@@ -1,6 +1,23 @@
 # AI-Agent — 휴대용 AI Native 하네스
 
-신규 프로젝트 어디서든 **10분 안에 AI 우선 개발 워크플로우를 까는** 스타터 킷.
+신규 프로젝트 어디서든 **10분 안에 AI 우선 개발 워크플로우를 까는** 스타터 킷. 두 층으로 되어 있다.
+**하네스 코어**는 도구 중립 지침 [`AGENTS.md`](AGENTS.md)를 정본으로 삼아 Codex·Claude Code·Cursor가 같은 규칙에서
+출발하게 하고, 작업 기록(`WORKLOG.md`)을 그대로 제출 리포트의 재료로 쓰며, [`bootstrap.sh`](bootstrap.sh)로 새
+프로젝트에 설치되고, 코파톤(하루 해커톤) 당일 플레이북을 함께 담는다. **도메인 팩**은 그 위에 얹는 분야별
+표준으로, 지금은 Android 그린필드 표준 스킬 `android-standards`([`android/`](android/README.md)) 하나가 있다.
+팩 구조라 iOS·백엔드 팩도 같은 틀(`<팩>/SKILL.md` + `--pack <이름>`)로 추가할 수 있다.
+
+## 상황별로 어디서 시작하나
+
+| 상황 | 할 일 | 자세히 |
+|---|---|---|
+| 새 프로젝트에 AI 워크플로우 깔기 | `./bootstrap.sh <프로젝트>` — AGENTS.md·CLAUDE.md·WORKLOG.md·templates 설치 | [빠른 시작](#빠른-시작) |
+| Android 그린필드 프로젝트 시작 | 팩을 주입한 뒤 build-logic·detekt·ktlint·Konsist·CI 강제 장치를 프로젝트에 설치 | [새 Android 프로젝트 세팅](android/README.md) |
+| Claude Code에서 안드로이드 작업 요청하기 | 그냥 "로그인 페이지 만들어줘"라고 한다. 스킬이 자동으로 붙어 결정 표 → 구현 → 검증 → 표준 준수 보고를 낸다 | [android/SKILL.md](android/SKILL.md) |
+| Codex·Cursor로 같은 규칙 쓰기 | `./bootstrap.sh <프로젝트> --pack android` — `harness/android/` 복사 + AGENTS.md에 섹션 추가 | [팀·다른 도구와 공유](android/README.md) |
+| 기존 앱에 적용 | 신규 Kotlin·Compose 코드에만 쓴다. 충돌하면 프로젝트 지침 파일이 우선 | [기존 앱에 적용](android/README.md) |
+| 규칙 고치기 | 출처 확보 → research 기록 → 출처 번호 등록 → 규칙 작성 → 연동 갱신 → 형식 검사 | [규칙 고치기·추가하기](android/README.md) |
+| 해커톤 당일 | 페이즈 배분대로 굴리고 WORKLOG를 리포트로 옮긴다 | [docs/workflow.md](docs/workflow.md), [templates/report.md](templates/report.md) |
 
 ## 구성
 
@@ -38,8 +55,7 @@ Android 팩의 설치·사용법은 [android/README.md](android/README.md) 에 �
 
 ## 핵심 설계
 
-1. **AGENTS.md가 정본** — OpenAI Codex 표준 포맷. 어떤 AI 도구를 붙여도 같은 규칙으로 시작.
-2. **WORKLOG가 리포트가 된다** — 작업 결정·프롬프트 전략·검증 결과를 WORKLOG.md에 append.
-   심사(블라인드 리포트)는 작동하는 결과물 + "AI를 어떻게 Steering했는가"를 보므로,
-   과정 기록이 제출물 재료가 된다. 병렬 작업 시엔 오케스트레이터만 기록(단일 writer).
-3. **생성자↔검증자 분리** — 구현자의 자기 테스트에 더해, 별도 에이전트/도구가 교차 리뷰한다.
+1. **AGENTS.md가 정본** — OpenAI Codex 표준 포맷이라 어떤 AI 도구를 붙여도 같은 규칙으로 시작한다.
+2. **WORKLOG가 리포트가 된다** — 결정·프롬프트 전략·검증 결과를 append 하면 그대로 블라인드 리포트의
+   재료가 된다(병렬 작업 시엔 오케스트레이터만 기록하는 단일 writer 원칙).
+3. **생성자↔검증자 분리** — 구현자의 자기 테스트에 더해, 별도 에이전트·도구가 교차 리뷰한다.
