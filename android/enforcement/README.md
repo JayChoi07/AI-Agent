@@ -90,7 +90,20 @@ plugins {
     alias(libs.plugins.convention.android.library)
     alias(libs.plugins.convention.android.hilt)
 }
+
+// :core:common (Compose 없는 순수 공용 모듈 — 의존 대상 없음, R-10 의존 표. Dispatchers.kt 의 @Module 때문에 hilt 는 붙인다)
+plugins {
+    alias(libs.plugins.convention.android.library)
+    alias(libs.plugins.convention.android.hilt)
+}
+
+// :core:testing (fake·MainDispatcherRule 등 테스트 전용 유틸. 프로덕션 소스셋에서 참조 금지, R-10 의존 표)
+plugins {
+    alias(libs.plugins.convention.android.library)
+}
 ```
+
+위는 플러그인 조합만이다. 모듈마다 다른 `namespace`(R-19-03)와 최소 의존이 붙은 골격은 `templates/core/<모듈>/build.gradle.kts`에 있다.
 
 ## R-ID ↔ 강제 장치 매핑
 

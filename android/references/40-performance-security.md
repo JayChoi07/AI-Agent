@@ -7,7 +7,7 @@
 ## 규칙
 
 ### R-40-01 성능 측정과 벤치마크는 R8을 켠 릴리스 빌드에서만 한다
-- 규칙: 시작 시간·프레임·메모리 수치는 `isMinifyEnabled = true`인 릴리스 변이에서 잰다. 디버그 빌드에서 얻은 수치로 회귀를 판정하거나 최적화 여부를 결정하지 않는다.
+- 규칙: 시작 시간·프레임·메모리 수치는 최적화를 켠(DSL은 R-19-04) 릴리스 변이에서 잰다. 디버그 빌드에서 얻은 수치로 회귀를 판정하거나 최적화 여부를 결정하지 않는다.
 - 근거: 디버그 모드는 성능 비용을 얹으므로 측정은 릴리스에서 해야 한다 [S16](https://developer.android.com/develop/ui/compose/performance).
 - 예시:
   ```bash
@@ -28,19 +28,19 @@
 - 체크: 시작 경로에 동기 I/O나 네트워크 대기가 들어갔는가. TTFD 지점이 코드로 표시돼 있는가.
 
 ### R-40-03 릴리스 빌드에 Baseline Profile과 profileinstaller를 포함한다
-- 규칙: 릴리스 빌드에 Baseline Profile을 생성해 포함하고 `androidx.profileinstaller` 의존성을 넣는다. 프로파일 생성용 변이는 `isMinifyEnabled = false`, 배포 릴리스는 `true`로 둔다.
+- 규칙: 릴리스 빌드에 Baseline Profile을 생성해 포함하고 `androidx.profileinstaller` 의존성을 넣는다. 프로파일 생성용 변이는 최적화를 끄고 배포 릴리스는 켠다(DSL 형태는 R-19-04가 소유한다).
 - 근거: Baseline Profile은 첫 실행부터 시작 성능을 개선하며(Startup Profile·R8 규칙 재작성이 추가 개선), 산출물은 `assets/dexopt/baseline.prof`이고 `androidx.profileinstaller`가 필요하다. 생성 변이는 minify를 끄고 릴리스는 켠다 [S37](https://developer.android.com/topic/performance/baselineprofiles/overview).
 - 예시:
   ```kotlin
   // Good
-  release { isMinifyEnabled = true }
-  benchmarkRelease { initWith(release); isMinifyEnabled = false }
+  release { optimization { enable = true } }
+  benchmarkRelease { initWith(release); optimization { enable = false } }
   // Bad: 프로파일 생성 변이까지 난독화해 프로파일 규칙이 실제 릴리스와 어긋난다
   ```
 - 체크: 릴리스 APK에 `assets/dexopt/baseline.prof`가 있는가. 생성 변이의 minify 설정이 위와 같은가.
 
 ### R-40-04 릴리스 빌드는 R8을 켠다
-- 규칙: 배포용 릴리스 변이는 `isMinifyEnabled = true`로 둔다. 크래시가 난다고 R8을 끄지 않고 keep 규칙으로 좁혀 해결하며, 규칙을 추가하면 왜 필요한지 주석으로 남긴다.
+- 규칙: 배포용 릴리스 변이는 최적화를 켠다(DSL 형태는 R-19-04가 소유한다). 크래시가 난다고 R8을 끄지 않고 keep 규칙으로 좁혀 해결하며, 규칙을 추가하면 왜 필요한지 주석으로 남긴다.
 - 근거: 릴리스는 R8을 켜는 것이 전제이며 R8 규칙 재작성이 시작 성능 개선에 기여한다 [S37](https://developer.android.com/topic/performance/baselineprofiles/overview). 성능 측정도 R8 켠 상태를 기준으로 한다 [S16](https://developer.android.com/develop/ui/compose/performance).
 - 예시:
   ```proguard

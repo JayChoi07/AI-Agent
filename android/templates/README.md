@@ -1,16 +1,22 @@
 # 코드 템플릿
 
-> 적용: 그린필드 Android(Kotlin·Compose·Navigation 3 1.1.7·Hilt·멀티모듈). 새 feature 모듈 한 개를 만드는 최소 골격이다.
+> 적용: 그린필드 Android(Kotlin·Compose·Navigation 3 1.1.7·Hilt·멀티모듈). 앱 골격 하나(`app/`·`designsystem/`)와 feature 모듈 한 개를 만드는 최소 골격이다.
 
-## 플레이스홀더 3종
+## 플레이스홀더 6종
 
 | 토큰 | 뜻 | 예 |
 |---|---|---|
 | `{{Feature}}` | 기능 이름 PascalCase. 파일 이름에도 들어간다 | `Login` |
 | `{{feature}}` | 기능 이름 소문자. 패키지 조각·모듈 이름 | `login` |
 | `{{package}}` | 앱 루트 패키지 | `com.example.app` |
+| `{{App}}` | 앱 이름 PascalCase. 클래스 이름에 들어간다 | `Acme` |
+| `{{app}}` | 앱 이름 소문자. `rootProject.name` | `acme` |
+| `{{package-path}}` | `{{package}}`의 점을 슬래시로 바꾼 값. **디렉터리 이름에만** 쓴다 | `com/example/app` |
 
-이 3개 외의 `{{...}}` 토큰은 쓰지 않는다.
+이 6개 외의 `{{...}}` 토큰은 쓰지 않는다. `{{App}}`·`{{app}}`·`{{package-path}}`는 `app/` 골격 템플릿에서만 쓴다.
+
+테마 컴포저블 이름은 앱 이름과 무관하게 `AppTheme`, XML 테마는 `Theme.App`·`Theme.App.Starting`이다 —
+R-18-10·R-18-12가 그 이름을 정하고, feature 템플릿(`{{Feature}}Screen.kt`·`{{Feature}}ScreenshotTest.kt`)도 그 이름을 import 한다.
 
 ## 계층 방향
 
@@ -22,6 +28,13 @@ Repository는 인터페이스와 구현 모두 data에 있고, 다른 계층은 
 
 | 템플릿 | 대상 | 비고 |
 |---|---|---|
+| `app/settings.gradle.kts` | `settings.gradle.kts` | 앱 골격 — **프로젝트당 한 번**. 아래 "앱 골격 치환" 참조 |
+| `app/build.gradle.kts` | `build.gradle.kts`(루트) | 컨벤션 플러그인이 적용하는 플러그인을 `apply false` |
+| `app/gradle.properties` | `gradle.properties` | R-19-09·R-19-10 |
+| `app/app/build.gradle.kts` | `app/build.gradle.kts` | `:app` 모듈 |
+| `app/app/src/main/**` | `app/src/main/**` | 매니페스트·themes·strings·Kotlin 4파일. 경로의 `{{package-path}}`가 패키지 디렉터리가 된다 |
+| `core/<모듈>/build.gradle.kts` | `core/common`·`core/testing`·`core/designsystem`의 `build.gradle.kts` | 플러그인 조합 + 모듈별 `namespace` + 최소 의존 (R-19-03) |
+| `designsystem/*.kt` | `core/designsystem/src/main/kotlin/…/core/designsystem/theme/` | `Color`·`Type`·`Shape`·`Theme`. `theme/` 진입점은 `AppTheme` 하나 |
 | `module/build.gradle.kts` | `feature/{{feature}}/build.gradle.kts` | convention 플러그인 사용 |
 | `ui/*.kt` | `feature/{{feature}}/src/main/kotlin/…/ui/` | Key·Route·UiState·ViewModel·Screen |
 | `ui/mvi/{{Feature}}ViewModel.kt` | 위 ViewModel을 **대체** | MVI를 고른 경우만 |
@@ -164,10 +177,77 @@ ViewModel의 `init` 블록에서 비동기 작업을 시작하지 않는다. 두
 - `{{Feature}}Error.toMessage()` — 리터럴 대신 `stringResource(R.string.…)` 사용
 - `Get{{Feature}}UseCase` — 단순 위임뿐이면 파일을 지우고 ViewModel이 Repository를 직접 주입받는다 (R-16-02)
 
+## 앱 골격 치환 (프로젝트당 한 번)
+
+`checklists/new-app.md` 구현 순서 3~6단계에서 쓴다. 레포 루트에서 실행하고, **강제 장치 설치
+(`$PACK_ROOT/enforcement/README.md` "설치 순서" 1~7단계)를 먼저 끝낸 뒤**에 돌린다 —
+`build-logic`과 카탈로그가 없으면 루트 빌드 파일의 `libs.plugins.convention.*`가 해석되지 않는다.
+
+`:app`은 첫 화면의 `{{Feature}}Key`와 `{{feature}}Entry`를 import 하므로, 이 스크립트 다음에
+위 "치환 명령"으로 첫 feature 모듈까지 만들어야 컴파일된다. `:core:common`·`:core:testing`·`:core:designsystem`의
+`build.gradle.kts`는 `core/<모듈>/build.gradle.kts` 템플릿에서 온다(플러그인 조합은 `enforcement/README.md`와 같고,
+모듈별 `namespace`와 최소 의존이 들어 있다). `Dispatchers.kt`·`MainDispatcherRule.kt`는 아래 "치환 명령"이 `:core:common`·`:core:testing`에 넣는다.
+
+```bash
+SRC="$PACK_ROOT/templates"
+APP=Acme            # {{App}}  — 앱 이름 PascalCase
+APP_LOWER=acme      # {{app}}  — rootProject.name
+NAME=Login          # {{Feature}} — 첫 화면
+LOWER=login         # {{feature}}
+PKG=com.example.app # {{package}}
+PKG_DIR="${PKG//./\/}"   # {{package-path}} — 디렉터리 이름에만 쓰인다
+
+APP_PKG="app/src/main/kotlin/$PKG_DIR"
+DS_PKG="core/designsystem/src/main/kotlin/$PKG_DIR/core/designsystem/theme"
+mkdir -p "$APP_PKG" app/src/main/res/values "$DS_PKG"
+
+subst_app() { # $1=템플릿 파일, $2=대상 파일 경로
+  sed -e "s/{{App}}/$APP/g" -e "s/{{app}}/$APP_LOWER/g" \
+      -e "s/{{Feature}}/$NAME/g" -e "s/{{feature}}/$LOWER/g" \
+      -e "s/{{package}}/$PKG/g" "$1" > "$2"
+}
+
+# 루트 3파일
+subst_app "$SRC/app/settings.gradle.kts" settings.gradle.kts
+subst_app "$SRC/app/build.gradle.kts"    build.gradle.kts
+subst_app "$SRC/app/gradle.properties"   gradle.properties
+
+# :app 빌드 파일과 리소스
+subst_app "$SRC/app/app/build.gradle.kts"             app/build.gradle.kts
+subst_app "$SRC/app/app/src/main/AndroidManifest.xml" app/src/main/AndroidManifest.xml
+for f in "$SRC"/app/app/src/main/res/values/*.xml; do
+  subst_app "$f" "app/src/main/res/values/$(basename "$f")"
+done
+
+# :app 의 Kotlin 4파일. 템플릿 경로의 '{{package-path}}' 디렉터리가 $PKG_DIR 로 펼쳐지고,
+# 파일 이름의 {{App}} 도 함께 치환한다.
+for f in "$SRC"/app/app/src/main/kotlin/'{{package-path}}'/*.kt; do
+  subst_app "$f" "$APP_PKG/$(basename "$f" | sed "s/{{App}}/$APP/g")"
+done
+
+# :core:designsystem 테마 4파일 — 파일 이름에는 플레이스홀더가 없다
+for f in "$SRC"/designsystem/*.kt; do subst_app "$f" "$DS_PKG/$(basename "$f")"; done
+
+# :core:* 3개의 빌드 파일 — namespace 가 모듈마다 다르다 (R-19-03)
+mkdir -p core/common core/testing core/designsystem
+for m in common testing designsystem; do
+  subst_app "$SRC/core/$m/build.gradle.kts" "core/$m/build.gradle.kts"
+done
+```
+
+`:app`이 쓰는 앱 셸 별칭 3개(`androidx-activity-compose` · `androidx-core-splashscreen` ·
+`androidx-compose-material3-adaptive`)는 `$PACK_ROOT/enforcement/build-logic/libs.versions.toml.snippet`의
+"앱 셸" 그룹에 있다 — 설치 3단계에서 카탈로그에 병합했으면 따로 할 일이 없다.
+그다음 `./gradlew ktlintFormat` → `./gradlew assembleDebug`.
+
 ## 검증
 
 ```bash
-grep -rn -E '\{\{[A-Za-z]+\}\}' "$PACK_ROOT/templates" | grep -v -E '\{\{(Feature|feature|package)\}\}'
+# 1) 파일 내용에 남은 미치환 토큰 (이 README 는 토큰을 설명하는 문서라 제외한다)
+grep -rn -E '\{\{[A-Za-z-]+\}\}' --exclude=README.md "$PACK_ROOT/templates" \
+  | grep -v -E '\{\{(Feature|feature|package|App|app)\}\}'
+# 2) 파일·디렉터리 이름에 쓰인 토큰
+find "$PACK_ROOT/templates" | grep -o -E '\{\{[A-Za-z-]+\}\}' | sort -u
 ```
 
-출력이 없어야 한다.
+1은 출력이 없어야 한다. 2는 `{{App}}`·`{{Feature}}`·`{{package-path}}` 세 줄만 나와야 한다.

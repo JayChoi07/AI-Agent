@@ -135,6 +135,41 @@
 | S123 | LemonAppDev | Konsist — 첫 테스트(선언 체크) | https://docs.konsist.lemonappdev.com/getting-started/getting-started/create-first-konsist-test-declaration-check.md | 공식 문서 | testing-ci |
 | S124 | LemonAppDev | Konsist — 두 번째 테스트(아키텍처 체크) | https://docs.konsist.lemonappdev.com/getting-started/getting-started/create-secound-konsist-test-architectural-check.md | 공식 문서 | testing-ci |
 | S125 | LemonAppDev | Konsist — Verify Classes | https://docs.konsist.lemonappdev.com/veryfying-codebase/verify-classes.md | 공식 문서 | testing-ci |
+| S126 | Google | Configure your app module | https://developer.android.com/build/configure-app-module | 공식 가이드 | app-bootstrap-build |
+| S127 | Google | Configure build variants | https://developer.android.com/build/build-variants | 공식 가이드 | app-bootstrap-build |
+| S128 | Google | Shrink, obfuscate, and optimize your app | https://developer.android.com/build/shrink-code | 공식 가이드 | app-bootstrap-build |
+| S129 | Google | Enable app optimization | https://developer.android.com/topic/performance/app-optimization/enable-app-optimization | 공식 가이드 | app-bootstrap-build |
+| S130 | Google | AGP 9.0.0 릴리스 노트 | https://developer.android.com/build/releases/past-releases/agp-9-0-0-release-notes | 공식 문서 | app-bootstrap-build |
+| S131 | Google | AGP 9.3.0 릴리스 노트 | https://developer.android.com/build/releases/agp-9-3-0-release-notes | 공식 문서 | app-bootstrap-build |
+| S132 | Google | AGP 8.0.0 릴리스 노트 | https://developer.android.com/build/releases/past-releases/agp-8-0-0-release-notes | 공식 문서 | app-bootstrap-build |
+| S133 | Google | Java versions in Android builds | https://developer.android.com/build/jdks | 공식 가이드 | app-bootstrap-build |
+| S134 | Google | Sign your app | https://developer.android.com/studio/publish/app-signing | 공식 가이드 | app-bootstrap-build |
+| S135 | Google | Optimize your build speed | https://developer.android.com/build/optimize-your-build | 공식 가이드 | app-bootstrap-build |
+| S136 | Google | Meet Google Play's target API level requirement | https://developer.android.com/google/play/requirements/target-sdk | 공식 정책 | app-bootstrap-build |
+| S137 | Google | Create and manage notification channels | https://developer.android.com/develop/ui/views/notifications/channels | 공식 가이드 | app-bootstrap-build |
+| S138 | Google | Create adaptive icons | https://developer.android.com/develop/ui/views/launch/icon_design_adaptive | 공식 가이드 | app-bootstrap-build |
+| S139 | Google | Java 8+ API desugaring support | https://developer.android.com/studio/write/java8-support | 공식 가이드 | app-bootstrap-build |
+| S140 | Gradle | Version catalogs | https://docs.gradle.org/current/userguide/version_catalogs.html | 공식 가이드 | app-bootstrap-build |
+| S141 | Gradle | Configuration cache | https://docs.gradle.org/current/userguide/configuration_cache.html | 공식 가이드 | app-bootstrap-build |
+| S142 | Gradle | Build environment (Gradle properties) | https://docs.gradle.org/current/userguide/build_environment.html | 공식 가이드 | app-bootstrap-build |
+| S143 | Google | App Startup 라이브러리 | https://developer.android.com/topic/libraries/app-startup | 공식 가이드 | app-bootstrap-shell |
+| S144 | Google | 스플래시 화면 | https://developer.android.com/develop/ui/views/launch/splash-screen | 공식 가이드 | app-bootstrap-shell |
+| S145 | Google | 스플래시 화면 API로 마이그레이션 | https://developer.android.com/develop/ui/views/launch/splash-screen/migrate | 공식 가이드 | app-bootstrap-shell |
+| S146 | Google | Compose edge-to-edge 설정 | https://developer.android.com/develop/ui/compose/system/setup-e2e | 공식 가이드 | app-bootstrap-shell |
+| S147 | Google | Android 15 동작 변경(타깃 앱) | https://developer.android.com/about/versions/15/behavior-changes-15 | 공식 문서 | app-bootstrap-shell |
+| S148 | Google | Android 16 동작 변경(타깃 앱) | https://developer.android.com/about/versions/16/behavior-changes-16 | 공식 문서 | app-bootstrap-shell |
+| S149 | Google | Compose 윈도우 인셋 설정 | https://developer.android.com/develop/ui/compose/system/insets-ui | 공식 가이드 | app-bootstrap-shell |
+| S150 | Google | Compose 시스템 바 보호 | https://developer.android.com/develop/ui/compose/system/system-bars | 공식 가이드 | app-bootstrap-shell |
+| S151 | Google | Compose의 Material Design 3 | https://developer.android.com/develop/ui/compose/designsystems/material3 | 공식 가이드 | app-bootstrap-shell |
+| S152 | Google | Compose 커스텀 디자인 시스템 | https://developer.android.com/develop/ui/compose/designsystems/custom | 공식 가이드 | app-bootstrap-shell |
+| S153 | Google | 윈도우 크기 클래스 사용 | https://developer.android.com/develop/ui/compose/layouts/adaptive/use-window-size-classes | 공식 가이드 | app-bootstrap-shell |
+| S154 | Google | 런타임 구성 변경 처리 | https://developer.android.com/guide/topics/resources/runtime-changes | 공식 가이드 | app-bootstrap-shell |
+| S155 | Google | UI 상태 저장 | https://developer.android.com/topic/libraries/architecture/saving-states | 공식 가이드 | app-bootstrap-shell |
+| S156 | Google | 매니페스트 `<activity>` 요소 | https://developer.android.com/guide/topics/manifest/activity-element | 공식 문서 | app-bootstrap-shell |
+| S157 | Google | androidx.core 릴리스 노트(core-splashscreen 1.2.0) | https://developer.android.com/jetpack/androidx/releases/core | 릴리스 노트 | app-bootstrap-shell |
+| S158 | Google | XML 테마를 Compose 테마로 마이그레이션 | https://developer.android.com/develop/ui/compose/designsystems/views-to-compose | 공식 가이드 | app-bootstrap-shell |
+| S159 | Google | Material Components and layouts — insets (Scaffold) | https://developer.android.com/develop/ui/compose/system/material-insets | 공식 가이드 | app-bootstrap-shell |
+| S160 | Google | Compose Material 3 Adaptive 릴리스 노트 | https://developer.android.com/jetpack/androidx/releases/compose-material3-adaptive | 공식 문서 | app-bootstrap-shell |
 
 노트 지역 번호 합계 130건(architecture 22 + state-nav 27 + kotlin-style 26 + testing-ci 43 + korea 12) → URL 중복 7건 제거 → 123건 → testing-ci 지역 S19가 getting-started 문서 3건을 한 번호로 묶고 있어 URL 단위로 분리(+2) → **전역 125건**. 제거된 중복은 S02(architecture+state-nav), S08(architecture+state-nav), S09(state-nav+kotlin-style), S35(kotlin-style+testing-ci), S43(state-nav+testing-ci), S51(architecture+testing-ci), S93(architecture+state-nav)이다.
 

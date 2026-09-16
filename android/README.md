@@ -1,7 +1,7 @@
 # android — Android 그린필드 표준 팩
 
-Kotlin·Compose·Navigation 3·Hilt·멀티모듈 기준의 Android 개발 표준을 **규칙 196개**(출처 125건) · **유형별 체크리스트 7개** · **코드 템플릿 22개**(치환 안내 포함 23파일) · **빌드 강제 장치** · **라우터 스킬**로 묶은 팩이다.
-스킬 이름은 `android-standards`이고, 진입점은 [`SKILL.md`](SKILL.md)다. 요청 유형을 먼저 분류한 뒤 그 유형의 체크리스트만 따라가는 라우터 구조라, [`references/`](references) 18개 파일을 전부 읽지 않는다.
+Kotlin·Compose·Navigation 3·Hilt·멀티모듈 기준의 Android 개발 표준을 **규칙 224개**(출처 158건) · **유형별 체크리스트 8개** · **코드 템플릿 40개**(치환 안내 포함 41파일) · **빌드 강제 장치** · **라우터 스킬**로 묶은 팩이다.
+스킬 이름은 `android-standards`이고, 진입점은 [`SKILL.md`](SKILL.md)다. 요청 유형을 먼저 분류한 뒤 그 유형의 체크리스트만 따라가는 라우터 구조라, [`references/`](references) 20개 파일을 전부 읽지 않는다.
 대상은 **그린필드**(신규 Kotlin·Compose 프로젝트)이며, 레거시 프로젝트에서는 신규 코드에만 적용한다.
 모든 규칙에는 `R-NN-MM` ID와 [`references/90-sources.md`](references/90-sources.md)의 출처 번호(S)가 붙는다. 출처 없는 규칙은 쓰지 않는다.
 
@@ -16,6 +16,7 @@ Kotlin·Compose·Navigation 3·Hilt·멀티모듈 기준의 Android 개발 표�
 
 | 유형 | 트리거 예 | 체크리스트 |
 |---|---|---|
+| new-app | 새 앱 만들어줘, 프로젝트 세팅, 빈 폴더에서 시작 | [checklists/new-app.md](checklists/new-app.md) |
 | new-screen | 페이지/화면 만들어줘, 상세 화면 추가 | [checklists/new-screen.md](checklists/new-screen.md) |
 | new-feature-module | 새 기능 모듈, `:feature:*` 추가 | [checklists/new-feature-module.md](checklists/new-feature-module.md) |
 | new-data-source | API 붙여줘, DB 테이블 추가, DataStore | [checklists/new-data-source.md](checklists/new-data-source.md) |
@@ -28,8 +29,9 @@ Kotlin·Compose·Navigation 3·Hilt·멀티모듈 기준의 Android 개발 표�
 
 ### B. 새 Android 프로젝트 세팅
 
-**언제** — 빈 프로젝트에서 시작해 규칙을 빌드로 강제하고 싶을 때.
-**하는 일** — `android create --name <이름> -o <경로> empty-activity`(또는 Android Studio)로 골격을 만든 뒤 [`enforcement/README.md`](enforcement/README.md) "설치 순서"를 따른다. 8단계 요약:
+**언제** — 빈 폴더에서 시작해 첫 화면이 뜨는 앱까지 세우고, 규칙을 빌드로 강제하고 싶을 때.
+**하는 일** — 에이전트에게 "새 앱 만들어줘"라고 요청한다. `new-app` 유형([checklists/new-app.md](checklists/new-app.md))이 사용자만 정할 수 있는 값(`applicationId`·첫 화면·브랜드 색·CI 여부)을 먼저 묻고, 결정 표(SDK 3종·buildType·첫 모듈 그래프·초기화 배치·테마)를 [`references/18-app-shell.md`](references/18-app-shell.md)·[`references/19-build-config.md`](references/19-build-config.md) 근거로 채운 뒤 [`templates/app/`](templates/app)·[`templates/designsystem/`](templates/designsystem) 골격을 치환해 `assembleDebug`와 첫 화면 기동까지 간다.
+손으로 할 때는 `android create --name <이름> -o <경로> empty-activity`(또는 Android Studio)로 골격을 만든 뒤 [`enforcement/README.md`](enforcement/README.md) "설치 순서"를 따른다. 8단계 요약:
 
 1. `build-logic/`을 프로젝트 루트에 복사
 2. 루트 `settings.gradle.kts`에 `includeBuild("build-logic")` + `enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")`
@@ -114,15 +116,17 @@ cmd /c mklink /J "%USERPROFILE%\.claude\skills\android-standards" "<repo>\androi
 ```
 android/
 ├── SKILL.md          # 라우터 — 유형 분류 → 체크리스트, 절차·보고 형식 (≤150줄)
-├── references/       # 규칙 18파일. 00 원칙 / 10~17 구조·아키텍처 / 20~23 Kotlin·비동기·에러
-│                     #             / 30~32 테스트·CI·리뷰 / 40 성능·보안 / 90 출처(S01~S125)
-├── checklists/       # 유형별 파이프라인 7파일. 컨텍스트 수집 → 결정 항목 → 구현 순서 → 산출물 검증
-├── templates/        # 치환형 코드 골격. ui/ · ui/mvi/ · domain/ · data/ · model/ · di/ · test/ · module/
+├── references/       # 규칙 20파일. 00 원칙 / 10~17 구조·아키텍처 / 18 앱 셸 / 19 빌드 설정
+│                     #             / 20~23 Kotlin·비동기·에러 / 30~32 테스트·CI·리뷰 / 40 성능·보안 / 90 출처(S01~S158)
+├── checklists/       # 유형별 파이프라인 8파일. 컨텍스트 수집 → 결정 항목 → 구현 순서 → 산출물 검증
+├── templates/        # 치환형 코드 골격. app/(앱 셸·루트 빌드) · core/(3모듈 빌드 파일) · designsystem/ · ui/ · ui/mvi/ · domain/ · data/
+│                     #   · model/ · di/ · test/ · module/
 │                     #   치환 규칙은 templates/README.md
 ├── enforcement/      # 강제 장치. detekt.yml · .editorconfig · build-logic 컨벤션 플러그인
 │                     #   · konsist/ArchitectureTest.kt · .github/workflows/android-ci.yml
 ├── eval/             # 팩 자체 검증 시나리오
-├── research/         # 출처 조사 노트 5건 (architecture · state-nav · kotlin-style · testing-ci · korea)
+├── research/         # 출처 조사 노트 7건 (architecture · state-nav · kotlin-style · testing-ci · korea
+│                     #   · app-bootstrap-build · app-bootstrap-shell)
 └── scripts/
     └── check-pack.sh # 형식 검사 — 줄 수 한도, 규칙 5요소, 근거 URL, R-ID 유일성, 체크리스트 헤더,
                       #             references 밖에서 인용한 R-ID 의 실존 여부
@@ -142,13 +146,17 @@ android/
 | FORMATTER | ktlint-gradle 14.2.0 단독, 엔진 `ktlint 1.8.0` 고정, `.editorconfig`에 `ktlint_code_style = android_studio`. 이 플러그인은 Maven Central에 없어 저장소에 `gradlePluginPortal()`이 있어야 한다(실빌드 실증 2026-09-09). spotless·detekt-formatting 미채택 |
 | NAV3_VERSION | Navigation 3 stable 1.1.7. ResultEventBus·DeepLinkRequest 없음 → 결과 반환은 공유 상태·상위 ViewModel, 딥링크는 `DeepLinkPattern`+`KeyDecoder` 직접 구현 |
 | DETEKT_LINE | detekt 2.0.0-alpha.6, 플러그인 id `dev.detekt`. 임계값은 문서 확인 기본값(파라미터 5·6, 복합조건 3, 순환복잡도 14, 중첩 4, LongMethod 60). CI 태스크는 타입 해석이 있는 `detektDebug` — plain `detekt`는 타입 해석 규칙을 조용히 통과시킨다(실빌드 실증 2026-09-09) |
+| MIN_SDK | 26. 특정 minSdk를 권고한 공식 문서는 없어 팩 확정값이다(R-19-02). API 26 경계(알림 채널 필수·`mipmap-anydpi-v26` 적응형 아이콘·`MethodHandle.invoke`)와 그 아래의 desugaring 비용을 근거로 붙였다. 내리려면 이유를 `MIN_SDK` 상수 옆에 남긴다 |
+| APP_SHELL | 스플래시는 `core-splashscreen`의 `installSplashScreen()`만(전용 Activity 없음), edge-to-edge는 `enableEdgeToEdge()` + 인셋 1회 소비, 초기화는 18의 결정 매트릭스(App Startup / `Application.onCreate` / 지연), 테마는 `:core:designsystem` `theme/` 4파일에 진입점 `AppTheme` 하나(공통 컴포넌트는 `component/`에서 별도 공개), `WindowSizeClass`는 앱 루트에서 한 번 계산 |
+| BUILD_CONFIG | buildType은 debug·release 둘, release는 AGP 9.3+ `optimization { enable = true }`, debug `applicationIdSuffix = ".debug"`, product flavor 없음이 기본, configuration cache 켬, 서명은 `keystore.properties` 분리 |
 | FEATURE_MODULE_SPLIT | 단일 `:feature:*` 모듈로 시작. feature 간 직접 이동 없음(콜백 + `:app` 조합층). 다른 feature가 NavKey를 직접 참조해야 할 때만 `:api`/`:impl` 분할 |
 
-확정 버전 라인은 AGP 9.4.0 · Gradle 9.7.1 · JDK 17 · compileSdk·targetSdk 37 · Kotlin 2.4.20 · Compose BOM 2026.08.00 · Hilt 2.60.1 · Navigation 3 1.1.7이다(Gradle 9.7.1 · compileSdk 37은 실빌드 실증 2026-09-09 — 조사 시점 값은 각각 "9.6.x 이상"·36이었다). 전체 목록은 `enforcement/build-logic/libs.versions.toml.snippet`이 정본이고, 조사 근거는 `research/testing-ci.md`의 "확인 버전 표"에 있다.
+확정 버전 라인은 AGP 9.4.0 · Gradle 9.7.1 · JDK 17 · compileSdk·targetSdk 37 · minSdk 26 · Kotlin 2.4.20 · Compose BOM 2026.08.00 · Hilt 2.60.1 · Navigation 3 1.1.7 · core-splashscreen 1.2.0 · activity-compose 1.13.0 · material3-adaptive 1.3.0이다(Gradle 9.7.1 · compileSdk 37은 실빌드 실증 2026-09-09 — 조사 시점 값은 각각 "9.6.x 이상"·36이었다). 전체 목록은 `enforcement/build-logic/libs.versions.toml.snippet`이 정본이고, 조사 근거는 `research/testing-ci.md`의 "확인 버전 표"에 있다.
 
 ## 한계·주의
 
 - 검증은 스크래치 프로젝트의 CLI 게이트까지다. **실기기·계측 테스트로는 검증하지 않았다.**
 - 스크린샷 테스트 렌더링은 `@Config(sdk = [35])`로 고정한다. Robolectric 4.16.1의 상한은 36이지만 SDK 36 이미지가 Java 21을 요구하고 팩은 JDK 17이기 때문이다.
 - CLI로 게이트를 돌릴 때 셸 기본 JDK가 17이 아니면 `JAVA_HOME`을 JDK 17 경로로 인라인 지정해야 한다.
+- **18·19번 규칙 문서와 `new-app` 체크리스트·`templates/app/`·`templates/designsystem/`은 2026-09-16 추가분으로, 치환 스크립트 실행과 형식 검사까지만 확인했고 스크래치 실빌드로는 아직 실증하지 않았다.** 첫 실제 앱 세팅 때 `assembleDebug`가 통과하면 이 줄을 지운다.
 - 20~22번 규칙 문서의 Bad 예시 약 15건은 코드가 아니라 산문 설명이고, Bad 예시가 아예 없는 규칙도 4건 있다. 리뷰에서 차단 사유가 아니라고 보고 남겨 뒀다.

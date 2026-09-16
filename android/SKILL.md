@@ -1,6 +1,6 @@
 ---
 name: android-standards
-description: Android 앱(Kotlin·Compose·Navigation 3·Hilt·멀티모듈) 그린필드 개발 표준. 화면/페이지 추가, 기능 모듈 추가, API·DB 연동, 함수·유틸 작성, 버그 수정, 리팩터링, 산출물 리뷰 등 Android 작업이면 먼저 요청 유형을 분류하고 checklists/ 파이프라인대로 결정→구현→표준 준수 보고를 한다. 트리거 예 - "페이지 만들어줘", "화면 추가", "기능 붙여줘", "API 연동", "이 함수 짜줘", "버그 고쳐", "리팩터링", "리뷰해줘".
+description: Android 앱(Kotlin·Compose·Navigation 3·Hilt·멀티모듈) 그린필드 개발 표준. 새 앱 세팅(0에서 시작), 화면/페이지 추가, 기능 모듈 추가, API·DB 연동, 함수·유틸 작성, 버그 수정, 리팩터링, 산출물 리뷰 등 Android 작업이면 먼저 요청 유형을 분류하고 checklists/ 파이프라인대로 결정→구현→표준 준수 보고를 한다. 트리거 예 - "새 앱 만들어줘", "프로젝트 세팅", "페이지 만들어줘", "화면 추가", "기능 붙여줘", "API 연동", "이 함수 짜줘", "버그 고쳐", "리팩터링", "리뷰해줘".
 ---
 
 # Android 표준 (android-standards)
@@ -29,6 +29,7 @@ description: Android 앱(Kotlin·Compose·Navigation 3·Hilt·멀티모듈) 그�
 ## 유형 → 체크리스트
 | 유형 | 트리거 예 | 체크리스트 |
 |---|---|---|
+| new-app | 새 앱 만들어줘, 프로젝트 세팅, 빈 폴더에서 시작 | checklists/new-app.md |
 | new-screen | 페이지/화면 만들어줘, 상세 화면 추가 | checklists/new-screen.md |
 | new-feature-module | 새 기능 모듈, :feature:* 추가 | checklists/new-feature-module.md |
 | new-data-source | API 붙여줘, DB 테이블 추가, DataStore | checklists/new-data-source.md |

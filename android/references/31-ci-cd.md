@@ -114,8 +114,8 @@ CI는 규칙 집행의 두 번째 층이다. 기계가 판정할 수 있는 규�
 - 체크: 저장소 검색에 키 문자열이 남아 있는가. 포크 PR에서 시크릿 잡이 도는가.
 
 ### R-31-09 릴리스 검증은 R8을 켠 릴리스 빌드로 별도 잡에서 한다
-- 규칙: `assembleRelease`(`isMinifyEnabled = true`)와 성능 측정은 PR 게이트가 아니라 릴리스 준비 잡에서 돌린다. 디버그 빌드 결과로 성능이나 난독화 안정성을 판단하지 않는다.
-- 근거: 성능 측정은 디버그 모드가 비용을 얹기 때문에 릴리스 빌드에서 해야 한다 [S16](https://developer.android.com/develop/ui/compose/performance). Baseline Profile도 릴리스 변이에서 `isMinifyEnabled = true`를 전제한다 [S37](https://developer.android.com/topic/performance/baselineprofiles/overview).
+- 규칙: `assembleRelease`(최적화 켬 — DSL은 R-19-04)와 성능 측정은 PR 게이트가 아니라 릴리스 준비 잡에서 돌린다. 디버그 빌드 결과로 성능이나 난독화 안정성을 판단하지 않는다.
+- 근거: 성능 측정은 디버그 모드가 비용을 얹기 때문에 릴리스 빌드에서 해야 한다 [S16](https://developer.android.com/develop/ui/compose/performance). Baseline Profile도 릴리스 변이에서 최적화를 켠 상태를 전제한다 [S37](https://developer.android.com/topic/performance/baselineprofiles/overview).
 - 예시:
   ```yaml
   # Good: release 잡에서 ./gradlew assembleRelease 와 매크로벤치마크
@@ -127,4 +127,4 @@ CI는 규칙 집행의 두 번째 층이다. 기계가 판정할 수 있는 규�
 
 - **빌드 시간 예산**: 조사한 어떤 출처도 CI 빌드 시간 상한을 제시하지 않는다. 숫자를 규칙으로 쓰지 않고, 게이트 순서(R-31-01)와 캐시(R-31-05)로 시간을 관리한다.
 - **릴리스 브랜치·태그 이름 규칙**: `release/*`·`v1.2.3` 같은 관행은 널리 쓰이지만 이 팩의 출처 중 어느 것도 정하지 않는다. 프로젝트 지침 파일에서 정할 자리다.
-- **configuration cache 활성화**: setup-gradle 확인본에서 configuration cache 사용을 명시한 문구를 확인하지 못했다. 켤지 여부는 스크래치 빌드(Task 16)에서 실증한 뒤 결정한다.
+- **configuration cache 활성화**: **해소됨(2026-09-16).** setup-gradle 문서에는 없지만 Gradle 공식 문서(9.0부터 preferred mode)와 Android 빌드 속도 가이드가 근거를 준다 → `R-19-10`이 소유한다.
