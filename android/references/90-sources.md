@@ -170,14 +170,41 @@
 | S158 | Google | XML 테마를 Compose 테마로 마이그레이션 | https://developer.android.com/develop/ui/compose/designsystems/views-to-compose | 공식 가이드 | app-bootstrap-shell |
 | S159 | Google | Material Components and layouts — insets (Scaffold) | https://developer.android.com/develop/ui/compose/system/material-insets | 공식 가이드 | app-bootstrap-shell |
 | S160 | Google | Compose Material 3 Adaptive 릴리스 노트 | https://developer.android.com/jetpack/androidx/releases/compose-material3-adaptive | 공식 문서 | app-bootstrap-shell |
+| S161 | Google | Version your app | https://developer.android.com/studio/publish/versioning | 공식 가이드 | release-cd |
+| S162 | Git | githooks — pre-push · `core.hooksPath` | https://git-scm.com/docs/githooks | 공식 문서 | release-cd |
+| S163 | r0adkll | upload-google-play README · Releases | https://github.com/r0adkll/upload-google-play | 오픈소스 README | release-cd |
+| S164 | Google | Set up an open, closed, or internal test | https://support.google.com/googleplay/android-developer/answer/9845334 | Play Console 도움말 | release-cd |
+| S165 | Google | Release app updates with staged rollouts | https://support.google.com/googleplay/android-developer/answer/6346149 | Play Console 도움말 | release-cd |
+| S166 | Google | Prepare and roll out a release | https://support.google.com/googleplay/android-developer/answer/9859348 | Play Console 도움말 | release-cd |
+| S167 | Google | App testing requirements for new personal developer accounts | https://support.google.com/googleplay/android-developer/answer/14151465 | Play Console 도움말 | release-cd |
+| S168 | Google | Play Developer API — Getting started | https://developers.google.com/android-publisher/getting_started | 공식 가이드 | release-cd |
+| S169 | Google | google-github-actions/auth README | https://github.com/google-github-actions/auth | 오픈소스 README | release-cd |
+| S170 | Triple-T | Gradle Play Publisher README | https://github.com/Triple-T/gradle-play-publisher | 오픈소스 README | release-cd |
+| S171 | Google | Big test stability | https://developer.android.com/training/testing/instrumented-tests/stability | 공식 가이드 | e2e-testing |
+| S172 | Google | Hilt testing guide | https://developer.android.com/training/dependency-injection/hilt-testing | 공식 가이드 | e2e-testing |
+| S173 | Google | AGP DSL 레퍼런스 9.4 — TestOptions | https://developer.android.com/reference/tools/gradle-api/9.4/com/android/build/api/dsl/TestOptions | 공식 레퍼런스 | e2e-testing |
+| S174 | Google | Test(androidx.test) 릴리스 노트 | https://developer.android.com/jetpack/androidx/releases/test | 릴리스 노트 | e2e-testing |
+| S175 | ReactiveCircus | android-emulator-runner README · Releases | https://github.com/ReactiveCircus/android-emulator-runner | 오픈소스 README | e2e-testing |
+| S176 | GitHub | GitHub-hosted runners reference | https://docs.github.com/en/actions/reference/runners/github-hosted-runners | 공식 문서 | e2e-testing |
+| S177 | GitHub | GitHub Actions billing | https://docs.github.com/en/billing/concepts/product-billing/github-actions | 공식 문서 | e2e-testing |
+| S178 | GitHub | Dependabot supported ecosystems and repositories | https://docs.github.com/en/code-security/reference/supply-chain-security/supported-ecosystems-and-repositories | 공식 문서 | dependency-updates |
+| S179 | GitHub | Dependabot options reference | https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference | 공식 문서 | dependency-updates |
+| S180 | GitHub | Troubleshooting Dependabot on GitHub Actions | https://docs.github.com/en/code-security/reference/supply-chain-security/troubleshoot-dependabot/dependabot-on-actions | 공식 문서 | dependency-updates |
+| S181 | Mend | Renovate — Noise Reduction | https://docs.renovatebot.com/noise-reduction/ | 공식 문서 | dependency-updates |
+| S182 | Google | Compose BOM | https://developer.android.com/develop/ui/compose/bom | 공식 가이드 | dependency-updates |
+| S183 | JetBrains | Compose compiler migration guide | https://kotlinlang.org/docs/compose-compiler-migration-guide.html | 공식 문서 | dependency-updates |
+| S184 | JetBrains | Configure a Gradle project (KGP 호환 표) | https://kotlinlang.org/docs/gradle-configure-project.html | 공식 문서 | dependency-updates |
+| S185 | GitHub | Manually running a workflow | https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow | 공식 문서 | release-cd |
+| S186 | GitHub | Deployments and environments | https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments | 공식 문서 | release-cd |
+| S187 | GitHub | REST API — Billing usage | https://docs.github.com/en/rest/billing/usage | 공식 레퍼런스 | e2e-testing |
 
 노트 지역 번호 합계 130건(architecture 22 + state-nav 27 + kotlin-style 26 + testing-ci 43 + korea 12) → URL 중복 7건 제거 → 123건 → testing-ci 지역 S19가 getting-started 문서 3건을 한 번호로 묶고 있어 URL 단위로 분리(+2) → **전역 125건**. 제거된 중복은 S02(architecture+state-nav), S08(architecture+state-nav), S09(state-nav+kotlin-style), S35(kotlin-style+testing-ci), S43(state-nav+testing-ci), S51(architecture+testing-ci), S93(architecture+state-nav)이다.
 
-S123~S125는 `testing-ci.md`가 리뷰 반영으로 개정된 뒤(지역 S19 확장 + 지역 S43 신설) 추가한 행이다. **S01~S122의 번호와 URL은 바꾸지 않았다** — 이미 인용된 번호가 어긋나지 않게 하려고 뒤에 이어 붙였으므로, 주제 순서와 번호 순서가 이 세 행에서만 어긋난다. S123·S124는 S76(의존성 추가)과 같은 getting-started 묶음이고, S125는 S72~S77과 같은 Konsist 문서군이다. `raw.githubusercontent.com/LemonAppDev/konsist-documentation/.../verify-classes.md`는 S125와 같은 문서의 원본이라 별도 번호를 주지 않았다.
+S123~S125는 `testing-ci.md`가 리뷰 반영으로 개정된 뒤(지역 S19 확장 + 지역 S43 신설) 추가한 행이다. **S01~S122의 번호와 URL은 바꾸지 않았다** — 이미 인용된 번호가 어긋나지 않게 하려고 뒤에 이어 붙였으므로, 주제 순서와 번호 순서가 이 세 행에서만 어긋난다. S123·S124는 S76(의존성 추가)과 같은 getting-started 묶음이고, S125는 S72~S77과 같은 Konsist 문서군이다. `raw.githubusercontent.com/LemonAppDev/konsist-documentation/.../verify-classes.md`는 S125와 같은 문서의 원본이라 별도 번호를 주지 않았다. S161~S187은 2026-09-30 조사 노트 3건(release-cd · e2e-testing · dependency-updates)에서 규칙이 실제로 인용하는 출처만 옮긴 행이다. 노트의 나머지 출처와 후보 비교는 각 노트에 남아 있고, 기존 번호와 겹치는 문서(AGP 9.0.0 릴리스 노트 = S130, Sign your app = S134, NiA Build.yaml = S56, Compose 컴파일러 플러그인 = S48)는 기존 번호를 재사용한다.
 
 ## 결정 표
 
-`키`는 규칙 문서들이 참조하는 확정값 이름이다. 33건 모두 확정됐고 빈 칸은 없다. 아래 표의 `근거 출처`·`결정자` 칸이 선택지별 판단 근거를 그대로 담고 있으며, 짧은 요약은 `android/README.md`의 확정 결정 요약에 있다.
+`키`는 규칙 문서들이 참조하는 확정값 이름이다. 37건 모두 확정됐고 빈 칸은 없다. 아래 표의 `근거 출처`·`결정자` 칸이 선택지별 판단 근거를 그대로 담고 있으며, 짧은 요약은 `android/README.md`의 확정 결정 요약에 있다.
 
 | 키 | 주제 | 선택지 | 결정 | 근거 출처 | 결정자 |
 |---|---|---|---|---|---|
@@ -214,6 +241,10 @@ S123~S125는 `testing-ci.md`가 리뷰 반영으로 개정된 뒤(지역 S19 확
 | COMPOSE_SCOPE | Compose 적용 범위 | 신규 모듈 한정 / 전면 | 그린필드는 전면 Compose. 우회(AndroidView 래핑)는 근거와 재검토 시점 기록 시에만 | S111 | 규칙 |
 | MODULE_5WAY | 기능당 5모듈 분할 | 채택 / 미채택 | 미채택. 700모듈 규모 전제이고 iOS 사례다 | S115 vs S04, S03 | 규칙 |
 | ENFORCEMENT_ORDER | 규칙 집행 수단 순서 | 린터만 / 린터+CI+에이전트 | 린터(기계 판정) → CI 게이트 → 에이전트 주입(판단 필요 규칙) | S112, S114, S39 | 규칙 |
+| RUN_LOCATION | 검사·테스트·빌드의 실행 위치 | 로컬 스크립트 / 자체 호스팅 러너 / PR 검사만 GitHub / GitHub 워크플로 전부 | **로컬 스크립트가 기본, GitHub 워크플로는 선택**. 푸시 전 pre-push 훅이 게이트를 돌린다. 이유는 비공개 저장소의 분량 차감과 초과 청구 | S177, S162 | 사용자(2026-09-30) |
+| RELEASE | 배포 | 업로드: Play Console 직접 / r0adkll 액션 / fastlane supply / Gradle Play Publisher / API 직접 · 테스터 채널: Play 내부 테스트 / Firebase App Distribution · versionCode: 카운터 파일 / CI 실행 번호 / 커밋 수 / 직접 입력 | **사람이 Play Console에 직접 올리는 것이 기본**, 워크플로를 쓰면 `r0adkll/upload-google-play`를 수동 실행으로만. versionCode는 **저장소의 카운터 파일**(처음 고른 CI 실행 번호는 로컬 실행으로 바꾸면서 대체), 트랙은 내부 테스트까지 | S166, S163, S164, S161, S185 | 사용자(2026-09-30) |
+| E2E | 전체 플로우 테스트 도구·실행 환경 | 도구: Compose UI Test / +UI Automator / Maestro · 환경: 로컬 / GitHub 러너 에뮬레이터 / Gradle Managed Devices / Firebase Test Lab | **Compose UI Test 단독, 실행은 로컬 기기·에뮬레이터가 기본**. GitHub에서 돌리면 `android-emulator-runner`, 주 2회, 사용량 95%에서 건너뜀. R8 켠 빌드의 UI Automator 검증은 미채택 | S171, S172, S175, S176 | 사용자(2026-09-30) |
+| DEP_UPDATE | 의존성 자동 업데이트 | 도구: Dependabot / Renovate / Gradle 플러그인 · 자동 병합: 안 함 / 패치만 / 마이너까지 | **Dependabot, 자동 병합 안 함**. 게이트(로컬 스크립트 또는 PR 워크플로) 통과 뒤 사람이 병합 | S178, S179, S181 | 사용자(2026-09-30) |
 
 ## R-ID 중복·겹침 정리
 
@@ -263,7 +294,7 @@ S123~S125는 `testing-ci.md`가 리뷰 반영으로 개정된 뒤(지역 S19 확
 | Nav3 `entry` 안의 `hiltViewModel()` 사용 | state-nav R-13-07 | **해소됨.** 공식 navigation-3 스킬의 Hilt 연동 레시피가 `entry` 안 `hiltViewModel()` + `rememberViewModelStoreNavEntryDecorator()` 조합을 제시하고, 스크래치 빌드로 동작을 확인했다(2026-09-09) |
 | Mavericks "저활동" 판정 | state-nav 비교표 | 릴리스·push 날짜에서 추론. 공식 유지보수 선언 미확인(사이트 본문 비어 반환) |
 | Konsist `withAllParentsOf`·`hasDataModifier`·`hasOperatorModifier`·단수형 `primaryConstructor` | testing-ci 미확인 | **부분 해소.** `hasDataModifier`·`hasOperatorModifier`는 Konsist 0.17.3 공개 소스로 존재를 확인했고 `enforcement/konsist/ArchitectureTest.kt`가 실제로 쓴다(스크래치 빌드 통과 — 검증 기록은 `enforcement/README.md`). 보류로 남는 것은 `withAllParentsOf`·단수형 `primaryConstructor` 둘뿐이고, 이 둘은 `withParentClassOf`·`hasPrimaryConstructor`·`primaryConstructors`로 대체한다 |
-| androidx.test(core/runner/rules/ext-junit) 안정 버전 | testing-ci 미확정 | NiA 카탈로그 값이 전부 `-rc01`. 계측 테스트를 팩에 넣으려면 추가 조사 필요 |
+| androidx.test(core/runner/rules/ext-junit) 안정 버전 | testing-ci 미확정 | **해소됨(2026-09-30).** 릴리스 노트 확인값은 core·runner·rules 1.7.0, ext-junit 1.3.0, espresso 3.7.0이다(S174). NiA 카탈로그는 여전히 `-rc01`이라 복사하지 않는다. 실빌드로는 아직 돌려 보지 않았다 |
 | 버전 조합 검증(KSP 2.3.11+Kotlin 2.4.20, detekt 2.0.0-alpha.6+AGP 9.4.0, Robolectric 4.16.1+SDK 36, Hilt 2.60.1+Kotlin 2.4.20) | testing-ci 리스크 목록 | **해소됨(실빌드 실증 2026-09-09).** 공식 문서 명시는 여전히 없지만 스크래치 빌드로 전부 통과 확인. 단 Robolectric×SDK 36은 Java 21을 요구해 SDK 35로 내렸고, compileSdk는 36→**37**, Gradle 래퍼는 **9.7.1**로 올려야 했다 |
 | 국내 사례(P1~P13)의 조문 승격 | korea 요약 | 12건 중 문서화된 스타일 가이드 0건. 전부 경험 공유 글이라 단일 조직 1~2건 근거 |
 | 에이전트 동시 주입 규칙 수 상한(2개·4개) | korea P7 | 근거가 S114 한 건. 다른 조직 교차 확인 없음 |

@@ -45,6 +45,7 @@ Repository는 인터페이스와 구현 모두 data에 있고, 다른 계층은 
 | `di/Dispatchers.kt` | `core/common` | 프로젝트당 한 번만 복사 — **이미 있으면 건너뛴다** |
 | `test/MainDispatcherRule.kt` | `core/testing` | 프로젝트당 한 번만 복사 — **이미 있으면 건너뛴다** |
 | `test/Fake*.kt`, `test/*Test.kt` | `feature/{{feature}}/src/test/kotlin/` | fake 3종·ViewModel/Repository 단위 테스트·Roborazzi 스크린샷 |
+| `androidtest/*.kt` | `app/src/androidTest/kotlin/…/`(앱 루트 패키지) | 전체 플로우(계측) 테스트를 도입할 때만. Hilt 러너 + 플로우 테스트 골격 (R-30-13, R-30-14). 아래 치환 명령은 이 디렉터리를 복사하지 않는다 — 손으로 복사하고 `{{package}}`·`{{Feature}}`를 바꾼다 |
 
 DataSource를 인터페이스 + `Default*` 구현으로 나눈 이유는 하나다. Repository 단위 테스트가
 Remote·Local을 fake로 갈아끼울 수 있어야 한다 (R-30-10). 구현이 하나뿐인 인터페이스를 금지하는

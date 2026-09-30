@@ -7,3 +7,4 @@
 *.md text eol=lf
 .gitignore text eol=lf
 .gitattributes text eol=lf
+android/enforcement/scripts/hooks/* text eol=lf

@@ -1,5 +1,8 @@
 name: android-ci
 
+# 선택 파일이다. 게이트를 돌리는 기본 경로는 scripts/check.sh 와 pre-push 훅이다 (R-31-18, R-31-19).
+# 비공개 저장소에서는 PR 마다 실행 시간이 요금제 포함 분량에서 차감되고, 결제 수단이 있으면 초과분이 청구된다.
+
 on:
   pull_request:
   push:

@@ -91,7 +91,7 @@ Google은 테스트를 실행 위치(로컬 host-side / 계측 instrumented)와 
 - 체크: 기준 이미지가 바뀐 PR에 화면을 바꾼 이유가 적혀 있는가. 골든 PNG가 `src/test/screenshots/`에 커밋돼 있는가. CI 로그에 record 태스크가 없는가.
 
 ### R-30-05 fake는 테스트 소스셋에만 둔다
-- 규칙: fake 구현은 `src/test`에 두고, 여러 모듈이 공유해야 하면 테스트 전용 모듈(`:core:testing`)로 뺀다. 프로덕션 소스셋에 fake를 두거나 프로덕션 코드가 fake를 참조하게 하지 않는다.
+- 규칙: fake 구현은 `src/test`(계측 테스트에서만 쓰면 `src/androidTest`)에 두고, 여러 모듈이나 두 테스트 소스셋이 공유해야 하면 테스트 전용 모듈(`:core:testing`)로 뺀다. 프로덕션 소스셋에 fake를 두거나 프로덕션 코드가 fake를 참조하게 하지 않는다.
 - 근거: fake는 테스트용 경량 대체물이며 프로덕션 코드에 포함하지 않는다 [S31](https://developer.android.com/training/testing/fundamentals/test-doubles).
 - 예시:
   ```kotlin
@@ -192,7 +192,67 @@ Google은 테스트를 실행 위치(로컬 host-side / 계측 instrumented)와 
   ```
 - 체크: 새 계측 테스트가 로컬 테스트로 대체 가능한가. 계측 테스트 수가 화면 수만큼 늘어나고 있지 않은가.
 
+### R-30-13 전체 플로우 테스트는 Compose UI Test로 쓰고 루트 Activity를 띄워 사용자처럼 이동한다
+- 규칙: R-30-12의 대표 플로우는 `:app`의 `src/androidTest`에 Compose UI Test로 쓴다. `createAndroidComposeRule<MainActivity>()`로 루트 Activity를 띄우고, 화면 전환은 버튼·탭을 눌러 실제 네비게이션으로 한다. 앱 밖에서 조작하는 도구(Maestro·UI Automator)를 전체 플로우의 기본 도구로 쓰지 않는다.
+- 근거: "Prefer Espresso and Compose Test APIs to create UI tests." 이고 큰 테스트는 "you typically start one of your activities and navigate as a user would" 방식으로 쓴다 [S171](https://developer.android.com/training/testing/instrumented-tests/stability). 도구를 Compose UI Test 하나로 고정한 것은 팩 결정(`E2E`)이다.
+- 예시:
+  ```kotlin
+  // Good
+  @get:Rule(order = 1) val composeRule = createAndroidComposeRule<MainActivity>()
+  @Test fun signIn_reachesHome() {
+      composeRule.onNodeWithText("로그인").performClick()
+      composeRule.onNodeWithText("홈").assertIsDisplayed()
+  }
+  // Bad: 화면 Composable 을 setContent 로 따로 띄워 놓고 전체 플로우 테스트라고 부른다
+  ```
+- 체크: 테스트가 루트 Activity에서 시작하는가. 화면 전환을 백스택 직접 조작으로 건너뛰지 않았는가.
+
+### R-30-14 계측 테스트는 Hilt 테스트 애플리케이션 위에서 돌린다
+- 규칙: `AndroidJUnitRunner`를 상속한 러너가 `newApplication`에서 `HiltTestApplication`을 넘기게 하고 `testInstrumentationRunner`에 그 러너의 전체 클래스 이름을 적는다. 테스트 클래스에는 `@HiltAndroidTest`를 붙이고 `HiltAndroidRule`을 `order = 0`으로 가장 먼저 실행한다. 의존성은 `androidTestImplementation(hilt-android-testing)`과 `kspAndroidTest(hilt 컴파일러)`를 함께 선언한다.
+- 근거: "You must execute instrumented tests that use Hilt in an Application object that supports Hilt." 이고 "To use the Hilt test application in instrumented tests, you need to configure a new test runner." 이며 규칙 순서는 "make sure HiltAndroidRule runs first" 이다 [S172](https://developer.android.com/training/dependency-injection/hilt-testing).
+- 예시:
+  ```kotlin
+  // Good
+  class HiltTestRunner : AndroidJUnitRunner() {
+      override fun newApplication(cl: ClassLoader?, name: String?, context: Context?): Application =
+          super.newApplication(cl, HiltTestApplication::class.java.name, context)
+  }
+  // Bad: 프로덕션 Application 으로 계측 테스트를 돌려 실제 서버·DB 에 붙는다
+  ```
+- 체크: `testInstrumentationRunner`가 Hilt 러너를 가리키는가. `kspAndroidTest`가 선언돼 있는가(kapt 금지 — R-14 계열).
+
+### R-30-15 계측 테스트의 데이터 계층은 `@TestInstallIn`으로 fake에 바꿔 끼운다
+- 규칙: 계측 테스트에서 프로덕션 모듈을 대체할 때는 `@TestInstallIn` 모듈을 쓴다. `@UninstallModules`·`@BindValue`는 테스트 하나에만 필요한 교체로 한정한다. 테스트 전용 동작을 위해 프로덕션 코드에 실행 인자·플래그 분기를 넣지 않는다. 교체 모듈은 `:app`의 `src/androidTest`에 두고, fake는 R-30-05대로 `:core:testing`에서 `androidTestImplementation`으로 받는다.
+- 근거: "The recommendation is to use @TestInstallIn whenever possible." [S172](https://developer.android.com/training/dependency-injection/hilt-testing). 그래프 교체를 계측 테스트에만 쓴다는 R-14-10과 같은 방향이다.
+- 예시:
+  ```kotlin
+  // Good
+  @Module
+  @TestInstallIn(components = [SingletonComponent::class], replaces = [UserModule::class])
+  interface FakeUserModule {
+      @Binds fun bind(fake: FakeUserRepository): UserRepository
+  }
+  // Bad: 프로덕션 코드가 테스트 여부를 읽어 분기한다
+  if (BuildConfig.IS_TEST) FakeUserRepository() else DefaultUserRepository()
+  ```
+- 체크: 프로덕션 소스셋에 테스트 분기가 있는가. `@UninstallModules`를 여러 테스트가 반복해서 쓰고 있지 않은가.
+
+### R-30-16 계측 테스트는 임의 대기 대신 조건 대기를 쓰고 애니메이션을 끈다
+- 규칙: 계측 테스트에서 `Thread.sleep`·`delay`로 시간을 기다리지 않는다. 기다려야 하면 `waitUntil`·`waitUntilExactlyOneExists` 같은 조건 대기를 쓴다. 계측 테스트가 있는 모듈은 `testOptions.animationsDisabled = true`를 둔다.
+- 근거: "You should avoid pausing your tests for an arbitrary period (sleep) to let the app run and stabilize." 이고 큰 UI 테스트에는 wait-until API를 쓰라고 한다 [S171](https://developer.android.com/training/testing/instrumented-tests/stability). `animationsDisabled`를 켜면 Gradle이 계측 실행에 `--no-window-animation`을 붙인다 [S173](https://developer.android.com/reference/tools/gradle-api/9.4/com/android/build/api/dsl/TestOptions).
+- 예시:
+  ```kotlin
+  // Good
+  composeRule.waitUntilExactlyOneExists(hasText("홈"), timeoutMillis = 5_000)
+  // Bad
+  Thread.sleep(3_000)
+  ```
+- 체크: `androidTest` 소스셋에 `Thread.sleep`이 있는가. `animationsDisabled`가 켜져 있는가.
+
 ## 출처가 침묵하는 것 (규칙으로 쓰지 않음)
+
+- **Compose 테스트 v2 API**: 공식 가이드는 v1 `createComposeRule` 계열을 deprecated라고 하면서 v2는 알파라고 적는다(2026-09-30 확인, `research/e2e-testing.md`). R-30-11·R-30-13은 v1을 유지하고, v2가 안정되면 두 규칙을 함께 고친다.
+- **전체 플로우 테스트에 쓸 Activity**: Hilt 가이드는 화면 단위 테스트용으로 빈 `HiltTestActivity`를 안내하고 전체 플로우에 무엇을 쓰라는 문장은 없다. R-30-13이 루트 Activity를 고른 것은 팩 결정이다.
 
 - **피라미드 비율(70/20/10 등)**: [S30](https://developer.android.com/training/testing/fundamentals)에 그림만 있고 수치가 없다. 출처가 비율을 정하지 않으므로 계층별 비율을 규칙화하지 않는다.
 - **커버리지 임계값 %**: NiA는 커버리지 리포트를 만들지만 임계값 게이트가 없다 [S56](https://raw.githubusercontent.com/android/nowinandroid/main/.github/workflows/Build.yaml). 임계값을 정할 근거 출처가 없어 숫자를 쓰지 않는다. 커버리지는 리포트로만 본다.

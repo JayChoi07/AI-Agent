@@ -1,7 +1,7 @@
 # android — Android 그린필드 표준 팩
 
-Kotlin·Compose·Navigation 3·Hilt·멀티모듈 기준의 Android 개발 표준을 **규칙 224개**(출처 158건) · **유형별 체크리스트 8개** · **코드 템플릿 40개**(치환 안내 포함 41파일) · **빌드 강제 장치** · **라우터 스킬**로 묶은 팩이다.
-스킬 이름은 `android-standards`이고, 진입점은 [`SKILL.md`](SKILL.md)다. 요청 유형을 먼저 분류한 뒤 그 유형의 체크리스트만 따라가는 라우터 구조라, [`references/`](references) 20개 파일을 전부 읽지 않는다.
+Kotlin·Compose·Navigation 3·Hilt·멀티모듈 기준의 Android 개발 표준을 **규칙 243개**(출처 187건) · **유형별 체크리스트 8개** · **코드 템플릿 42개**(치환 안내 포함 43파일) · **빌드 강제 장치** · **라우터 스킬**로 묶은 팩이다.
+스킬 이름은 `android-standards`이고, 진입점은 [`SKILL.md`](SKILL.md)다. 요청 유형을 먼저 분류한 뒤 그 유형의 체크리스트만 따라가는 라우터 구조라, [`references/`](references) 21개 파일을 전부 읽지 않는다.
 대상은 **그린필드**(신규 Kotlin·Compose 프로젝트)이며, 레거시 프로젝트에서는 신규 코드에만 적용한다.
 모든 규칙에는 `R-NN-MM` ID와 [`references/90-sources.md`](references/90-sources.md)의 출처 번호(S)가 붙는다. 출처 없는 규칙은 쓰지 않는다.
 
@@ -39,11 +39,11 @@ Kotlin·Compose·Navigation 3·Hilt·멀티모듈 기준의 Android 개발 표�
 4. 루트 `build.gradle.kts`에 컨벤션 플러그인이 적용하는 플러그인을 전부 `apply false`로 선언
 5. `config/detekt/detekt.yml`·`.editorconfig` 배치
 6. `konsist/ArchitectureTest.kt`를 `:app`의 테스트 소스로 복사하고 패키지 선언 교체
-7. `.github/workflows/android-ci.yml` 복사
+7. `scripts/`의 셸 스크립트 4개와 `scripts/hooks/pre-push` 복사 후 `git config core.hooksPath scripts/hooks` (GitHub 워크플로는 선택 — 쓰기로 한 것만 `.github/workflows/`에서 복사)
 8. `./gradlew recordRoborazziDebug`로 만든 골든 png를 `<모듈>/src/test/screenshots/`에 커밋
 
-**무엇이 나오는지** — 계층 의존·필드 주입·`!!`·줄 길이 같은 규칙이 Konsist·detekt·ktlint로 검사되고, CI가
-ktlintCheck → detektDebug → 테스트 → assembleDebug 순서로 게이트를 돈다.
+**무엇이 나오는지** — 계층 의존·필드 주입·`!!`·줄 길이 같은 규칙이 Konsist·detekt·ktlint로 검사되고, 푸시 전에 pre-push 훅이
+ktlintCheck → detektDebug → 테스트 → assembleDebug 순서로 게이트를 돈다(GitHub 워크플로를 고르면 CI도 같은 순서로 돈다).
 **필요 환경** — JDK 17 · AGP 9.4.0 · Gradle 9.7.1 · compileSdk 37.
 이 단계도 손으로 할 필요는 없다. 에이전트에게 "이 프로젝트에 android-standards 강제장치 세팅해줘"라고 시키면 된다.
 
@@ -116,17 +116,19 @@ cmd /c mklink /J "%USERPROFILE%\.claude\skills\android-standards" "<repo>\androi
 ```
 android/
 ├── SKILL.md          # 라우터 — 유형 분류 → 체크리스트, 절차·보고 형식 (≤150줄)
-├── references/       # 규칙 20파일. 00 원칙 / 10~17 구조·아키텍처 / 18 앱 셸 / 19 빌드 설정
-│                     #             / 20~23 Kotlin·비동기·에러 / 30~32 테스트·CI·리뷰 / 40 성능·보안 / 90 출처(S01~S158)
+├── references/       # 규칙 21파일. 00 원칙 / 10~17 구조·아키텍처 / 18 앱 셸 / 19 빌드 설정
+│                     #             / 20~23 Kotlin·비동기·에러 / 30~32 테스트·CI·배포·리뷰 / 33 의존성 업데이트 / 40 성능·보안 / 90 출처(S01~S187)
 ├── checklists/       # 유형별 파이프라인 8파일. 컨텍스트 수집 → 결정 항목 → 구현 순서 → 산출물 검증
 ├── templates/        # 치환형 코드 골격. app/(앱 셸·루트 빌드) · core/(3모듈 빌드 파일) · designsystem/ · ui/ · ui/mvi/ · domain/ · data/
-│                     #   · model/ · di/ · test/ · module/
+│                     #   · model/ · di/ · test/ · androidtest/ · module/
 │                     #   치환 규칙은 templates/README.md
 ├── enforcement/      # 강제 장치. detekt.yml · .editorconfig · build-logic 컨벤션 플러그인
 │                     #   · konsist/ArchitectureTest.kt · .github/workflows/android-ci.yml
+│                     #   · scripts/(check · instrumented · bump-version-code · release · hooks/pre-push)
+│                     #   · (선택) android-release.yml · android-instrumented.yml · .github/dependabot.yml
 ├── eval/             # 팩 자체 검증 시나리오
-├── research/         # 출처 조사 노트 7건 (architecture · state-nav · kotlin-style · testing-ci · korea
-│                     #   · app-bootstrap-build · app-bootstrap-shell)
+├── research/         # 출처 조사 노트 10건 (architecture · state-nav · kotlin-style · testing-ci · korea
+│                     #   · app-bootstrap-build · app-bootstrap-shell · release-cd · e2e-testing · dependency-updates)
 └── scripts/
     └── check-pack.sh # 형식 검사 — 줄 수 한도, 규칙 5요소, 근거 URL, R-ID 유일성, 체크리스트 헤더,
                       #             references 밖에서 인용한 R-ID 의 실존 여부
@@ -150,6 +152,10 @@ android/
 | APP_SHELL | 스플래시는 `core-splashscreen`의 `installSplashScreen()`만(전용 Activity 없음), edge-to-edge는 `enableEdgeToEdge()` + 인셋 1회 소비, 초기화는 18의 결정 매트릭스(App Startup / `Application.onCreate` / 지연), 테마는 `:core:designsystem` `theme/` 4파일에 진입점 `AppTheme` 하나(공통 컴포넌트는 `component/`에서 별도 공개), `WindowSizeClass`는 앱 루트에서 한 번 계산 |
 | BUILD_CONFIG | buildType은 debug·release 둘, release는 AGP 9.3+ `optimization { enable = true }`, debug `applicationIdSuffix = ".debug"`, product flavor 없음이 기본, configuration cache 켬, 서명은 `keystore.properties` 분리 |
 | FEATURE_MODULE_SPLIT | 단일 `:feature:*` 모듈로 시작. feature 간 직접 이동 없음(콜백 + `:app` 조합층). 다른 feature가 NavKey를 직접 참조해야 할 때만 `:api`/`:impl` 분할 |
+| RUN_LOCATION | 게이트·계측 테스트·릴리스 빌드는 로컬 스크립트가 기본이고 GitHub 워크플로는 선택. 푸시 전 pre-push 훅이 게이트를 돌린다. 비공개 저장소의 GitHub 실행 시간은 요금제 포함 분량에서 차감되고 결제 수단이 있으면 초과분이 청구되기 때문이다 |
+| RELEASE | Play 업로드는 사람이 한다 — 기본은 `scripts/release.sh`가 만든 AAB를 Play Console에 직접, 배포 워크플로를 쓰면 `r0adkll/upload-google-play`를 수동 실행(`workflow_dispatch`)으로만. 트랙은 내부 테스트까지, 프로덕션 승격은 Play Console에서 수동. versionCode는 저장소의 카운터 파일, 테스터 채널은 Play 내부 테스트 하나. fastlane·Gradle Play Publisher·Firebase App Distribution 미채택 |
+| E2E | 전체 플로우 테스트는 Compose UI Test 단독(루트 Activity + Hilt 테스트 러너 + `@TestInstallIn`). 실행은 로컬 기기·에뮬레이터(`scripts/instrumented.sh`)가 기본이고, GitHub에서 돌리면 `android-emulator-runner`로 주 2회 예약·수동, 이번 달 Actions 사용량이 포함 분량의 95% 이상이면 건너뛴다. Maestro·UI Automator·Gradle Managed Devices·Firebase Test Lab 미채택 |
+| DEP_UPDATE | Dependabot(`gradle` + `github-actions`), 주 1회. 자동 병합 없음 — 게이트(로컬 스크립트 또는 PR 워크플로) 통과 뒤 사람이 병합. Renovate·dependency verification·의존성 잠금 미채택 |
 
 확정 버전 라인은 AGP 9.4.0 · Gradle 9.7.1 · JDK 17 · compileSdk·targetSdk 37 · minSdk 26 · Kotlin 2.4.20 · Compose BOM 2026.08.00 · Hilt 2.60.1 · Navigation 3 1.1.7 · core-splashscreen 1.2.0 · activity-compose 1.13.0 · material3-adaptive 1.3.0이다(Gradle 9.7.1 · compileSdk 37은 실빌드 실증 2026-09-09 — 조사 시점 값은 각각 "9.6.x 이상"·36이었다). 전체 목록은 `enforcement/build-logic/libs.versions.toml.snippet`이 정본이고, 조사 근거는 `research/testing-ci.md`의 "확인 버전 표"에 있다.
 
@@ -159,4 +165,6 @@ android/
 - 스크린샷 테스트 렌더링은 `@Config(sdk = [35])`로 고정한다. Robolectric 4.16.1의 상한은 36이지만 SDK 36 이미지가 Java 21을 요구하고 팩은 JDK 17이기 때문이다.
 - CLI로 게이트를 돌릴 때 셸 기본 JDK가 17이 아니면 `JAVA_HOME`을 JDK 17 경로로 인라인 지정해야 한다.
 - **18·19번 규칙 문서와 `new-app` 체크리스트·`templates/app/`·`templates/designsystem/`은 2026-09-16 추가분으로, 치환 스크립트 실행과 형식 검사까지만 확인했고 스크래치 실빌드로는 아직 실증하지 않았다.** 첫 실제 앱 세팅 때 `assembleDebug`가 통과하면 이 줄을 지운다.
+- **2026-09-30 추가분(R-30-13~16 · R-31-10~19 · R-33-01~05, 로컬 스크립트 5개·워크플로 2개·`dependabot.yml`·`templates/androidtest/`·카탈로그 별칭 3개)은 형식 검사와 YAML 문법 검사까지만 확인했다.** 로컬 스크립트와 pre-push 훅은 가짜 `gradlew`로 동작만 확인했고, Play 업로드·에뮬레이터 잡·Dependabot PR·계측 테스트 컴파일·실제 Gradle 빌드로는 돌려 보지 않았다. `r0adkll/upload-google-play`가 AGP 9.4.0 산출물을 올리는지도 실행으로 확인하지 않았다.
+- `references/90-sources.md`가 300줄 한도에 닿았다. 출처를 더 추가하려면 먼저 결정 표나 보류 표를 별도 파일로 나눠야 한다.
 - 20~22번 규칙 문서의 Bad 예시 약 15건은 코드가 아니라 산문 설명이고, Bad 예시가 아예 없는 규칙도 4건 있다. 리뷰에서 차단 사유가 아니라고 보고 남겨 뒀다.

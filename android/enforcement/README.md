@@ -50,7 +50,22 @@ convention plugin · detekt · ktlint · Konsist · GitHub Actions 로 옮긴 �
 6. **아키텍처 테스트** — `konsist/ArchitectureTest.kt` 를 `:app/src/test/java/<패키지>/` 로 복사하고
    `package` 선언을 프로젝트 패키지로 바꾼다. `:app` 에 `testImplementation(libs.konsist)` 와
    `testImplementation(libs.junit4)` 를 추가한다(`convention.android.feature` 를 쓰는 모듈은 이미 포함).
-7. **CI** — `.github/workflows/android-ci.yml` 을 그대로 복사한다.
+7. **로컬 스크립트와 훅** — `scripts/` 아래 셸 파일 네 개를 프로젝트의 `scripts/` 로, `scripts/hooks/pre-push` 를 `scripts/hooks/` 로 복사하고
+   `chmod +x` 한 뒤 `git config core.hooksPath scripts/hooks` 를 실행한다(R-31-18, R-31-19). 루트 `.gitattributes` 에 `scripts/**/*.sh text eol=lf` 와
+   `scripts/hooks/* text eol=lf` 를 넣는다. 가짜 `gradlew` 로 여덟 경우를 확인했다(2026-09-30) — 실제 Gradle 빌드로는 아직 돌려 보지 않았다.
+   - `scripts/check.sh` — 게이트 4단계(R-31-01 순서).
+   - `scripts/instrumented.sh` — 연결된 기기·에뮬레이터에서 `connectedDebugAndroidTest`.
+   - `scripts/bump-version-code.sh` — `distribution/version-code.txt` 를 1 올린다(R-31-11).
+   - `scripts/release.sh` — 게이트 → versionCode 올리기 → `bundleRelease`. 업로드는 하지 않는다(R-31-10).
+   - `scripts/hooks/pre-push` — 푸시 직전에 `check.sh` 를 돌린다. 브랜치 푸시 대상이 체크아웃한 HEAD 와 다르거나 추적 파일에 미커밋 변경이 있으면 검사 없이 막는다.
+   GitHub 워크플로는 선택이다(2026-09-30 추가, **실행으로는 아직 검증하지 않았다**). 비공개 저장소는 실행 시간이 요금제 포함 분량에서 차감되고,
+   결제 수단이 있는 계정은 초과분이 청구된다. 쓰기로 한 프로젝트만 필요한 만큼 복사한다.
+   - `.github/workflows/android-ci.yml` — PR 마다 게이트 4단계.
+   - `.github/dependabot.yml` — 의존성 자동 업데이트. 자동 병합 없음(R-33-01, R-33-02).
+   - `.github/workflows/android-release.yml` — 수동 실행 시에만 서명된 AAB를 Play 내부 테스트 트랙에 올린다(R-31-10 ~ R-31-15).
+     필요한 시크릿: `UPLOAD_KEYSTORE_BASE64`, `KEYSTORE_PROPERTIES`, `PLAY_SERVICE_ACCOUNT_JSON`. `packageName` 은 앱의 `applicationId` 로 바꾼다.
+   - `.github/workflows/android-instrumented.yml` — 주 2회 예약·수동으로 에뮬레이터에서 계측 테스트를 돌린다(R-31-16).
+     이번 달 Actions 사용량이 포함 분량의 95% 이상이면 건너뛴다(R-31-17). 필요한 시크릿: `BILLING_READ_TOKEN`. `INCLUDED_MINUTES` 는 요금제에 맞춘다.
 8. **스크린샷 골든 커밋** — compose 컨벤션 플러그인이 Roborazzi 출력을 `<모듈>/src/test/screenshots/` 로 보낸다.
    `./gradlew recordRoborazziDebug` 로 만든 png 를 **VCS 에 커밋**해야 CI 의 `verifyRoborazziDebug` 가 돈다.
    (기본값인 `build/outputs/roborazzi` 에 두면 체크아웃마다 골든이 없어 항상 실패한다.)
@@ -127,6 +142,13 @@ plugins {
 | R-31-02 | 워크플로 골격 checkout → setup-java(17) → setup-gradle | GitHub Actions 잡 단계 | `.github/workflows/android-ci.yml` |
 | R-31-01 | 게이트 순서 ktlintCheck→detektDebug→테스트→assembleDebug | GitHub Actions 잡 단계 | `.github/workflows/android-ci.yml` |
 | R-31-06 | 실패한 검사 리포트는 항상 업로드 | `actions/upload-artifact` (`if: always()`) | `.github/workflows/android-ci.yml` |
+| R-31-10 · R-31-12 · R-31-13 | 업로드는 수동 실행으로만, 트랙은 항상 적고 내부 테스트까지 | 트리거 `workflow_dispatch` + `tracks: internal` | `.github/workflows/android-release.yml` |
+| R-31-11 | versionCode 는 저장소의 카운터 파일에서 읽고 스크립트가 올린다 | `bump-version-code.sh` + `distribution/version-code.txt` | `scripts/bump-version-code.sh`, `templates/app/app/build.gradle.kts` |
+| R-31-18 | 게이트·계측·릴리스는 로컬 스크립트, 워크플로는 선택 | `check.sh` · `instrumented.sh` · `release.sh` | `scripts/*.sh` |
+| R-31-19 | 푸시 전에 게이트를 돌리고 실패하면 막는다 | pre-push 훅 + `core.hooksPath` | `scripts/hooks/pre-push` |
+| R-31-16 | 계측 잡은 KVM 권한 → `android-emulator-runner` | GitHub Actions 잡 단계 | `.github/workflows/android-instrumented.yml` |
+| R-31-17 | 사용량이 기준을 넘으면 계측 잡을 건너뜀 | `guard` 잡의 출력 + `if:` 조건 | `.github/workflows/android-instrumented.yml` |
+| R-33-01 · R-33-03 | 버전 갱신은 Dependabot PR 로, 전체 묶음 금지 | Dependabot 설정 | `.github/dependabot.yml` |
 | R-30-03 · R-30-04 | Screen 마다 스크린샷 테스트, 골든은 record 로만 갱신하고 커밋 | `verifyRoborazziDebug` + compose convention plugin (골든은 `src/test/screenshots`) | 워크플로 · `AndroidLibraryComposeConventionPlugin.kt` |
 
 ## AGP 9 때문에 브리프에서 바꾼 것

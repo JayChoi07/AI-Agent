@@ -11,6 +11,9 @@ plugins {
     alias(libs.plugins.convention.android.hilt)
 }
 
+// 파일이 아직 없으면(첫 릴리스 전) versionCode 는 1 이다 (R-31-11).
+val versionCodeFile = rootProject.layout.projectDirectory.file("distribution/version-code.txt")
+
 android {
     // namespace 와 applicationId 를 둘 다 적고, applicationId 는 출시 후 바꾸지 않는다 (R-19-03).
     namespace = "{{package}}"
@@ -19,8 +22,11 @@ android {
         applicationId = "{{package}}"
         // compileSdk 는 컨벤션 플러그인 상수에서 오고, targetSdk 는 :app 에 같은 값으로 명시한다 (R-19-01).
         targetSdk = 37
-        // versionCode·versionName 부여 방식은 19가 규칙으로 정하지 않는다(출처 침묵). 프로젝트 지침에서 정한다.
-        versionCode = 1
+        // versionCode 는 저장소의 카운터 파일에서 읽는다. 올리는 곳은 scripts/release.sh 하나다 (R-31-11).
+        versionCode = providers.fileContents(versionCodeFile).asText
+            .map { it.trim().toInt() }
+            .getOrElse(1)
+        // versionName 형식은 규칙이 정하지 않는다(출처 침묵). 프로젝트 지침에서 정한다.
         versionName = "1.0.0"
     }
 
@@ -44,6 +50,11 @@ android {
     // :core:* · :feature:* 에는 Hilt 로 넘긴다 (R-19-14).
     // buildFeatures { buildConfig = true }
     // defaultConfig { buildConfigField("String", "BASE_URL", "\"https://api.example.com\"") }
+
+    // 전체 플로우(계측) 테스트를 도입할 때 켠다 (R-30-14, R-30-16).
+    // 러너와 테스트 골격은 templates/androidtest/ 에 있고 src/androidTest 로 복사한다.
+    // defaultConfig { testInstrumentationRunner = "{{package}}.HiltTestRunner" }
+    // testOptions { animationsDisabled = true }
 }
 
 // 서명 자료는 루트 keystore.properties 에서 읽고 커밋하지 않는다 (R-19-12). :app 만 쓰는 설정이라
@@ -69,4 +80,12 @@ dependencies {
     // Konsist 아키텍처 테스트는 :app 의 test 소스셋에 둔다(enforcement/README.md 설치 6단계).
     testImplementation(libs.junit4)
     testImplementation(libs.konsist)
+
+    // 전체 플로우(계측) 테스트를 도입할 때 켠다 (R-30-13, R-30-14). kapt 가 아니라 kspAndroidTest 다.
+    // androidTestImplementation(platform(libs.androidx.compose.bom))
+    // androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    // androidTestImplementation(libs.androidx.test.runner)
+    // androidTestImplementation(libs.androidx.test.ext.junit)
+    // androidTestImplementation(libs.hilt.android.testing)
+    // kspAndroidTest(libs.hilt.compiler)
 }

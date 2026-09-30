@@ -21,10 +21,14 @@ ktlint = "1.8.0"
 roborazzi = "1.74.0"
 robolectric = "4.16.1"
 junit4 = "4.13.2"
-# 앱 셸(:app)이 직접 쓰는 세 개. 확인일 2026-09-16, 근거는 [libraries] 의 "앱 셸" 그룹 주석 참조.
+# 앱 셸(:app)이 직접 쓰는 것. 확인일 2026-09-16, 근거는 [libraries] 의 "앱 셸" 그룹 주석 참조.
+# material3 adaptive 는 Compose BOM 이 관리하므로 버전 키를 두지 않는다 (R-33-04).
 activity = "1.13.0"
 coreSplashscreen = "1.2.0"
-material3Adaptive = "1.3.0"
+# 계측 테스트(:app 의 androidTest). 확인일 2026-09-30, https://developer.android.com/jetpack/androidx/releases/test
+# — runner 1.7.0 · ext-junit 1.3.0 모두 2025-07-30 안정. 실빌드로는 아직 돌려 보지 않았다.
+androidxTestRunner = "1.7.0"
+androidxTestExtJunit = "1.3.0"
 
 [libraries]
 # --- build-logic 이 compileOnly 로 참조하는 플러그인 아티팩트 ---
@@ -87,9 +91,16 @@ androidx-activity-compose = { group = "androidx.activity", name = "activity-comp
 # installSplashScreen() (R-18-03).
 # https://developer.android.com/jetpack/androidx/releases/core — core-splashscreen 1.2.0 stable, 확인일 2026-09-16.
 androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "coreSplashscreen" }
-# currentWindowAdaptiveInfoV2() (R-18-13; 구 함수는 1.3.0 에서 deprecated). Compose BOM 이 이 그룹의 버전을 관리하지 않아 버전을 따로 적는다.
+# currentWindowAdaptiveInfoV2() (R-18-13; 구 함수는 1.3.0 에서 deprecated). 버전은 Compose BOM 이 정한다 (R-33-04) —
+# compose-bom 2026.08.00 의 POM 에 androidx.compose.material3.adaptive:adaptive 1.3.0 이 들어 있다(확인일 2026-09-30).
 # https://developer.android.com/jetpack/androidx/releases/compose-material3-adaptive — 1.3.0 stable(2026-08-12), 확인일 2026-09-16.
-androidx-compose-material3-adaptive = { group = "androidx.compose.material3.adaptive", name = "adaptive", version.ref = "material3Adaptive" }
+androidx-compose-material3-adaptive = { group = "androidx.compose.material3.adaptive", name = "adaptive" }
+
+# --- 계측 테스트(:app 전용, 도입할 때만) ---
+# 컨벤션 플러그인이 붙이지 않는다. :app/build.gradle.kts 가 androidTest 구성으로 직접 선언한다 (R-30-13, R-30-14).
+androidx-test-runner = { group = "androidx.test", name = "runner", version.ref = "androidxTestRunner" }
+androidx-test-ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidxTestExtJunit" }
+hilt-android-testing = { group = "com.google.dagger", name = "hilt-android-testing", version.ref = "hilt" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

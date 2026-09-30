@@ -257,5 +257,5 @@
 
 - **카탈로그 섹션 순서**: Gradle 문서는 TOML 형식을 lenient하다고 설명하고 `[versions]`·`[libraries]`·`[bundles]`·`[plugins]` 순서를 강제하지 않는다 [S140](https://docs.gradle.org/current/userguide/version_catalogs.html). 팩 스니펫의 순서는 문서 표기 순서를 따른 것이고 규칙이 아니다.
 - **데몬 힙의 구체 수치**: 가이드가 "4, 6, 8GB 중에서 올려 측정하라"까지만 정하므로 숫자를 규칙으로 고정하지 않는다 [S135](https://developer.android.com/build/optimize-your-build). `R-19-09`는 "명시한다"까지만 정한다.
-- **versionCode·versionName 부여 방식**: 자동 증가·태그 연동 같은 관행을 정한 출처가 없다. 프로젝트 지침 파일에서 정할 자리다.
+- **versionCode·versionName 부여 방식**: 출처는 여전히 방식을 정하지 않는다. versionCode는 팩 결정으로 `R-31-11`(저장소의 카운터 파일 + 릴리스 스크립트)이 소유하고(2026-09-30), versionName 형식은 프로젝트 지침 파일에서 정할 자리다
 - **`org.gradle.parallel`·`org.gradle.caching`**: 기본값은 둘 다 `false`지만 [S142](https://docs.gradle.org/current/userguide/build_environment.html) configuration cache가 켜지면 프로젝트 내 병렬 실행이 항상 켜지므로 [S141](https://docs.gradle.org/current/userguide/configuration_cache.html) 중복 설정을 규칙으로 두지 않는다.
