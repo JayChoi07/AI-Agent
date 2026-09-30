@@ -1,5 +1,5 @@
 # new-screen — 화면 추가
-읽을 references: [10-project-structure, 11-architecture-layers, 12-state-management, 13-navigation, 14-di, 16-domain-layer, 17-compose-ui, 30-testing]
+읽을 references: [10-project-structure, 11-architecture-layers, 12-state-management, 13-navigation, 14-di, 16-domain-layer, 17-compose-ui, 25-runtime-permissions, 26-time-handling, 30-testing]
 함께 로드할 공식 스킬: [navigation-3, testing-setup(테스트 인프라가 없을 때만)]
 
 ## 컨텍스트 수집 (구현 전)
@@ -9,7 +9,7 @@
 - 유사 화면 1개(같은 패턴을 따른다)
 
 ## 결정 항목 (구현 전 전부 명시)
-구현 전 6개를 전부 적고, 결과를 산출물의 표준 준수 보고에 그대로 옮긴다.
+구현 전 7개를 전부 적고, 결과를 산출물의 표준 준수 보고에 그대로 옮긴다.
 
 | # | 결정 | 규칙 | 애매하면 질문할 것 |
 |---|---|---|---|
@@ -19,6 +19,7 @@
 | 4 | UseCase 필요 여부 | R-16-02, R-16-07 | 비즈니스 규칙이 있는지 |
 | 5 | 테스트 범위 | R-30-01, R-30-03 | 스크린샷 기준 상태 목록 |
 | 6 | CI 영향 — 새 모듈이면 워크플로 확인 | R-31-01 | 없음 |
+| 7 | 권한이 필요한 기능이 있는가 | R-25-01, R-25-02, R-25-04 | 어떤 권한이고, 권한 없이 되는 대안(Photo Picker·SAF·CDM)이 있는지 |
 
 결정 2는 Navigation 3 1.1.7에 결과 전달 버스가 없으므로, 결과는 공유 상태나 상위 ViewModel로 돌려받는다(R-13-07).
 결정 3의 판정 표는 `references/12-state-management.md`의 R-12-02 매트릭스를 그대로 채운다. 기준은 MVI 도입 사유 5개이며 필드 수·이벤트 수 같은 규모 수치가 아니다. 2개 이상 해당하면 MVI 골격(R-12-11)을 쓴다.

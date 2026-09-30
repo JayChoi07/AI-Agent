@@ -1,5 +1,5 @@
 # new-feature-module — feature 모듈 추가
-읽을 references: [10-project-structure, 11-architecture-layers, 14-di, 31-ci-cd]
+읽을 references: [10-project-structure, 11-architecture-layers, 14-di, 24-background-work, 31-ci-cd]
 함께 로드할 공식 스킬: [없음]
 
 ## 컨텍스트 수집 (구현 전)

@@ -183,7 +183,7 @@ Google은 테스트를 실행 위치(로컬 host-side / 계측 instrumented)와 
 - 체크: Activity 없이 되는 테스트에 Activity 규칙을 쓰지 않았는가. `ui-test-manifest`가 debug 구성에만 있는가.
 
 ### R-30-12 계측 테스트는 대표 플로우로 한정한다
-- 규칙: `src/androidTest`에는 로그인 → 홈처럼 여러 화면을 지나는 대표 플로우 1~2개만 둔다. 분기·에러 조합은 로컬 테스트로 내리고, 계측 테스트를 늘려 커버리지를 채우지 않는다.
+- 규칙: `src/androidTest`에는 로그인 → 홈처럼 여러 화면을 지나는 대표 플로우 1~2개만 둔다. 분기·에러 조합은 로컬 테스트로 내리고, 계측 테스트를 늘려 커버리지를 채우지 않는다. Room 마이그레이션 테스트(R-27-11·R-27-12)는 플로우 테스트가 아니라 스키마 검증이라 이 개수 한정에 넣지 않는다.
 - 근거: 범위 구분에서 medium은 둘 이상의 단위 사이 통합, big은 더 큰 플로우다 [S30](https://developer.android.com/training/testing/fundamentals). NiA도 계측 잡을 단위 테스트 잡과 분리해 돌린다 [S56](https://raw.githubusercontent.com/android/nowinandroid/main/.github/workflows/Build.yaml).
 - 예시:
   ```kotlin
@@ -193,7 +193,7 @@ Google은 테스트를 실행 위치(로컬 host-side / 계측 instrumented)와 
 - 체크: 새 계측 테스트가 로컬 테스트로 대체 가능한가. 계측 테스트 수가 화면 수만큼 늘어나고 있지 않은가.
 
 ### R-30-13 전체 플로우 테스트는 Compose UI Test로 쓰고 루트 Activity를 띄워 사용자처럼 이동한다
-- 규칙: R-30-12의 대표 플로우는 `:app`의 `src/androidTest`에 Compose UI Test로 쓴다. `createAndroidComposeRule<MainActivity>()`로 루트 Activity를 띄우고, 화면 전환은 버튼·탭을 눌러 실제 네비게이션으로 한다. 앱 밖에서 조작하는 도구(Maestro·UI Automator)를 전체 플로우의 기본 도구로 쓰지 않는다.
+- 규칙: R-30-12의 대표 플로우는 `:app`의 `src/androidTest`에 Compose UI Test로 쓴다. `createAndroidComposeRule<MainActivity>()`로 루트 Activity를 띄우고, 화면 전환은 버튼·탭을 눌러 실제 네비게이션으로 한다. 앱 밖에서 조작하는 도구(Maestro·UI Automator)를 전체 플로우의 기본 도구로 쓰지 않는다. 시스템 권한 대화상자를 다루는 데 UI Automator를 쓰는 것은 예외다(R-25-14).
 - 근거: "Prefer Espresso and Compose Test APIs to create UI tests." 이고 큰 테스트는 "you typically start one of your activities and navigate as a user would" 방식으로 쓴다 [S171](https://developer.android.com/training/testing/instrumented-tests/stability). 도구를 Compose UI Test 하나로 고정한 것은 팩 결정(`E2E`)이다.
 - 예시:
   ```kotlin

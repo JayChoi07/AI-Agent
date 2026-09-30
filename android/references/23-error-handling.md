@@ -2,7 +2,7 @@
 
 > 적용: 그린필드 Android(Kotlin·Compose·Navigation 3 1.1.7·Hilt·멀티모듈). 출처 번호(S..)는 90-sources.md.
 
-에러 타입은 90-sources `ERROR_TYPE` 결정(도메인별 커스텀 `sealed` 계층 + 단순 부재는 nullable)을 따른다. 일회성 이벤트를 UiState로 환원하는 규칙은 12가 소유하므로 여기서 다시 쓰지 않는다.
+에러 타입은 91-decisions `ERROR_TYPE` 결정(도메인별 커스텀 `sealed` 계층 + 단순 부재는 nullable)을 따른다. 일회성 이벤트를 UiState로 환원하는 규칙은 12가 소유하므로 여기서 다시 쓰지 않는다.
 
 ### R-23-01 호출자가 분기해야 하는 실패는 도메인별 `sealed` 타입으로 모델링한다
 - 규칙: 실패 종류마다 UI 반응이 달라지면 그 도메인 전용 `sealed interface`를 만들어 성공·실패를 한 타입으로 돌려준다. 계층은 도메인 단위로 두고 앱 전역 공용 에러 enum 하나로 합치지 않는다. `sealed`로 두면 분기 누락을 컴파일러가 잡는다.
@@ -27,7 +27,7 @@
 
 ### R-23-02 구분이 의미 없는 부재·실패는 nullable로 둔다
 - 규칙: 호출부가 곧바로 기본값·빈 상태로 흡수하는 실패에는 타입을 만들지 않는다. `User?`처럼 nullable로 두고 `?:`로 처리한다.
-- 근거: `kotlin.Result` KEEP이 로컬에서 처리되고 구분이 의미 없는 실패는 nullable 반환으로 충분하다고 본다 [S65](https://github.com/Kotlin/KEEP/blob/master/proposals/stdlib/result.md). 90-sources `ERROR_TYPE` 결정의 후반부다.
+- 근거: `kotlin.Result` KEEP이 로컬에서 처리되고 구분이 의미 없는 실패는 nullable 반환으로 충분하다고 본다 [S65](https://github.com/Kotlin/KEEP/blob/master/proposals/stdlib/result.md). 91-decisions `ERROR_TYPE` 결정의 후반부다.
 - 예시:
   ```kotlin
   // Good
@@ -40,7 +40,7 @@
 
 ### R-23-03 `kotlin.Result`나 서드파티 Either를 반환 타입으로 쓰지 않는다
 - 규칙: 함수 시그니처에 `Result<T>`를 쓰지 않는다. 외부 라이브러리의 Either·Raise 계열 타입도 도입하지 않는다.
-- 근거: `Result` KEEP은 이 타입이 도메인 에러 표현용이 아니며 `Catching` 접미가 붙은 함수 같은 제한된 자리에만 쓰이도록 설계됐다고 밝힌다 [S65](https://github.com/Kotlin/KEEP/blob/master/proposals/stdlib/result.md). 타입드 에러 라이브러리는 대안이 되지만 [S105](https://arrow-kt.io/learn/typed-errors/working-with-typed-errors/) 90-sources `ERROR_TYPE` 결정에서 미채택했다.
+- 근거: `Result` KEEP은 이 타입이 도메인 에러 표현용이 아니며 `Catching` 접미가 붙은 함수 같은 제한된 자리에만 쓰이도록 설계됐다고 밝힌다 [S65](https://github.com/Kotlin/KEEP/blob/master/proposals/stdlib/result.md). 타입드 에러 라이브러리는 대안이 되지만 [S105](https://arrow-kt.io/learn/typed-errors/working-with-typed-errors/) 91-decisions `ERROR_TYPE` 결정에서 미채택했다.
 - 예시:
   ```kotlin
   // Good

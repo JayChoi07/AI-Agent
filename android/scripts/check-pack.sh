@@ -27,7 +27,7 @@ fi
 
 # 3. 규칙 5요소 + 근거 URL
 for f in "${refs[@]}"; do
-  case "$(basename "$f")" in 90-sources.md) continue;; esac
+  case "$(basename "$f")" in 90-sources.md | 91-decisions.md) continue;; esac
   out=$(awk -v file="$(basename "$f")" '
     function flush() {
       if (id != "") {

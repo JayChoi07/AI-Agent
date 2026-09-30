@@ -16,4 +16,10 @@ step detektDebug
 step testDebugUnitTest verifyRoborazziDebug
 step assembleDebug
 
+# Room 스키마 JSON 이 있는 프로젝트만 (R-27-05). KSP 가 스키마 JSON 을 만든 뒤여야 하므로 빌드 뒤에 돈다.
+if [ -x scripts/check-room-schema.sh ]; then
+  printf '\n== check-room-schema ==\n'
+  scripts/check-room-schema.sh
+fi
+
 printf '\n게이트 4단계 통과\n'

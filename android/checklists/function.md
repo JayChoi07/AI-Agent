@@ -1,5 +1,5 @@
 # function — 함수 하나 추가·수정
-읽을 references: [20-kotlin-style, 21-functions, 22-coroutines-flow, 23-error-handling]
+읽을 references: [20-kotlin-style, 21-functions, 22-coroutines-flow, 23-error-handling, 26-time-handling]
 함께 로드할 공식 스킬: [없음]
 
 ## 컨텍스트 수집 (구현 전)

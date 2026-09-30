@@ -139,8 +139,8 @@
   ```
 - 체크: 질의 대상 데이터를 key-value에 통째로 넣었는가. 큰 바이너리를 DB 컬럼에 넣었는가.
 
-### R-15-09 프로세스 사망을 넘겨야 하는 작업은 WorkManager로 처리한다
-- 규칙: 동기화·업로드처럼 앱이 죽어도 끝나야 하는 비즈니스 작업은 WorkManager로 예약하고 재시도 정책을 붙인다. 화면 수명에 묶인 `viewModelScope`에서 실행하지 않는다.
+### R-15-09 프로세스 사망을 넘겨야 하는 지연 가능 작업은 WorkManager로 처리한다
+- 규칙: 동기화·업로드처럼 앱이 죽어도 끝나야 하고 미뤄지거나 끊겨도 되는 비즈니스 작업은 WorkManager로 예약하고 재시도 정책을 붙인다. 화면 수명에 묶인 `viewModelScope`에서 실행하지 않는다. 사용자가 인지하고 끊기면 경험이 나빠지는 연속 작업은 이 규칙의 대상이 아니고 R-24-01·R-24-02의 포그라운드 서비스가 맡는다.
 - 근거: business-oriented 작업의 WorkManager 위임 [S06](https://developer.android.com/topic/architecture/data-layer), `SyncWorker` + 지수 백오프 구성 [S51](https://raw.githubusercontent.com/android/nowinandroid/main/docs/ArchitectureLearningJourney.md)
 - 예시:
   ```kotlin

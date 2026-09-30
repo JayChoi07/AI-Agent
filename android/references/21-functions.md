@@ -87,7 +87,7 @@
 
 ### R-21-07 변환은 고차 함수로, 단독 순회는 `for`로 쓴다
 - 규칙: 걸러내기·변환·집계는 `filter`·`map`·`sumOf` 같은 고차 함수를 쓴다. 원소마다 부수효과만 실행하는 단독 순회는 `forEach` 대신 일반 `for` 루프를 쓴다.
-- 근거: Kotlin 코딩 컨벤션이 루프보다 고차 함수를 권하면서 `forEach`만 예외로 `for`를 선호한다 [S58](https://kotlinlang.org/docs/coding-conventions.html). 90-sources `COLLECTION_ITER` 결정을 따른다.
+- 근거: Kotlin 코딩 컨벤션이 루프보다 고차 함수를 권하면서 `forEach`만 예외로 `for`를 선호한다 [S58](https://kotlinlang.org/docs/coding-conventions.html). 91-decisions `COLLECTION_ITER` 결정을 따른다.
 - 예시:
   ```kotlin
   // Good
@@ -100,7 +100,7 @@
 
 ### R-21-08 체인이 한 문장으로 읽히지 않으면 중간 결과에 이름을 붙인다
 - 규칙: 단계 수 상한은 두지 않는다. 대신 체인이 서로 다른 관심사를 섞거나(필터링 + 도메인 계산 + 포맷팅), 한 문장으로 설명되지 않으면 중간 결과를 이름 있는 `val`로 끊는다. 줄바꿈은 점을 다음 줄 앞에 두고 한 단계 들여쓴다.
-- 근거: Kotlin 코딩 컨벤션은 체인의 줄바꿈 형식만 규정하고 단계 수에는 침묵하며, Sequence 문서도 "multiple steps"라고만 한다 [S58](https://kotlinlang.org/docs/coding-conventions.html), [S60](https://kotlinlang.org/docs/sequences.html). 수치 상한을 제시한 출처가 없어 판단 기준으로 둔다(90-sources 보류 표).
+- 근거: Kotlin 코딩 컨벤션은 체인의 줄바꿈 형식만 규정하고 단계 수에는 침묵하며, Sequence 문서도 "multiple steps"라고만 한다 [S58](https://kotlinlang.org/docs/coding-conventions.html), [S60](https://kotlinlang.org/docs/sequences.html). 수치 상한을 제시한 출처가 없어 판단 기준으로 둔다(91-decisions 보류 표).
 - 예시:
   ```kotlin
   // Good
@@ -233,7 +233,7 @@
 
 ### R-21-18 예상된 실패는 예외 대신 도메인 타입으로 돌려준다
 - 규칙: 호출자가 분기해야 하는 실패(입력 거절·권한 없음·중복)는 예외로 던지지 말고 도메인별 `sealed` 결과 타입으로 반환한다. 구분이 필요 없는 단순 부재는 nullable로 둔다. 상세 모델과 계층 경계는 23이 소유한다.
-- 근거: `kotlin.Result` KEEP은 "The `Result` class is not designed to represent domain-specific error conditions"라며 로컬 처리·의미 없는 실패는 nullable, 구분이 필요한 도메인 실패는 sealed class를 제시한다 [S65](https://github.com/Kotlin/KEEP/blob/master/proposals/stdlib/result.md). 예외는 프로그래밍 오류·전제 위반에 쓴다 [S63](https://kotlinlang.org/docs/exceptions.html). 90-sources `ERROR_TYPE` 결정을 따른다.
+- 근거: `kotlin.Result` KEEP은 "The `Result` class is not designed to represent domain-specific error conditions"라며 로컬 처리·의미 없는 실패는 nullable, 구분이 필요한 도메인 실패는 sealed class를 제시한다 [S65](https://github.com/Kotlin/KEEP/blob/master/proposals/stdlib/result.md). 예외는 프로그래밍 오류·전제 위반에 쓴다 [S63](https://kotlinlang.org/docs/exceptions.html). 91-decisions `ERROR_TYPE` 결정을 따른다.
 - 예시:
   ```kotlin
   // Good

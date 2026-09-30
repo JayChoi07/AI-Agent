@@ -50,7 +50,7 @@
 
 ### R-20-04 한 줄은 100자를 넘기지 않는다
 - 규칙: 열 제한 100자. 도구 기본값이 다르면 프로젝트 설정에서 100으로 재설정한다.
-- 근거: Android 스타일 가이드가 열 제한 100자를 규정한다 [S35](https://developer.android.com/kotlin/style-guide). detekt `MaxLineLength` 기본값은 120이므로 [S81](https://detekt.dev/docs/rules/style) 설정에서 100으로 낮춘다(90-sources `LINE_LENGTH`).
+- 근거: Android 스타일 가이드가 열 제한 100자를 규정한다 [S35](https://developer.android.com/kotlin/style-guide). detekt `MaxLineLength` 기본값은 120이므로 [S81](https://detekt.dev/docs/rules/style) 설정에서 100으로 낮춘다(91-decisions `LINE_LENGTH`).
 - 예시:
   ```kotlin
   // Good: 인자를 줄바꿈해 100자 안에 둔다
@@ -63,7 +63,7 @@
 
 ### R-20-05 포맷은 손이 아니라 포맷터가 정한다
 - 규칙: 포맷터는 ktlint-gradle 단독으로 두고 `ktlintCheck`를 CI 게이트에 넣는다. 스타일 설정은 `.editorconfig`(`ktlint_code_style = android_studio`)에 두고 엔진 버전은 빌드 스크립트에서 `ktlint { version.set("1.8.0") }`으로 고정한다. 리뷰에서 포맷을 손으로 지적하지 않는다.
-- 근거: ktlint-gradle이 `ktlintCheck`/`ktlintFormat` 태스크와 엔진 버전 고정을 제공한다 [S85](https://raw.githubusercontent.com/JLLeitschuh/ktlint-gradle/main/README.md). 코드 스타일 선택지와 `.editorconfig` 설정 키는 ktlint 문서에 있다 [S83](https://raw.githubusercontent.com/pinterest/ktlint/master/documentation/release-latest/docs/rules/code-styles.md), [S84](https://raw.githubusercontent.com/pinterest/ktlint/master/documentation/release-latest/docs/rules/configuration-ktlint.md). 포맷터 단일화는 90-sources `FORMATTER` 결정이다.
+- 근거: ktlint-gradle이 `ktlintCheck`/`ktlintFormat` 태스크와 엔진 버전 고정을 제공한다 [S85](https://raw.githubusercontent.com/JLLeitschuh/ktlint-gradle/main/README.md). 코드 스타일 선택지와 `.editorconfig` 설정 키는 ktlint 문서에 있다 [S83](https://raw.githubusercontent.com/pinterest/ktlint/master/documentation/release-latest/docs/rules/code-styles.md), [S84](https://raw.githubusercontent.com/pinterest/ktlint/master/documentation/release-latest/docs/rules/configuration-ktlint.md). 포맷터 단일화는 91-decisions `FORMATTER` 결정이다.
 - 예시:
   ```kotlin
   // Good: 빌드 스크립트
@@ -176,7 +176,7 @@
 
 ### R-20-14 KDoc은 공개 표면에 달고 설명은 본문 문장으로 쓴다
 - 규칙: `public`·`protected` 타입과 멤버에는 KDoc을 단다. 자명한 접근자와 오버라이드는 예외다. 설명은 본문 문장에 통합하고 `@param`/`@return`은 본문으로 담기 어려울 만큼 설명이 길 때만 쓴다.
-- 근거: Android 스타일 가이드는 공개 표면 KDoc을 최소 요구로 두고 [S35](https://developer.android.com/kotlin/style-guide), Kotlin 코딩 컨벤션은 "Avoid `@param` and `@return` tags"로 본문 통합을 권한다 [S58](https://kotlinlang.org/docs/coding-conventions.html). 90-sources `KDOC_TAGS` 결정을 따른다.
+- 근거: Android 스타일 가이드는 공개 표면 KDoc을 최소 요구로 두고 [S35](https://developer.android.com/kotlin/style-guide), Kotlin 코딩 컨벤션은 "Avoid `@param` and `@return` tags"로 본문 통합을 권한다 [S58](https://kotlinlang.org/docs/coding-conventions.html). 91-decisions `KDOC_TAGS` 결정을 따른다.
 - 예시:
   ```kotlin
   // Good

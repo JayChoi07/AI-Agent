@@ -73,6 +73,45 @@ style:
     excludeImports: []
   ForbiddenComment:
     active: true
+  # R-26-02 시각 API 직접 사용 금지. detekt 2.0.0-alpha.6 에서 키 이름과 동작을 실행으로 확인했다(2026-09-30).
+  # - 이 규칙은 기본 비활성이고 타입 해석이 필요해 detektDebug 에서만 동작한다.
+  # - methods 는 `reason` / `value` 형식이다. 값 끝에 `()` 를 붙이면 인자 없는 오버로드만 막는다
+  #   (Instant.now() 는 걸리고 Instant.now(clock) 은 통과한다).
+  # - ForbiddenImport 의 키는 `forbiddenImports` 다(`imports` 는 설정 검증에서 실패한다).
+  ForbiddenMethodCall:
+    active: true
+    methods:
+      - reason: 'R-26-02: 현재 시각은 주입한 Clock 으로 읽는다.'
+        value: 'java.lang.System.currentTimeMillis'
+      - reason: 'R-26-03: 인자 없는 now() 는 Clock 을 주입하지 않은 호출이다. now(clock) 을 쓴다.'
+        value: 'java.time.Instant.now()'
+      - reason: 'R-26-03: 인자 없는 now() 는 Clock 을 주입하지 않은 호출이다. now(clock) 을 쓴다.'
+        value: 'java.time.LocalDate.now()'
+      - reason: 'R-26-03: 인자 없는 now() 는 Clock 을 주입하지 않은 호출이다. now(clock) 을 쓴다.'
+        value: 'java.time.LocalDateTime.now()'
+      - reason: 'R-26-03: 인자 없는 now() 는 Clock 을 주입하지 않은 호출이다. now(clock) 을 쓴다.'
+        value: 'java.time.LocalTime.now()'
+      - reason: 'R-26-03: 인자 없는 now() 는 Clock 을 주입하지 않은 호출이다. now(clock) 을 쓴다.'
+        value: 'java.time.ZonedDateTime.now()'
+      - reason: 'R-26-03: 인자 없는 now() 는 Clock 을 주입하지 않은 호출이다. now(clock) 을 쓴다.'
+        value: 'java.time.OffsetDateTime.now()'
+      - reason: 'R-26-03: 인자 없는 now() 는 Clock 을 주입하지 않은 호출이다. now(clock) 을 쓴다.'
+        value: 'java.time.YearMonth.now()'
+      - reason: 'R-26-04: 기본 Clock 은 :core:common 의 Hilt 모듈이 UTC 로 제공한다.'
+        value: 'java.time.Clock.systemDefaultZone()'
+      # ForbiddenImport 는 import 문만 본다. 전체 이름으로 부르면 import 가 없으므로 호출도 막는다.
+      - reason: 'R-26-02: Calendar 대신 java.time 과 주입한 Clock 을 쓴다.'
+        value: 'java.util.Calendar.getInstance'
+      - reason: 'R-26-02: Date 대신 java.time 과 주입한 Clock 을 쓴다.'
+        value: 'java.util.Date.<init>'
+      - reason: 'R-26-02: SimpleDateFormat 대신 DateTimeFormatter 를 쓴다.'
+        value: 'java.text.SimpleDateFormat.<init>'
+  ForbiddenImport:
+    active: true
+    forbiddenImports:
+      - 'java.util.Date'
+      - 'java.util.Calendar'
+      - 'java.text.SimpleDateFormat'
   # 줄 길이. detekt 기본값은 120이지만 팩 확정값(Kotlin 스타일 가이드)은 100이며
   # .editorconfig 의 ktlint max_line_length 와 같은 값이어야 두 도구가 충돌하지 않는다.
   MaxLineLength:

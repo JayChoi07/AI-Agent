@@ -57,6 +57,7 @@ convention plugin · detekt · ktlint · Konsist · GitHub Actions 로 옮긴 �
    - `scripts/instrumented.sh` — 연결된 기기·에뮬레이터에서 `connectedDebugAndroidTest`.
    - `scripts/bump-version-code.sh` — `distribution/version-code.txt` 를 1 올린다(R-31-11).
    - `scripts/release.sh` — 게이트 → versionCode 올리기 → `bundleRelease`. 업로드는 하지 않는다(R-31-10).
+   - `scripts/check-room-schema.sh` — Room 스키마 JSON 이 있으면 `check.sh` 가 첫 단계에서 부른다(R-27-05). 가짜 저장소 일곱 경우로 확인했다.
    - `scripts/hooks/pre-push` — 푸시 직전에 `check.sh` 를 돌린다. 브랜치 푸시 대상이 체크아웃한 HEAD 와 다르거나 추적 파일에 미커밋 변경이 있으면 검사 없이 막는다.
    GitHub 워크플로는 선택이다(2026-09-30 추가, **실행으로는 아직 검증하지 않았다**). 비공개 저장소는 실행 시간이 요금제 포함 분량에서 차감되고,
    결제 수단이 있는 계정은 초과분이 청구된다. 쓰기로 한 프로젝트만 필요한 만큼 복사한다.
@@ -144,6 +145,8 @@ plugins {
 | R-31-06 | 실패한 검사 리포트는 항상 업로드 | `actions/upload-artifact` (`if: always()`) | `.github/workflows/android-ci.yml` |
 | R-31-10 · R-31-12 · R-31-13 | 업로드는 수동 실행으로만, 트랙은 항상 적고 내부 테스트까지 | 트리거 `workflow_dispatch` + `tracks: internal` | `.github/workflows/android-release.yml` |
 | R-31-11 | versionCode 는 저장소의 카운터 파일에서 읽고 스크립트가 올린다 | `bump-version-code.sh` + `distribution/version-code.txt` | `scripts/bump-version-code.sh`, `templates/app/app/build.gradle.kts` |
+| R-26-02 · R-26-03 · R-26-04 | 시각 API 직접 사용·`Clock` 없는 `now()` 금지 | detekt `ForbiddenMethodCall`·`ForbiddenImport` (`detektDebug`, 타입 해석 필요 — detekt-cli 2.0.0-alpha.6 로 동작 확인) | `config/detekt/detekt.yml` |
+| R-27-05 | 스키마를 바꾸면 `@Database.version` 도 올린다 | `check-room-schema.sh` (기존 JSON 수정·삭제, 최대 번호 ≠ version) | `scripts/check-room-schema.sh` |
 | R-31-18 | 게이트·계측·릴리스는 로컬 스크립트, 워크플로는 선택 | `check.sh` · `instrumented.sh` · `release.sh` | `scripts/*.sh` |
 | R-31-19 | 푸시 전에 게이트를 돌리고 실패하면 막는다 | pre-push 훅 + `core.hooksPath` | `scripts/hooks/pre-push` |
 | R-31-16 | 계측 잡은 KVM 권한 → `android-emulator-runner` | GitHub Actions 잡 단계 | `.github/workflows/android-instrumented.yml` |

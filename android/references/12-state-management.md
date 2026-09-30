@@ -30,7 +30,7 @@
   | 상태 전이 이력을 재현·감사해야 한다 | 아니오 | 예 | |
   | 상태 변경 로직을 코루틴 없이 순수 함수로 단위 테스트해야 한다 | 아니오 | 예 | |
   | 부수효과(네비·다이얼로그·분석)를 상태와 분리해 1급으로 다뤄야 한다 | 아니오 | 예 | |
-- 근거: Google은 UDF·AAC ViewModel을 Strongly recommended로 두면서 Intent/Reducer 계층을 요구하는 문장을 두지 않는다 [S02](https://developer.android.com/topic/architecture/recommendations), [S09](https://developer.android.com/topic/architecture/ui-layer/events). 매트릭스 행은 MVI 계열이 실제로 내세우는 도입 사유에서 가져왔다 — 상태별 허용 전이와 이탈 시 취소 [S97](https://raw.githubusercontent.com/freeletics/FlowRedux/main/README.md), 전이 이력 재현 [S96](https://raw.githubusercontent.com/badoo/MVICore/master/README.md), 순수 update 함수의 테스트 용이성 [S95](https://raw.githubusercontent.com/spotify/mobius/master/README.md), 부수효과 1급 취급 [S91](https://orbit-mvi.org/). 출발 표의 "필드 수 5개", "이벤트 4종", "부수효과 2종" 같은 규모 수치는 근거 출처가 없어(90-sources 보류 표 "MVI 도입 판단선") 삭제하고 도입 사유 기준으로 바꿨다. 남긴 "2개 이상"이라는 개수 기준 자체는 출처가 아니라 팩의 운영 판단이며, 판정 근거를 표준 준수 보고에 남겨 사후 조정한다
+- 근거: Google은 UDF·AAC ViewModel을 Strongly recommended로 두면서 Intent/Reducer 계층을 요구하는 문장을 두지 않는다 [S02](https://developer.android.com/topic/architecture/recommendations), [S09](https://developer.android.com/topic/architecture/ui-layer/events). 매트릭스 행은 MVI 계열이 실제로 내세우는 도입 사유에서 가져왔다 — 상태별 허용 전이와 이탈 시 취소 [S97](https://raw.githubusercontent.com/freeletics/FlowRedux/main/README.md), 전이 이력 재현 [S96](https://raw.githubusercontent.com/badoo/MVICore/master/README.md), 순수 update 함수의 테스트 용이성 [S95](https://raw.githubusercontent.com/spotify/mobius/master/README.md), 부수효과 1급 취급 [S91](https://orbit-mvi.org/). 출발 표의 "필드 수 5개", "이벤트 4종", "부수효과 2종" 같은 규모 수치는 근거 출처가 없어(91-decisions 보류 표 "MVI 도입 판단선") 삭제하고 도입 사유 기준으로 바꿨다. 남긴 "2개 이상"이라는 개수 기준 자체는 출처가 아니라 팩의 운영 판단이며, 판정 근거를 표준 준수 보고에 남겨 사후 조정한다
 - 예시:
   ```kotlin
   // 로그인 화면: 해당 0개 → MVVM-UDF

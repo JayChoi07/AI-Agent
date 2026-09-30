@@ -1,5 +1,5 @@
 # new-data-source — 데이터 소스·Repository 추가
-읽을 references: [11-architecture-layers, 14-di, 15-data-layer, 22-coroutines-flow, 23-error-handling, 30-testing]
+읽을 references: [11-architecture-layers, 14-di, 15-data-layer, 22-coroutines-flow, 23-error-handling, 26-time-handling, 27-room-migrations, 30-testing]
 함께 로드할 공식 스킬: [testing-setup(테스트 인프라가 없을 때만)]
 
 ## 컨텍스트 수집 (구현 전)
@@ -17,6 +17,8 @@
 | 4 | 에러 매핑 — 도메인별 sealed 타입 | R-15-11, R-23-01, R-23-04, R-23-05 | 호출자가 어떤 실패를 구분해야 하는지 |
 | 5 | 디스패처 — DataSource가 주입받아 이동 | R-14-08, R-15-05, R-22-02 | IO 외 디스패처가 필요한지 |
 | 6 | 노출 형태 — suspend vs Flow | R-15-04, R-22-06 | 계속 관찰해야 하는 값인지 |
+| 7 | 시각 컬럼 저장 형식 — 시점은 epoch 밀리초 Long | R-26-10, R-26-03 | 날짜만 필요한 값(`LocalDate`·`YearMonth`)인지 — 그 저장 형식은 R-26이 정하지 않았으므로 사용자에게 묻는다 |
+| 8 | Room 스키마를 바꾸는가 — version·마이그레이션·테스트 | R-27-05, R-27-06, R-27-11 | 이미 출시된 버전이 있는지 |
 
 Repository 인터페이스와 `Default*` 구현은 둘 다 data 계층에 두고, 모델·에러·결과 타입만 `model` 패키지에 둔다. data는 domain·ui를 참조하지 않는다 (R-11-01, R-11-02, R-15-01, R-15-06).
 
@@ -27,6 +29,7 @@ Repository 인터페이스와 `Default*` 구현은 둘 다 data 계층에 두고
    → 검증: `toDomain()`·`toEntity()` 명명, data 모듈 안에 위치 (R-15-13)
 3. DataSource — `templates/data/{{Feature}}RemoteDataSource.kt`, `templates/data/{{Feature}}LocalDataSource.kt`
    → 검증: 하나가 하나의 소스만 담당, 디스패처 주입받아 `withContext`로 이동 (R-15-03, R-15-05)
+   → Room 엔티티를 바꿨으면: 스키마 JSON 커밋·`version` 증가·마이그레이션 테스트 통과 (R-27-04, R-27-05, R-27-11), 시각 컬럼은 epoch `Long` (R-26-10)
 4. Repository 인터페이스(data 계층) — `templates/data/{{Feature}}Repository.kt`
    → 검증: `model` 패키지 타입만 노출, 일회성은 suspend·관찰은 `Flow` (R-15-01, R-15-04)
 5. 구현(data 계층) — `templates/data/Default{{Feature}}Repository.kt`
