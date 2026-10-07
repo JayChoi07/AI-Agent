@@ -55,7 +55,7 @@ references·templates·checklists는 전부 `$PACK_ROOT/references`, `$PACK_ROOT
 - 결정이 걸린 주제는 문서의 결정 매트릭스(R-12-02 등)를 표로 채워 보여준다.
 
 ## 공식 스킬 연계
-구현 방법은 로컬 공식 Android 스킬에 위임한다: navigation-3(네비 구현), testing-setup(테스트 인프라 세팅), adaptive(적응형 레이아웃), edge-to-edge(인셋), migrate-xml-views-to-jetpack-compose(이관). 이 팩은 "무엇을 어떻게 결정하고 무엇으로 검증하는가"만 담는다.
+구현 방법은 로컬 공식 Android 스킬에 위임한다: navigation-3(네비 구현), testing-setup(테스트 인프라 세팅), adaptive(적응형 레이아웃), edge-to-edge(인셋), migrate-xml-views-to-jetpack-compose(이관). 이 팩은 "무엇을 어떻게 결정하고 무엇으로 검증하는가"만 담는다. 스크린샷 도구는 이 팩의 SCREENSHOT_LIB(Roborazzi) 결정이 공식 스킬의 지시보다 우선한다.
 
 ## 표준 준수 보고 형식 (R-32-01)
 아래 `(R-NN-xx)` 자리에는 ID만 적지 말고 `R-10-04(모듈 간 배치 …)`처럼 제목 요지를 함께 적는다.

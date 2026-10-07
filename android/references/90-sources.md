@@ -277,6 +277,17 @@
 | S265 | Google(AOSP) | androidx 저장소 소스 room3 (androidx-main) | https://github.com/androidx/androidx/tree/androidx-main/room3 | 공식 저장소 소스 | room-migrations |
 | S266 | Google | Room 2.x(Legacy) 가이드 | https://developer.android.com/training/data-storage/room/v2 | 공식 가이드 | room-migrations |
 | S267 | Google | API 레퍼런스 androidx.room3.AutoMigration | https://developer.android.com/reference/kotlin/androidx/room3/AutoMigration | 공식 API 문서 | room-migrations |
+| S268 | Google | Nav3 레시피: Passing Arguments to ViewModels (Hilt) | https://developer.android.com/guide/navigation/navigation-3/recipes/passingarguments | 공식 가이드 | state-nav |
+| S269 | Google | Baseline Profile 생성 구성 | https://developer.android.com/topic/performance/baselineprofiles/configure-baselineprofiles | 공식 가이드 | testing-ci |
+| S270 | Google | About keep rules | https://developer.android.com/topic/performance/app-optimization/keep-rules-overview | 공식 가이드 | app-bootstrap-build |
+| S271 | Google | Add global options (R8) | https://developer.android.com/topic/performance/app-optimization/global-options | 공식 가이드 | app-bootstrap-build |
+| S272 | Google | Use R8 Configuration Analyzer | https://developer.android.com/topic/performance/app-optimization/r8-configuration-analyzer | 공식 가이드 | app-bootstrap-build |
+| S273 | Google | Fix optimization problems (R8) | https://developer.android.com/topic/performance/app-optimization/troubleshoot-the-optimization | 공식 가이드 | app-bootstrap-build |
+| S274 | Google | 공식 edge-to-edge 스킬 (Compose edge-to-edge 마이그레이션·문제 해결) | https://developer.android.com/agents/skills/system/edge-to-edge/skill | 공식 가이드 | app-bootstrap-shell |
+| S275 | Google | Nav3 레시피: Dialog | https://developer.android.com/guide/navigation/navigation-3/recipes/dialog | 공식 가이드 | state-nav |
+| S276 | Google | Nav3 레시피: Bottom sheet | https://developer.android.com/guide/navigation/navigation-3/recipes/bottomsheet | 공식 가이드 | state-nav |
+| S278 | Google | Nav3 레시피: Material List-Detail | https://developer.android.com/guide/navigation/navigation-3/recipes/material-listdetail | 공식 가이드 | state-nav |
+| S279 | Google | 공식 adaptive 스킬 (적응형 앱 만들기) | https://developer.android.com/agents/skills/jetpack-compose/adaptive/skill | 공식 가이드 | app-bootstrap-shell |
 
 노트 지역 번호 합계 130건(architecture 22 + state-nav 27 + kotlin-style 26 + testing-ci 43 + korea 12) → URL 중복 7건 제거 → 123건 → testing-ci 지역 S19가 getting-started 문서 3건을 한 번호로 묶고 있어 URL 단위로 분리(+2) → **전역 125건**. 제거된 중복은 S02(architecture+state-nav), S08(architecture+state-nav), S09(state-nav+kotlin-style), S35(kotlin-style+testing-ci), S43(state-nav+testing-ci), S51(architecture+testing-ci), S93(architecture+state-nav)이다.
 
@@ -284,4 +295,4 @@ S123~S125는 `testing-ci.md`가 리뷰 반영으로 개정된 뒤(지역 S19 확
 
 S188~S267는 2026-09-30 조사 노트 4건(background-work · runtime-permissions · time-handling · room-migrations)에서 규칙이 실제로 인용하는 출처만 옮긴 행이다.
 
-채택 결정 표·R-ID 겹침 정리·보류 표는 [`91-decisions.md`](91-decisions.md)로 옮겼다(파일당 300줄 한도, 2026-09-30).
+채택 결정 표·R-ID 겹침 정리·보류 표는 [`91-decisions.md`](91-decisions.md)로 옮겼다(파일당 300줄 한도, 2026-09-30). S280 이후 출처는 [`92-sources-2.md`](92-sources-2.md)에 잇는다(2026-10-07). S277은 S25와 URL이 같아 비웠다.

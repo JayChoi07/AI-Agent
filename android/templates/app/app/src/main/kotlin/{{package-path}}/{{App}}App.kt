@@ -1,7 +1,6 @@
 package {{package}}
 
 import androidx.compose.foundation.layout.consumeWindowInsets
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.runtime.Composable
@@ -21,8 +20,9 @@ import {{package}}.feature.{{feature}}.ui.{{feature}}Entry
  *
  * 세 가지를 한 곳에서만 한다.
  * 1. 백스택 — `rememberNavBackStack` 호출은 앱 전체에 이 한 줄이고, 조작은 [Navigator] 로만 한다 (R-13-03).
- * 2. 인셋 — `Scaffold` 의 `innerPadding` 을 적용하고 `consumeWindowInsets` 로 소비를 표시한다. 아래 화면이 같은
- *    인셋을 다시 더하지 않는다 (R-18-08).
+ * 2. 인셋 — `Scaffold` 의 `innerPadding` 을 `consumeWindowInsets` 로 소비 표시하고 엔트리 빌더의 `contentPadding` 으로
+ *    화면에 내려보낸다. 화면은 그것을 목록의 `contentPadding`(목록이 없으면 `Modifier.padding`)으로만 쓰고 같은 인셋을
+ *    다시 더하지 않는다 (R-18-08).
  * 3. 창 크기 — `windowSizeClass` 를 여기서 한 번 읽는다. 화면이 늘면 "레일을 쓸지" 같은 **결정 결과**를
  *    파라미터로 내려보내고, 화면이 스스로 창을 재지 않게 한다 (R-18-13).
  *      val useNavRail = windowSizeClass
@@ -44,7 +44,7 @@ fun {{App}}App(
         NavDisplay(
             backStack = backStack,
             // Scaffold 는 인셋을 소비하지 않으므로 여기서 소비를 표시한다 (R-18-08).
-            modifier = Modifier.padding(innerPadding).consumeWindowInsets(innerPadding),
+            modifier = Modifier.consumeWindowInsets(innerPadding),
             onBack = { navigator.goBack() },
             // 첫 항목이 SaveableStateHolder 여야 엔트리 상태가 복원되고, 둘째 줄이 있어야
             // ViewModel 이 NavEntry 단위로 살고 정리된다 (R-13-05).
@@ -52,9 +52,14 @@ fun {{App}}App(
                 rememberSaveableStateHolderNavEntryDecorator(),
                 rememberViewModelStoreNavEntryDecorator(),
             ),
+            // 다이얼로그·바텀시트 엔트리를 쓰면 여기에 sceneStrategies = listOf(DialogSceneStrategy<NavKey>())
+            // 처럼 전략을 등록한다 (R-13-04).
             // when 분기가 아니라 entryProvider DSL 로 키→콘텐츠를 잇는다 (R-13-04).
             entryProvider = entryProvider {
-                {{feature}}Entry(onBack = { navigator.goBack() })
+                {{feature}}Entry(
+                    onBack = { navigator.goBack() },
+                    contentPadding = innerPadding,
+                )
             },
         )
     }

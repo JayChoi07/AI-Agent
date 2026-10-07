@@ -68,7 +68,7 @@
 - 체크: `:core:*`·`:feature:*` 빌드 파일에 `applicationId`가 있는가. 두 모듈의 `namespace`가 같은 값인가. 매니페스트에 `package` 속성이 남아 있는가.
 
 ### R-19-04 buildType은 debug·release 둘만 두고 release에서 `optimization { enable = true }`로 켠다
-- 규칙: buildType을 임의로 늘리지 않는다. release 최적화는 `optimization { enable = true }` 한 줄로 켜고 `isMinifyEnabled`·`isShrinkResources`·`getDefaultProguardFile(...)`을 따로 적지 않는다. 이 설정은 `:app` 하나만 쓰므로 convention plugin으로 올리지 않는다(`R-10-14`). Baseline Profile 생성 변이가 필요해지면 `R-40-03`이 정한 형태로만 추가한다.
+- 규칙: buildType을 임의로 늘리지 않는다. release 최적화는 `optimization { enable = true }` 한 줄로 켜고 `isMinifyEnabled`·`isShrinkResources`·`getDefaultProguardFile(...)`을 따로 적지 않는다. 이 설정은 `:app` 하나만 쓰므로 convention plugin으로 올리지 않는다(`R-10-14`). Baseline Profile 변이(`nonMinifiedRelease`·`benchmarkRelease`)는 플러그인이 만들어 주므로 그 R8 설정을 `buildTypes`에 적지 않는다(서명처럼 일부 속성만 `R-40-03`에 따라 지정할 수 있다). 공식 r8-analyzer 스킬 `CONFIGURATION.md` §1이 요구하는 `isMinifyEnabled`·`getDefaultProguardFile("proguard-android-optimize.txt")`는 레거시 DSL 기준이라 AGP 9.3+의 새 DSL에는 적용하지 않는다.
 - 근거: Android Studio는 새 모듈에 debug·release 두 buildType을 만든다 [S127](https://developer.android.com/build/build-variants). AGP 9.3+ 의 updated optimization DSL은 "Turning on optimization enables both code optimization and optimized resource shrinking"이고 "You no longer need to specify the default Android keep rules file"이다 [S131](https://developer.android.com/build/releases/agp-9-3-0-release-notes). DSL 형태는 `optimization { enable = true }`이며 기본 keep 규칙이 `proguard-android-optimize.txt`와 동등하게 포함되고, 커스텀 규칙은 `src/<variant>/keepRules/*.keep`에 둔다 [S129](https://developer.android.com/topic/performance/app-optimization/enable-app-optimization). AGP 9.3 미만의 레거시 DSL은 `isMinifyEnabled`+`isShrinkResources` 쌍이다 [S128](https://developer.android.com/build/shrink-code). R8을 켜는 이유와 keep 규칙을 좁히는 규칙은 `R-40-04`다.
 - 예시:
   ```kotlin
@@ -252,6 +252,19 @@
   class ApiClient { private val url = BuildConfig.BASE_URL }
   ```
 - 체크: `:app` 밖에서 `BuildConfig.` 참조가 있는가. 같은 값이 두 모듈의 `buildConfigField`에 각각 선언돼 있는가.
+
+### R-19-15 AGP 9가 내장한 것보다 높은 Kotlin은 최상위 빌드 파일의 `buildscript` classpath로 명시한다
+- 규칙: AGP 9.0 이상은 KGP 2.2.10을 런타임 의존으로 갖는다. 그보다 높은 Kotlin(KGP)을 쓰면 최상위 `build.gradle.kts`의 `buildscript { dependencies { classpath(...) } }`에 `kotlin-gradle-plugin`을 카탈로그 별칭으로 명시한다. KSP는 루트 `plugins { alias(libs.plugins.ksp) apply false }`의 버전으로 이미 명시된다. 다른 플러그인의 전이 의존이 우연히 올려 주는 버전에 기대지 않는다.
+- 근거: "Android Gradle plugin 9.0 now has a runtime dependency on Kotlin Gradle plugin (KGP) 2.2.10"이고 "To use a higher version of KGP or KSP, add the following to your top-level build file"이고 스니펫은 `buildscript { dependencies { classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:KGP_VERSION") } }`(KSP는 별도 줄)다 [S130](https://developer.android.com/build/releases/past-releases/agp-9-0-0-release-notes). 이 선언이 없는 빌드도 Compose 컴파일러 플러그인의 전이 의존이 KGP를 `2.2.10 -> 2.4.20`으로 올려 풀렸지만(`./gradlew buildEnvironment` 확인 2026-10-07) 그 플러그인을 빼면 조용히 2.2.10으로 내려간다.
+- 예시:
+  ```kotlin
+  // Good — build.gradle.kts (루트)
+  buildscript {
+      dependencies { classpath(libs.kotlin.gradlePlugin) }
+  }
+  // Bad: 선언 없이 kotlin.compose 같은 다른 플러그인의 전이 의존에 기댄다
+  ```
+- 체크: `./gradlew buildEnvironment`에서 `kotlin-gradle-plugin`이 카탈로그 버전으로 직접 선언돼 있는가. 최상위 빌드 파일에 `buildscript` classpath가 있는가.
 
 ## 출처가 침묵하는 것 (규칙으로 쓰지 않음)
 

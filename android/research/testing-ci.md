@@ -298,3 +298,12 @@ Konsist.scopeFromProject().functions().withAnnotationOf(Preview::class)
 - **Konsist 미확인 API**: `withAllParentsOf`는 웹 검색 요약에만 등장하고 공식 문서(`verify-classes.md` [S43], `android-snippets.md` [S18])에서 확인 실패. `hasDataModifier`, `hasOperatorModifier`, 단수형 `primaryConstructor`도 확인 실패(API 레퍼런스 `lemonappdev.github.io/konsist/...`는 미조회). Task 15/16의 `ArchitectureTest.kt`에서 이 4개는 쓰지 말고 확인된 `withParentClassOf` / `hasPrimaryConstructor` / `primaryConstructors`로 대체할 것.
 - **버전 조합 리스크(빌드 전 검증 필요)**: ① KSP 2.3.11 + Kotlin 2.4.20 — 공식 퀵스타트는 2.4.20 + KSP 2.3.10 조합을 제시하며 2.3.11 조합의 명시적 확인 문구는 없음. ② detekt 2.0.0-alpha.6은 AGP 9.3.1 기준 빌드라 AGP 9.4.0에서 미검증. ③ Robolectric 4.16.1의 최대 지원 SDK가 35인지 36인지 릴리스 노트 서술이 엇갈림 — compileSdk 36+이면 `@Config(sdk = [...])` 조정 또는 4.17-beta 검토 필요. ④ Hilt 2.60.1의 Kotlin 2.4.20 / KSP 2.3.11 호환 명시는 확인 못 함.
 - **미확정 항목**: androidx.test(core/runner/rules/ext-junit)는 NiA 카탈로그 값이 모두 `-rc01`이라 안정 버전 미확인(계측 테스트를 팩에 넣으려면 추가 조사). detekt 기본 규칙셋 임계값은 개별 규칙 페이지를 열지 않아 미확인 — `detekt.yml`은 `detektGenerateConfig` 산출물을 기준으로 삼을 것.
+
+## 추가 확인 (2026-10-07) — 공식 testing-setup 스킬과의 대조
+
+- 공식 스킬 Step 6: Compose UI 동작 테스트는 Robolectric으로 `test` 소스셋에서 돌리고, 기기 테스트는 요청이 있을 때만 `androidTest`(S283). 팩 표의 medium을 `src/androidTest`에서 `src/test`로 바로잡았다.
+- Step 8·11: 화면 스크린샷 9크기 + 400x500 테마·글꼴 배율 변형, `DeviceConfigurationOverride`(S283, S284) → R-30-03.
+- Hilt 가이드(S172): `HiltTestActivity`는 `androidTest` 소스셋의 빈 `@AndroidEntryPoint` Activity이고 Robolectric은 `@Config(application = HiltTestApplication::class)` → R-30-17.
+- Step 9 "Always verify state restoration" + 공식 가이드의 `StateRestorationTester`(S284) → R-30-18.
+- 공식 스킬은 스크린샷 도구로 Compose Preview Screenshot Testing을 따르라고 하나 팩은 SCREENSHOT_LIB=Roborazzi 결정이 우선한다.
+- 미해결: `templates/test/{{Feature}}ScreenshotTest.kt`는 `junit4.v2.createComposeRule`을 import하고 R-30-11·R-30-13과 `AppFlowTest.kt`는 v1이다. 컴파일 검증을 못 해 템플릿은 고치지 않았다.

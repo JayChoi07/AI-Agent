@@ -59,8 +59,8 @@
 - 체크: 전체를 받는 묶음이 있는가. 묶음마다 이유가 적혀 있는가.
 
 ### R-33-04 함께 올라가야 하는 버전은 버전 키 하나를 공유한다
-- 규칙: Compose 컴파일러 플러그인은 `version.ref = "kotlin"`으로 Kotlin과 같은 키를 쓴다. Compose BOM이 관리하는 라이브러리는 BOM으로만 버전을 정하고 개별 버전을 적지 않는다. 같이 움직이는 항목에 버전 키를 따로 만들지 않는다.
-- 근거: "the Compose compiler ships simultaneously with Kotlin and will always be compatible with Kotlin of the same version" [S183](https://kotlinlang.org/docs/compose-compiler-migration-guide.html). "When you update the BOM version, all the libraries that you're using are automatically updated to their new versions." [S182](https://developer.android.com/develop/ui/compose/bom). 키가 하나면 업데이트 PR도 한 줄만 바꾼다.
+- 규칙: Compose 컴파일러 플러그인은 `version.ref = "kotlin"`으로 Kotlin과 같은 키를 쓴다. Compose BOM이 관리하는 라이브러리는 BOM으로만 버전을 정하고 개별 버전을 적지 않는다. 같이 움직이는 항목에 버전 키를 따로 만들지 않는다. `Grid`·`FlexBox`처럼 BOM 정식 버전에 아직 없는 실험 API는 공식 가이드가 개별 `compose` 버전 키로 `foundation-layout`을 받게 하므로, 쓰기 전에 사용자에게 확인하고 예외 사유를 남긴다.
+- 근거: "the Compose compiler ships simultaneously with Kotlin and will always be compatible with Kotlin of the same version" [S183](https://kotlinlang.org/docs/compose-compiler-migration-guide.html). "When you update the BOM version, all the libraries that you're using are automatically updated to their new versions." [S182](https://developer.android.com/develop/ui/compose/bom). 키가 하나면 업데이트 PR도 한 줄만 바꾼다. Grid 시작하기 가이드는 `[versions] compose = "..."`와 `androidx-compose-foundation-layout = { ..., version.ref = "compose" }`를 개별로 선언하고 [S286](https://developer.android.com/develop/ui/compose/layouts/adaptive/grid/get-started), adaptive 스킬은 "Grid is an experimental API ... Confirm with the user that they are happy to use an experimental API"라고 한다 [S279](https://developer.android.com/agents/skills/jetpack-compose/adaptive/skill).
 - 예시:
   ```toml
   # Good

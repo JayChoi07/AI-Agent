@@ -13,9 +13,9 @@
 | 4 | 화면 상태가 `<기능명>UiState` 불변 data class 하나 | R-12-01 | | |
 | 5 | 상태 아키텍처 매트릭스 판정이 기록됨 | R-12-02 | | |
 | 6 | 목적지 키가 `NavKey` + `@Serializable`, 소유 feature 모듈에 위치 | R-13-01 | | |
-| 7 | ViewModel이 `@HiltViewModel` + `@Inject constructor` | R-14-01 | | |
+| 7 | ViewModel이 `@HiltViewModel` + 생성자 주입(`@Inject`, 키 인자가 필요하면 `@AssistedInject`) | R-14-01 | | |
 | 8 | UseCase가 public 함수 하나 + `operator fun invoke` | R-16-01 | | |
-| 9 | Screen 컴포저블이 상태와 콜백만 받음 | R-17-01 | | |
+| 9 | Screen 컴포저블이 상태·콜백과 레이아웃 값(`modifier`·`contentPadding`)만 받음 | R-17-01 | | |
 | 10 | 화면 ViewModel마다 로컬 단위 테스트 존재 | R-30-01 | | |
 | 11 | Composable Screen마다 스크린샷 테스트 1개 이상 | R-30-03 | | |
 

@@ -1,5 +1,6 @@
 package {{package}}.feature.{{feature}}.ui
 
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -22,21 +23,34 @@ import androidx.navigation3.runtime.NavKey
  * 의존성은 androidx.lifecycle:lifecycle-viewmodel-navigation3 (카탈로그 별칭
  * androidx-lifecycle-viewmodel-navigation3)이며 :app 모듈에 넣는다.
  */
-fun EntryProviderScope<NavKey>.{{feature}}Entry(onBack: () -> Unit) {
-    entry<{{Feature}}Key> { {{Feature}}Route(onBack = onBack) }
+fun EntryProviderScope<NavKey>.{{feature}}Entry(
+    onBack: () -> Unit,
+    contentPadding: PaddingValues,
+) {
+    entry<{{Feature}}Key> {
+        {{Feature}}Route(onBack = onBack, contentPadding = contentPadding)
+    }
 }
 
 /**
  * ViewModel을 연결하는 Route. UI는 {{Feature}}Screen이 그린다 (R-17-01).
+ * `contentPadding`은 :app의 Scaffold `innerPadding`이다. 목록이 있는 화면은 이것을 목록의 `contentPadding`으로
+ * 받아 시스템 바 뒤까지 스크롤되게 한다 (R-18-08).
  * 최초 로드는 ViewModel의 `init`이 아니라 여기서 시작한다 (R-12-07). `initialize()`는 멱등이라
  * 재구성·설정 변경으로 다시 불려도 로드는 한 번만 돈다.
  */
 @Composable
 internal fun {{Feature}}Route(
     onBack: () -> Unit,
+    contentPadding: PaddingValues,
     viewModel: {{Feature}}ViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     LaunchedEffect(viewModel) { viewModel.initialize() }
-    {{Feature}}Screen(uiState = uiState, onEvent = viewModel::onEvent, onBack = onBack)
+    {{Feature}}Screen(
+        uiState = uiState,
+        onEvent = viewModel::onEvent,
+        onBack = onBack,
+        contentPadding = contentPadding,
+    )
 }

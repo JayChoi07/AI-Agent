@@ -121,8 +121,8 @@
 - 체크: `setContent` 블록이 두 줄을 넘는가. Activity 본문에 `collectAsStateWithLifecycle`이나 `backStack`이 있는가.
 
 ### R-18-07 `enableEdgeToEdge()`를 `onCreate`에서 호출하고 edge-to-edge opt-out을 쓰지 않는다
-- 규칙: 루트 Activity의 `onCreate`에서 `enableEdgeToEdge()`를 부른다. `windowOptOutEdgeToEdgeEnforcement`, `Window.setDecorFitsSystemWindows(true)` 같은 회피 수단을 쓰지 않는다. 시스템 바를 불투명하게 만들어 인셋 처리를 건너뛰지 않는다.
-- 근거: "If you target devices running Android 15 (API level 35) or higher, edge-to-edge is enforced by default"이고 이전 버전에서는 "call `enableEdgeToEdge()` in your `Activity.onCreate()` method"로 맞춘다 [S146](https://developer.android.com/develop/ui/compose/system/setup-e2e). "For apps targeting Android 16 (API level 36), `R.attr#windowOptOutEdgeToEdgeEnforcement` is deprecated and disabled, and your app can't opt-out of going edge-to-edge" [S148](https://developer.android.com/about/versions/16/behavior-changes-16) — 단 같은 문서가 실행 OS를 구분한다: Android 16 타깃 앱도 "running on an Android 15 device"면 opt-out이 "continues to work"하고, Android 16 기기에서만 "is disabled"다. 구버전 기기에서도 opt-out을 쓰지 않는 것은 이 팩의 정책이다. `Window#setDecorFitsSystemWindows(boolean)`는 Android 15에서 deprecated + disabled 목록에 있다 [S147](https://developer.android.com/about/versions/15/behavior-changes-15)
+- 규칙: 루트 Activity의 `onCreate`에서 `enableEdgeToEdge()`를 부른다. `windowOptOutEdgeToEdgeEnforcement`, `Window.setDecorFitsSystemWindows(true)` 같은 회피 수단을 쓰지 않는다. 시스템 바를 불투명하게 만들어 인셋 처리를 건너뛰지 않는다. `androidx.activity`의 `enableEdgeToEdge()`(ComponentActivity)는 시스템 바 아이콘 색을 자동으로 처리하므로 그 함수를 쓴다. `WindowCompat` 쪽 함수를 쓰면 `isAppearanceLightStatusBars`·`isAppearanceLightNavigationBars`를 테마에서 직접 맞춰야 한다.
+- 근거: "If you target devices running Android 15 (API level 35) or higher, edge-to-edge is enforced by default"이고 이전 버전에서는 "call `enableEdgeToEdge()` in your `Activity.onCreate()` method"로 맞춘다 [S146](https://developer.android.com/develop/ui/compose/system/setup-e2e). "For apps targeting Android 16 (API level 36), `R.attr#windowOptOutEdgeToEdgeEnforcement` is deprecated and disabled, and your app can't opt-out of going edge-to-edge" [S148](https://developer.android.com/about/versions/16/behavior-changes-16) — 단 같은 문서가 실행 OS를 구분한다: Android 16 타깃 앱도 "running on an Android 15 device"면 opt-out이 "continues to work"하고, Android 16 기기에서만 "is disabled"다. 구버전 기기에서도 opt-out을 쓰지 않는 것은 이 팩의 정책이다. `Window#setDecorFitsSystemWindows(boolean)`는 Android 15에서 deprecated + disabled 목록에 있다 [S147](https://developer.android.com/about/versions/15/behavior-changes-15). "DO NOT do this if the Activities use `enableEdgeToEdge` from `ComponentActivity` because it handles the icon colors automatically" [S274](https://developer.android.com/agents/skills/system/edge-to-edge/skill).
 - 예시:
   ```kotlin
   // Good
@@ -134,24 +134,28 @@
 - 체크: `enableEdgeToEdge()` 호출이 루트 `onCreate`에 있는가. 테마나 코드에 edge-to-edge 회피 설정이 남아 있는가.
 
 ### R-18-08 인셋은 앱 루트나 `Scaffold` 한 곳에서 소비하고 화면은 다시 더하지 않는다
-- 규칙: 시스템 바 인셋은 `Scaffold`의 `innerPadding` 또는 루트의 `Modifier.safeDrawingPadding()` 한 곳에서만 소비한다. `Scaffold`는 인셋을 소비하지 않으므로 `innerPadding`을 적용한 그 자리에서 `consumeWindowInsets(innerPadding)`으로 소비를 표시한다. 그 아래 화면은 남은 인셋(IME 등)만 처리하고 같은 인셋을 다시 더하지 않는다. 인셋 값을 숫자로 읽어 계산하지 말고 패딩·크기 modifier를 쓴다.
-- 근거: 인셋 padding modifier는 자동으로 인셋을 consume해 중복 적용을 막고, 직접 소비를 표시할 때는 `Modifier.consumeWindowInsets()`를 쓴다. 인셋 값은 "updated after composition but before layout"이므로 "prefer using window insets padding modifiers and size modifiers wherever possible" [S149](https://developer.android.com/develop/ui/compose/system/insets-ui). 루트에서 한 번 소비하는 형태(`Box(Modifier.safeDrawingPadding())`)가 기본 예시다 [S146](https://developer.android.com/develop/ui/compose/system/setup-e2e). "`Scaffold` does not apply the insets to content; this responsibility is yours"이고 예시가 `Modifier.consumeWindowInsets(innerPadding)`으로 소비를 표시한다 [S159](https://developer.android.com/develop/ui/compose/system/material-insets)
+- 규칙: 시스템 바 인셋은 `Scaffold`의 `innerPadding` 또는 루트의 `Modifier.safeDrawingPadding()` 한 곳에서만 소비한다. `Scaffold`는 인셋을 소비하지 않으므로 `innerPadding`을 적용한 그 자리에서 `consumeWindowInsets(innerPadding)`으로 소비를 표시한다. 그 아래 화면은 남은 인셋(IME 등)만 처리하고 같은 인셋을 다시 더하지 않는다. `:app`은 `innerPadding`을 엔트리 빌더 인자(`contentPadding`)로 Route에 넘기고 Route가 Screen에 내려보내며(R-17-01), 화면은 그것을 한 번만 쓴다 — 스크롤 목록이 있으면 `Modifier.padding`이 아니라 목록의 `contentPadding`으로 받아 콘텐츠가 시스템 바 뒤로 스크롤되게 하고, 목록이 없으면 루트 컨테이너의 `Modifier.padding`으로 쓴다. 소비 표시는 `:app`이 `NavDisplay`에 한 번만 한다(`Modifier.consumeWindowInsets(innerPadding)`). 목록이 `Scaffold` 바로 아래에 있을 때만 목록에 그 표시를 한다. 단, 목록 안에 텍스트 입력이 있으면 마지막 입력창이 IME에 가려지지 않도록 아래쪽은 `contentPadding` 대신 목록 끝의 `Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.systemBars))`로 채우고 목록에 `imePadding()`을 건다(근거의 S149). 인셋 값을 숫자로 읽어 계산하지 말고 패딩·크기 modifier를 쓴다. 플로팅 액션 버튼은 `Scaffold`의 `floatingActionButton` 슬롯 안에 두거나 `Modifier.safeDrawingPadding()`을 적용해 내비게이션 바 위에 그린다. `NavigationSuiteScaffold`(R-18-13)가 루트이면 `PaddingValues`를 내려보내지 않아 `:app`이 넘길 `innerPadding`이 없으므로 화면이 자기 목록 `contentPadding`·FAB 패딩에 직접 인셋을 적용하고 (소비 없이 원본 인셋이 필요하면 `WindowInsets.asPaddingValues()`를 쓸 수 있다 — 근거의 S149), 그 부모에는 `safeDrawingPadding`을 걸지 않는다. 이 경우에 한해 아래 체크의 `WindowInsets` 직접 읽기 금지를 완화한다.
+- 근거: 인셋 padding modifier는 자동으로 인셋을 consume해 중복 적용을 막고, 직접 소비를 표시할 때는 `Modifier.consumeWindowInsets()`를 쓴다. "The value of insets is updated after the composition phase, but before the layout phase"이고 소비 없이 원본 인셋이 필요하면 "use the `WindowInsets` values directly, or use `WindowInsets.asPaddingValues()`"이지만 "prefer to use the window insets padding modifiers and window insets size modifiers wherever possible"다 [S149](https://developer.android.com/develop/ui/compose/system/insets-ui). 루트에서 한 번 소비하는 형태(`Box(Modifier.safeDrawingPadding())`)가 기본 예시다 [S146](https://developer.android.com/develop/ui/compose/system/setup-e2e). "`Scaffold` does not apply the insets to content; this responsibility is yours"이고 예시가 `Modifier.consumeWindowInsets(innerPadding)`으로 소비를 표시한다 [S159](https://developer.android.com/develop/ui/compose/system/material-insets). 체크리스트가 "Do FABs draw above the navigation bars by either being inside a Scaffold or by applying `Modifier.safeDrawingPadding()`?"로 묻는다 [S274](https://developer.android.com/agents/skills/system/edge-to-edge/skill). "the adaptive scaffolds (e.g. `NavigationSuiteScaffold`, `ListDetailPaneScaffold`) don't propagate PaddingValues to their inner contents"이고 "DO NOT apply `safeDrawingPadding` or similar modifiers to the `NavigationSuiteScaffold` parent" [S274](https://developer.android.com/agents/skills/system/edge-to-edge/skill).
 - 예시:
   ```kotlin
-  // Good — 루트에서 한 번 소비한다
+  // Good — 루트에서 한 번 소비하고 contentPadding 으로 화면에 내려보낸다
   Scaffold { innerPadding ->
-      AppNavDisplay(Modifier.padding(innerPadding).consumeWindowInsets(innerPadding))
+      AppNavDisplay(Modifier.consumeWindowInsets(innerPadding), contentPadding = innerPadding)
+  }
+  // Good — 스크롤 목록은 innerPadding 을 contentPadding 으로 받는다 (S159 예시와 같은 형태)
+  Scaffold { innerPadding ->
+      LazyColumn(modifier = Modifier.consumeWindowInsets(innerPadding), contentPadding = innerPadding) { /* ... */ }
   }
   // Good — Scaffold 를 쓰지 않는 루트
   Box(Modifier.safeDrawingPadding()) { AppRoot() }
   // Bad — 화면에서 같은 인셋을 또 더한다
   Column(Modifier.padding(innerPadding).safeDrawingPadding()) { /* ... */ }
   ```
-- 체크: 한 경로에서 인셋 패딩이 두 번 붙는가. 화면이 `WindowInsets` 값을 직접 읽어 dp 계산을 하는가.
+- 체크: 한 경로에서 인셋 패딩이 두 번 붙는가. 화면이 `WindowInsets` 값을 직접 읽어 dp 계산을 하는가. 스크롤 목록이 `innerPadding`을 `Modifier.padding`으로 받아 콘텐츠가 시스템 바 영역 안에서 잘리는가. FAB가 `Scaffold` 밖에서 인셋 없이 그려지는가.
 
 ### R-18-09 시스템 바 대비는 색 설정 API가 아니라 콘텐츠 계층의 보호 컴포저블로 만든다
-- 규칙: 상태 바·내비게이션 바 뒤로 콘텐츠가 지나가 아이콘이 읽히지 않으면, 인셋 높이만큼의 스크림 컴포저블을 콘텐츠 위에 그려 대비를 만든다. `window.statusBarColor`·`navigationBarColor` 같은 색 설정으로 해결하려 하지 않는다. 3버튼 내비게이션 스크림을 끌 때만 `window.isNavigationBarContrastEnforced = false`를 쓴다.
-- 근거: 시스템 기본값이 모든 경우를 덮지 않으므로 앱이 보호를 그려야 하며, 공식 예시가 `WindowInsets.statusBars` 높이만큼의 `Spacer`에 그라데이션을 깔아 콘텐츠 뒤에 배치한다. 3버튼 내비게이션 대비는 `Window.setNavigationBarContrastEnforced`로 조절한다 [S150](https://developer.android.com/develop/ui/compose/system/system-bars). `R.attr#statusBarColor`, `Window#setStatusBarColor(int)`, `Window#setNavigationBarColor(int)`(제스처 내비게이션)는 Android 15에서 deprecated + disabled라 효과가 없다 [S147](https://developer.android.com/about/versions/15/behavior-changes-15)
+- 규칙: 상태 바·내비게이션 바 뒤로 콘텐츠가 지나가 아이콘이 읽히지 않으면, 인셋 높이만큼의 스크림 컴포저블을 콘텐츠 위에 그려 대비를 만든다. `window.statusBarColor`·`navigationBarColor` 같은 색 설정으로 해결하려 하지 않는다. 3버튼 내비게이션 스크림을 끌 때만 `window.isNavigationBarContrastEnforced = false`를 쓴다. `NavigationBar`·`BottomAppBar` 같은 하단 바가 있는 화면은 SDK 29 이상에서 이 설정을 꺼 하단 바 색이 화면 끝까지 이어지게 한다.
+- 근거: 시스템 기본값이 모든 경우를 덮지 않으므로 앱이 보호를 그려야 하며, 공식 예시가 `WindowInsets.statusBars` 높이만큼의 `Spacer`에 그라데이션을 깔아 콘텐츠 뒤에 배치한다. 3버튼 내비게이션 대비는 `Window.setNavigationBarContrastEnforced`로 조절한다 [S150](https://developer.android.com/develop/ui/compose/system/system-bars). `R.attr#statusBarColor`, `Window#setStatusBarColor(int)`, `Window#setNavigationBarColor(int)`(제스처 내비게이션)는 Android 15에서 deprecated + disabled라 효과가 없다 [S147](https://developer.android.com/about/versions/15/behavior-changes-15). "set `window.isNavigationBarContrastEnforced = false` ... for SDK 29+. This prevents the system from adding a translucent background to the navigation bar" [S274](https://developer.android.com/agents/skills/system/edge-to-edge/skill).
 - 예시:
   ```kotlin
   // Good — 콘텐츠 위에 상태 바 보호를 그린다
@@ -169,8 +173,8 @@
 - 체크: `statusBarColor`·`navigationBarColor` 대입이 남아 있는가. 밝은 콘텐츠 위 시스템 아이콘이 읽히는가.
 
 ### R-18-10 테마는 `:core:designsystem`의 `Color`·`Type`·`Shape`·`Theme` 파일로 나누고 테마 진입점은 `AppTheme` 하나로 둔다
-- 규칙: 색·타이포·모양 정의는 `:core:designsystem`의 `theme/` 패키지에 `Color.kt`·`Type.kt`·`Shape.kt`·`Theme.kt`로 나눈다. `theme/` 패키지의 공개 API는 `AppTheme` 컴포저블 하나이고 팔레트 상수는 `internal`로 막는다. 버튼·카드 같은 공통 컴포넌트는 같은 모듈의 `component/` 패키지에서 따로 공개한다(R-17-14). feature나 화면에서 `MaterialTheme(...)`을 다시 호출하지 않는다.
-- 근거: Material 3 테마는 `MaterialTheme(colorScheme, typography, shapes)` 하나로 구성되고 공식 도구가 `Color.kt`·`Theme.kt` 분리 형태를 만든다 [S151](https://developer.android.com/develop/ui/compose/designsystems/material3). 커스텀 디자인 시스템 가이드는 테마 컴포저블 하나가 `MaterialTheme`을 감싸고 앱 루트가 그것을 호출하는 형태를 보이되 테마 중첩도 허용한다 [S152](https://developer.android.com/develop/ui/compose/designsystems/custom) — 진입점을 하나로 제한하는 것은 이 팩의 결정이다. `designsystem`을 core 모듈로 두는 구성 [S52](https://raw.githubusercontent.com/android/nowinandroid/main/docs/ModularizationLearningJourney.md). 공통 컴포넌트를 이 모듈에서 가져다 쓰는 규칙은 R-17-14다. `Shape.kt` 분리는 출처가 색·테마 두 파일까지만 보여 준 것을 같은 기준으로 확장한 이 팩의 결정이다
+- 규칙: 색·타이포·모양 정의는 `:core:designsystem`의 `theme/` 패키지에 `Color.kt`·`Type.kt`·`Shape.kt`·`Theme.kt`로 나눈다. `theme/` 패키지의 공개 API는 `AppTheme` 컴포저블 하나이고 팔레트 상수는 `internal`로 막는다. 버튼·카드 같은 공통 컴포넌트는 같은 모듈의 `component/` 패키지에서 따로 공개한다(R-17-14). feature나 화면에서 `MaterialTheme(...)`을 다시 호출하지 않는다. Compose Styles API(공식 `styles` 스킬)는 실험 API라 이 팩의 범위 밖이다. 도입하면 필요한 `-opt-in`은 모듈 빌드 파일이 아니라 컨벤션 플러그인(`KotlinAndroid.kt`)에서 준다(JVM 타깃을 컨벤션에서 주는 R-19-11과 같은 방식).
+- 근거: Material 3 테마는 `MaterialTheme(colorScheme, typography, shapes)` 하나로 구성되고 공식 도구가 `Color.kt`·`Theme.kt` 분리 형태를 만든다 [S151](https://developer.android.com/develop/ui/compose/designsystems/material3). 커스텀 디자인 시스템 가이드는 테마 컴포저블 하나가 `MaterialTheme`을 감싸고 앱 루트가 그것을 호출하는 형태를 보이되 테마 중첩도 허용한다 [S152](https://developer.android.com/develop/ui/compose/designsystems/custom) — 진입점을 하나로 제한하는 것은 이 팩의 결정이다. `designsystem`을 core 모듈로 두는 구성 [S52](https://raw.githubusercontent.com/android/nowinandroid/main/docs/ModularizationLearningJourney.md). 공통 컴포넌트를 이 모듈에서 가져다 쓰는 규칙은 R-17-14다. `Shape.kt` 분리는 출처가 색·테마 두 파일까지만 보여 준 것을 같은 기준으로 확장한 이 팩의 결정이다. `styles` 스킬이 "this skill is EXPERIMENTAL", "This skill does not support Material Design component Styles"라고 하고 opt-in을 모듈 `build.gradle.kts`에 적게 한다 [S285](https://developer.android.com/agents/skills/jetpack-compose/theming/styles/skill). 이 팩은 JVM 타깃을 모듈에서 개별로 바꾸지 않고 컨벤션 플러그인에서 준다(R-19-11).
 - 예시:
   ```kotlin
   // Good — theme/ 패키지의 공개 API 는 AppTheme 하나
@@ -222,21 +226,21 @@
 - 체크: `themes.xml`에 색·타이포 항목이 있는가. 같은 브랜드 색이 XML과 Kotlin 양쪽에 적혀 있는가.
 
 ### R-18-13 `WindowSizeClass`는 앱 루트에서 한 번 계산해 상태로 내려보낸다
-- 규칙: 창 크기는 앱 루트 컴포저블에서 `currentWindowAdaptiveInfoV2().windowSizeClass`로 한 번 읽고, 그 아래로는 "내비게이션 레일을 쓸지" 같은 결정 결과를 파라미터로 내려보낸다. 화면이나 컴포넌트가 `LocalConfiguration`으로 창을 직접 재지 않는다.
-- 근거: 창 크기 클래스는 material3-adaptive의 `currentWindowAdaptiveInfoV2()`로 얻는다 — 1.3.0-alpha10이 "Deprecate `currentWindowAdaptiveInfo` and introduce V2 of it"이고 구 함수는 `ReplaceWith("currentWindowAdaptiveInfoV2")` 경고라 이 팩의 `allWarningsAsErrors`에서는 컴파일이 막힌다 [S160](https://developer.android.com/jetpack/androidx/releases/compose-material3-adaptive); 가이드 페이지는 아직 구 함수를 보여 준다. 브레이크포인트는 compact(<600dp)·medium(600~840dp)·expanded(840~1200dp)다. 공식 가이드는 "Localize the logic for handling display size changes by passing window size classes down as state to nested composables just like any other app state"라 하고, 예시에서 앱 루트 컴포저블의 기본 인자로 한 번 계산해 결정 결과(`showTopAppBar`)만 내려보낸다 [S153](https://developer.android.com/develop/ui/compose/layouts/adaptive/use-window-size-classes). 상태를 읽는 컴포저블들의 최소 공통 부모로 올리는 호이스팅 원칙과 같다(R-17-03) [S12](https://developer.android.com/develop/ui/compose/state-hoisting). "루트에서 정확히 한 번"으로 좁힌 것은 이 팩의 결정이다.
+- 규칙: 창 크기는 앱 루트 컴포저블에서 `currentWindowAdaptiveInfoV2().windowSizeClass`로 한 번 읽고, 그 아래로는 "목록을 몇 열로 그릴지" 같은 결정 결과를 파라미터로 내려보낸다. 하단 바와 내비게이션 레일의 전환은 직접 분기하지 않고 `NavigationSuiteScaffold`에 맡기며, 바 표시 여부는 `rememberNavigationSuiteScaffoldState()`의 `show`·`hide`로 제어한다. 화면이나 컴포넌트가 `LocalConfiguration`으로 창을 직접 재지 않는다.
+- 근거: 창 크기 클래스는 material3-adaptive의 `currentWindowAdaptiveInfoV2()`로 얻는다 — 1.3.0-alpha10이 "Deprecate `currentWindowAdaptiveInfo` and introduce V2 of it"이고 구 함수는 `ReplaceWith("currentWindowAdaptiveInfoV2")` 경고라 이 팩의 `allWarningsAsErrors`에서는 컴파일이 막힌다 [S160](https://developer.android.com/jetpack/androidx/releases/compose-material3-adaptive); 가이드 페이지는 아직 구 함수를 보여 준다. 브레이크포인트는 compact(<600dp)·medium(600~840dp)·expanded(840~1200dp)다. 공식 가이드는 "Localize the logic for handling display size changes by passing window size classes down as state to nested composables just like any other app state"라 하고, 예시에서 앱 루트 컴포저블의 기본 인자로 한 번 계산해 결정 결과(`showTopAppBar`)만 내려보낸다 [S153](https://developer.android.com/develop/ui/compose/layouts/adaptive/use-window-size-classes). 상태를 읽는 컴포저블들의 최소 공통 부모로 올리는 호이스팅 원칙과 같다(R-17-03) [S12](https://developer.android.com/develop/ui/compose/state-hoisting). "루트에서 정확히 한 번"으로 좁힌 것은 이 팩의 결정이다. 내비게이션 영역은 "Replace the container that held the navigation bar (often a `Scaffold`) with `NavigationSuiteScaffold` from the Material 3 adaptive layouts library"이고 표시 여부는 "`NavigationSuiteScaffold`'s `state` parameter"로 제어한다 [S279](https://developer.android.com/agents/skills/jetpack-compose/adaptive/skill).
 - 예시:
   ```kotlin
   // Good — 루트에서 한 번 계산해 결정 결과만 내려보낸다
   @Composable
   fun AppRoot(windowSizeClass: WindowSizeClass = currentWindowAdaptiveInfoV2().windowSizeClass) {
-      val useNavRail = windowSizeClass.isWidthAtLeastBreakpoint(WIDTH_DP_MEDIUM_LOWER_BOUND)
-      AppNavDisplay(useNavRail = useNavRail)
+      val gridColumns = if (windowSizeClass.isWidthAtLeastBreakpoint(WIDTH_DP_MEDIUM_LOWER_BOUND)) 2 else 1
+      AppNavDisplay(gridColumns = gridColumns)
   }
   // Bad — 화면이 스스로 창을 잰다
   @Composable
   fun HomeScreen() { val wide = LocalConfiguration.current.screenWidthDp >= 600 }
   ```
-- 체크: `currentWindowAdaptiveInfo()` 호출이 앱 루트 밖에 있는가. 화면이 `LocalConfiguration`으로 폭을 재는가.
+- 체크: `currentWindowAdaptiveInfo()` 호출이 앱 루트 밖에 있는가. 화면이 `LocalConfiguration`으로 폭을 재는가. 하단 바와 레일의 전환을 `useNavRail` 같은 직접 분기로 만들었는가(`NavigationSuiteScaffold`를 쓰는가).
 
 ### R-18-14 구성 변경과 프로세스 사망은 `android:configChanges`로 피하지 않고 상태 복원으로 대응한다
 - 규칙: 회전·다크 전환·다중 창에서 Activity가 재생성되는 것을 전제로 만든다. 재생성을 막으려고 `android:configChanges`를 적지 않는다. 백스택은 `rememberNavBackStack`, UI 상태는 `rememberSaveable`·`SavedStateHandle`로 복원하고, 저장 상태에는 ID 같은 작은 값만 넣는다. Activity 필드에 상태를 두지 않는다.
@@ -250,3 +254,38 @@
   class MainActivity : ComponentActivity() { private var query: String = "" }
   ```
 - 체크: 매니페스트에 `android:configChanges`가 있는가. 회전 후 사라지면 곤란한 값이 `remember`나 Activity 필드에 있는가.
+
+### R-18-15 `Scaffold` 기본 인셋에는 IME가 없으므로 텍스트 입력 화면은 키보드 인셋을 한 번만 처리한다
+- 규칙: `Scaffold`의 기본 `contentWindowInsets`는 시스템 바와 디스플레이 컷아웃만 담고 IME(키보드)는 담지 않는다. 텍스트 입력이 있는 화면은 키보드 인셋을 다음 중 하나로 한 번만 처리한다 — `Scaffold(contentWindowInsets = WindowInsets.safeDrawing)`(IME 포함, 이때 `imePadding()`을 또 쓰지 않는다), `Modifier.fitInside(WindowInsetsRulers.Ime.current)`, 또는 `innerPadding`을 적용한 컨테이너에 `Modifier.imePadding()`. 같은 인셋을 `innerPadding`과 `imePadding()`으로 두 번 더하지 않는다(R-18-08). `windowSoftInputMode`는 `adjustResize`로 둔다(R-18-05 예시). 목록 안에 텍스트 입력이 있으면 아래쪽 처리는 R-18-08의 `Spacer` 단서를 따른다.
+- 근거: "Scaffold's default `contentWindowInsets` does NOT contain IME insets"이고, IME가 이미 `innerPadding`에 들어 있는데 `imePadding()`을 또 쓰면 "there will be excess padding when the IME opens" [S274](https://developer.android.com/agents/skills/system/edge-to-edge/skill). 이 값은 우리 의존성에서도 `ScaffoldDefaults.contentWindowInsets`가 `WindowInsets.systemBars`와 `displayCutout`의 합집합으로 확인된다(스크래치 바이트코드 확인 2026-10-07). IME가 열릴 때 `imePadding()`이 아래쪽 패딩을 적용해 목록을 줄인다 [S149](https://developer.android.com/develop/ui/compose/system/insets-ui).
+- 예시:
+  ```kotlin
+  // Good — IME 를 contentWindowInsets 로 받고 imePadding 은 쓰지 않는다
+  Scaffold(contentWindowInsets = WindowInsets.safeDrawing) { innerPadding ->
+      Column(Modifier.padding(innerPadding).consumeWindowInsets(innerPadding).verticalScroll(rememberScrollState())) { /* ... */ }
+  }
+  // Good — 기본 contentWindowInsets 에 imePadding 을 더한다
+  Scaffold { innerPadding ->
+      Column(Modifier.padding(innerPadding).consumeWindowInsets(innerPadding).imePadding().verticalScroll(rememberScrollState())) { /* ... */ }
+  }
+  // Bad — IME 인셋이 두 번 더해진다
+  Scaffold(contentWindowInsets = WindowInsets.safeDrawing) { innerPadding ->
+      Column(Modifier.padding(innerPadding).imePadding().verticalScroll(rememberScrollState())) { /* ... */ }
+  }
+  ```
+- 체크: 텍스트 입력 화면에서 IME 인셋을 처리하는 방식이 하나뿐인가. `contentWindowInsets = WindowInsets.safeDrawing`과 `imePadding()`이 함께 있는가. 기본 `Scaffold`에 `imePadding()`도 없이 입력창이 키보드에 가려지는가.
+
+### R-18-16 풀스크린 다이얼로그는 `decorFitsSystemWindows = false`로 edge-to-edge로 만든다
+- 규칙: `DialogProperties(usePlatformDefaultWidth = false)`이고 내용이 `Modifier.fillMaxSize()`인 풀스크린 다이얼로그는 `decorFitsSystemWindows = false`를 지정해 상태 바·내비게이션 바 뒤까지 그린다. 일반 크기의 다이얼로그에는 쓰지 않는다.
+- 근거: "If both the following conditions are true, then the Dialog is full screen and must be made edge-to-edge" — `DialogProperties`에 `usePlatformDefaultWidth = false`가 있고 `Modifier.fillMaxSize()`를 부를 때이며, 해법은 "set `decorFitsSystemWindows = false` in the `DialogProperties`"다 [S274](https://developer.android.com/agents/skills/system/edge-to-edge/skill).
+- 예시:
+  ```kotlin
+  // Good
+  Dialog(
+      onDismissRequest = { /* ... */ },
+      properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
+  ) { Box(Modifier.fillMaxSize()) { /* ... */ } }
+  // Bad — 풀스크린인데 decorFitsSystemWindows 가 기본값이라 바 뒤로 그려지지 않는다
+  Dialog(onDismissRequest = { }, properties = DialogProperties(usePlatformDefaultWidth = false)) { Box(Modifier.fillMaxSize()) { } }
+  ```
+- 체크: `usePlatformDefaultWidth = false`와 `fillMaxSize()`를 함께 쓰는 다이얼로그에 `decorFitsSystemWindows = false`가 있는가.

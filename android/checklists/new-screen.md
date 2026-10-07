@@ -26,15 +26,15 @@
 
 ## 구현 순서
 1. `{{Feature}}Key` + entry 등록 — `templates/ui/{{Feature}}Route.kt`
-   → 검증: `NavKey` 구현 + `@Serializable`, `:app`의 entryProvider에 추가됨 (R-13-01, R-13-04)
+   → 검증: `NavKey` 구현 + `@Serializable`, `:app`의 entryProvider에 추가되고 `contentPadding = innerPadding`을 넘김 (R-13-01, R-13-04, R-18-08)
 2. `{{Feature}}UiState` — `templates/ui/{{Feature}}UiState.kt`
    → 검증: 불변 data class 하나, 기본값 전부 있음, 로딩·에러가 명시 필드 (R-12-01, R-12-08)
 3. `{{Feature}}ViewModel` — `templates/ui/{{Feature}}ViewModel.kt` (MVI면 `templates/ui/mvi/{{Feature}}ViewModel.kt`)
-   → 검증: `@HiltViewModel` + `@Inject constructor`, `asStateFlow()` 노출, `init`에서 비동기 시작 없음 (R-14-01, R-12-05, R-12-07)
+   → 검증: `@HiltViewModel` + `@Inject constructor`(키 인자가 필요하면 `@AssistedInject`), `asStateFlow()` 노출, `init`에서 비동기 시작 없음 (R-14-01, R-12-05, R-12-07)
 4. `model/{{Feature}}.kt`(모델·Error·Result) → `data/`(Repository 인터페이스·구현·DataSource) → `domain/`UseCase (결정 4가 예일 때)
    → 검증: 인터페이스·구현 모두 data 패키지, data는 domain을 import하지 않음 (R-11-01, R-11-02)
 5. `{{Feature}}Screen` + Preview — `templates/ui/{{Feature}}Screen.kt`
-   → 검증: 상태+콜백 파라미터만, Preview 2종(다크·폰트 배율) (R-17-01, R-17-02)
+   → 검증: 상태+콜백(+`modifier`·`contentPadding` 같은 레이아웃 값) 파라미터만, Preview 2종(다크·폰트 배율) (R-17-01, R-17-02)
 6. DI 바인딩 — `templates/di/{{Feature}}Module.kt`
    → 검증: 인터페이스는 `@Binds`, `di/` 패키지, 필드 주입 없음 (R-14-04, R-14-05, R-14-02)
 7. 테스트 — `templates/test/{{Feature}}ViewModelTest.kt`, `templates/test/{{Feature}}ScreenshotTest.kt`, `templates/test/Fake{{Feature}}Repository.kt`

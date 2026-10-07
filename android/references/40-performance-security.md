@@ -27,29 +27,34 @@
   ```
 - 체크: 시작 경로에 동기 I/O나 네트워크 대기가 들어갔는가. TTFD 지점이 코드로 표시돼 있는가.
 
-### R-40-03 릴리스 빌드에 Baseline Profile과 profileinstaller를 포함한다
-- 규칙: 릴리스 빌드에 Baseline Profile을 생성해 포함하고 `androidx.profileinstaller` 의존성을 넣는다. 프로파일 생성용 변이는 최적화를 끄고 배포 릴리스는 켠다(DSL 형태는 R-19-04가 소유한다).
-- 근거: Baseline Profile은 첫 실행부터 시작 성능을 개선하며(Startup Profile·R8 규칙 재작성이 추가 개선), 산출물은 `assets/dexopt/baseline.prof`이고 `androidx.profileinstaller`가 필요하다. 생성 변이는 minify를 끄고 릴리스는 켠다 [S37](https://developer.android.com/topic/performance/baselineprofiles/overview).
+### R-40-03 릴리스 빌드에 Baseline Profile과 profileinstaller를 포함하고 생성·벤치마크 변이는 플러그인이 만든 것을 쓴다
+- 규칙: 릴리스 빌드에 Baseline Profile을 생성해 포함하고 `androidx.profileinstaller` 의존성을 넣는다. 프로파일 생성용 변이(`nonMinifiedRelease`, 난독화·최적화를 끔)와 릴리스 설정을 이어받는 벤치마크용 변이(`benchmarkRelease`)는 Baseline Profile Gradle 플러그인이 `release`에서 자동으로 만들어 주므로 `buildTypes`에 R8 설정까지 손으로 적지 않는다(서명 같은 일부 속성만 지정할 수 있다). 배포 릴리스는 R8을 켠다(DSL 형태는 R-19-04가 소유한다).
+- 근거: Baseline Profile은 첫 실행부터 시작 성능을 개선하며(Startup Profile·R8 규칙 재작성이 추가 개선), 산출물은 `assets/dexopt/baseline.prof`이고 `androidx.profileinstaller`가 필요하다. 프로파일 생성 변이는 난독화·최적화를 꺼야 하고 "The Baseline Profile Gradle Plugin automatically handles this configuration for you"이며 릴리스는 `isMinifyEnabled = true`다 [S37](https://developer.android.com/topic/performance/baselineprofiles/overview). 플러그인이 `release`용으로 `benchmarkRelease`와 `nonMinifiedRelease`를 만들고 "These build types are automatically configured for the specific use case and don't generally need any customization"이다 [S269](https://developer.android.com/topic/performance/baselineprofiles/configure-baselineprofiles).
 - 예시:
   ```kotlin
-  // Good
+  // Good — buildTypes 에는 release 만 둔다. 플러그인이 nonMinifiedRelease(프로파일 생성, R8 끔)와 benchmarkRelease(측정, 릴리스 설정 상속)를 만든다
   release { optimization { enable = true } }
+  // Bad: 측정용 변이까지 R8을 꺼 실제 릴리스와 다른 코드를 잰다 (R-40-01 위반)
   benchmarkRelease { initWith(release); optimization { enable = false } }
-  // Bad: 프로파일 생성 변이까지 난독화해 프로파일 규칙이 실제 릴리스와 어긋난다
   ```
-- 체크: 릴리스 APK에 `assets/dexopt/baseline.prof`가 있는가. 생성 변이의 minify 설정이 위와 같은가.
+- 체크: 릴리스 APK에 `assets/dexopt/baseline.prof`가 있는가. `buildTypes`에 `benchmarkRelease`·`nonMinifiedRelease`의 R8 설정을 손으로 적지 않았는가.
 
 ### R-40-04 릴리스 빌드는 R8을 켠다
-- 규칙: 배포용 릴리스 변이는 최적화를 켠다(DSL 형태는 R-19-04가 소유한다). 크래시가 난다고 R8을 끄지 않고 keep 규칙으로 좁혀 해결하며, 규칙을 추가하면 왜 필요한지 주석으로 남긴다.
-- 근거: 릴리스는 R8을 켜는 것이 전제이며 R8 규칙 재작성이 시작 성능 개선에 기여한다 [S37](https://developer.android.com/topic/performance/baselineprofiles/overview). 성능 측정도 R8 켠 상태를 기준으로 한다 [S16](https://developer.android.com/develop/ui/compose/performance).
+- 규칙: 배포용 릴리스 변이는 최적화를 켠다(DSL 형태는 R-19-04가 소유한다). 크래시가 난다고 R8을 끄지 않고 keep 규칙으로 좁혀 해결하며, 규칙을 추가하면 왜 필요한지 주석으로 남긴다. keep 규칙은 `src/<variant>/keepRules`의 `.keep` 파일(예: `src/main/keepRules/app.keep`)에 둔다 — 새 DSL에서는 이 위치가 필수다. 패키지 전체를 잡는 keep(`pkg.**`)은 쓰지 않고 특정 클래스·멤버로 좁힌다. `-dontobfuscate`·`-dontoptimize`·`-dontshrink`는 디버깅 중에만 쓰고 릴리스에서는 뺀다. 의존 라이브러리는 R8과 호환되는 것을 고른다.
+- 근거: 릴리스는 R8을 켜는 것이 전제이며 R8 규칙 재작성이 시작 성능 개선에 기여한다 [S37](https://developer.android.com/topic/performance/baselineprofiles/overview). 성능 측정도 R8 켠 상태를 기준으로 한다 [S16](https://developer.android.com/develop/ui/compose/performance). "Add your keep rules to a file with the suffix `.keep` in the `src/<variant>/keepRules` source set"이고 새 DSL에서는 "you must place your keep rules" 거기에 둔다 [S129](https://developer.android.com/topic/performance/app-optimization/enable-app-optimization). "Keep rules that are narrowly scoped allow for maximum optimization. Use keep rules that are as specific as possible"이고 R8과 호환되는 라이브러리를 고르라고 한다 [S270](https://developer.android.com/topic/performance/app-optimization/keep-rules-overview). "You should only use the options `-dontoptimize`, `-dontshrink`, and `-dontobfuscate` temporarily during debugging or development" [S271](https://developer.android.com/topic/performance/app-optimization/global-options).
 - 예시:
   ```proguard
-  # Good: 리플렉션으로 접근하는 모델만 좁혀 keep
+  # app/src/main/keepRules/app.keep — 왜 필요한지 주석을 남긴다
+  # Good: 리플렉션으로 읽는 이 클래스의 필드만 유지
+  -keepclassmembers class com.example.model.UserDto { <fields>; }
+  # Bad: 패키지 전체를 잡아 R8 최적화를 막는다
   -keep class com.example.model.** { *; }
   # Bad
   -keep class ** { *; }
+  # Bad: 디버깅용 전역 옵션을 릴리스에 남긴다
+  -dontobfuscate
   ```
-- 체크: 릴리스 변이의 minify가 켜져 있는가. 새로 추가된 keep 규칙에 이유가 적혀 있는가.
+- 체크: 릴리스 변이의 minify가 켜져 있는가. 새로 추가된 keep 규칙에 이유가 적혀 있는가. `.keep` 파일이 `keepRules` 소스셋에 있는가. `pkg.**` 같은 넓은 keep이나 `-dontobfuscate`·`-dontoptimize`·`-dontshrink`가 릴리스에 남아 있는가.
 
 ### R-40-05 재구성 비용을 늘리는 패턴을 넣지 않는다
 - 규칙: 이미 읽은 상태에 되쓰기(backwards write)를 하지 않고, lazy 레이아웃에는 안정적인 `key`를 주며, 자주 바뀌는 값은 람다 기반 modifier(`Modifier.offset { }`)로 읽기를 미룬다. 구체적인 Composable 작성 규칙은 17-compose-ui.md를 따른다.

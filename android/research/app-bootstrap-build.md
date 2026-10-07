@@ -84,3 +84,14 @@
 조사 노트: app-bootstrap-build (2026-09-16). 기존 URL 재사용: S46(AGP 릴리스 노트), S38(보안 권장사항) — 새 번호를 부여하지 않았다.
 
 2026-09-16 astra 리뷰 반영: R-19-04(`optimization { enable = true }`)가 R-40-01·R-40-03·R-40-04·R-31-09의 `isMinifyEnabled` 문구·예시와 충돌해 40·31은 "최적화 켬" 요구만 남기고 DSL 소유를 R-19-04로 통일(R-40-03 예시는 `optimization { enable = false }`로 바꿨고 이 DSL 조합은 실빌드 미실증). R-19-10 Bad를 실제 명령으로 교체. S130의 `defaultTargetSdkToCompileSdkIfUnset` 인용은 2026-09-16 재확인됨(astra 보류 해소).
+
+## 추가 확인 (2026-10-07) — R8·Baseline Profile 공식 문서
+
+- `android docs fetch`로 확인: Baseline Profile 플러그인은 `release`에서 `benchmarkRelease`와 `nonMinifiedRelease`를 자동 생성한다(S269). `nonMinifiedRelease`는 `isMinifyEnabled = false` 등이 항상 덮어써진다. 기존 R-40-03 예시의 `benchmarkRelease { optimization { enable = false } }`는 변이 이름과 R8 설정이 모두 어긋나 있었다.
+- keep 규칙 위치는 `src/<variant>/keepRules`의 `.keep` 파일이며 새 DSL(AGP 9.3+)에서는 필수다(S129). 좁은 keep(S270), 전역 옵션은 디버깅 중에만(S271).
+- R8 구성 분석 리포트: AGP 9.3.0+ `./gradlew :app:analyzeReleaseR8Config`, 릴리스 빌드가 `configanalyzer.html`도 만든다(S272). 최적화 뒤 크래시는 대개 깨진 리플렉션이라 앱 동작을 strongly test 하라고 안내한다(S273).
+
+## 추가 확인 (2026-10-07) — AGP 9의 KGP 의존과 useAndroidX
+
+- AGP 9.0은 KGP 2.2.10을 런타임 의존으로 갖고, 더 높은 KGP·KSP는 최상위 빌드 파일의 `buildscript` classpath로 명시하라고 안내한다(S130). `./gradlew buildEnvironment`로 확인하니 팩 템플릿 구성은 `kotlin-gradle-plugin:2.2.10 -> 2.4.20`이 Compose 컴파일러 플러그인의 전이 의존으로 우연히 맞춰진 것이었다 → R-19-15, 템플릿에 classpath를 추가했다. KSP는 루트 `plugins` 별칭이 `2.2.10-2.0.2 -> 2.3.11`로 이미 명시한다.
+- `android.useAndroidx` 기본값은 AGP 9.0에서 `false` → `true`(S130 변경 표). 템플릿 `gradle.properties`의 "AGP가 요구하는 값" 주석은 사실이 아니게 돼 고쳤다(줄 자체는 의도 표시로 남김).

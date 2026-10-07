@@ -158,3 +158,14 @@
 | S160 | Google | Compose Material 3 Adaptive 릴리스 노트 | https://developer.android.com/jetpack/androidx/releases/compose-material3-adaptive | 공식 문서 |
 
 2026-09-16 astra 리뷰 반영: S159(`Scaffold`는 인셋을 소비하지 않음 → `consumeWindowInsets(innerPadding)`)·S160(1.3.0-alpha10 `currentWindowAdaptiveInfo` deprecated → V2; 소스 확인 `currentWindowAdaptiveInfoV2(): WindowAdaptiveInfo`, 구 함수 `ReplaceWith` WARNING) 추가. R-18-10·R-18-13의 직접 인용 2건이 원문에 없어 요약으로 교체하고 "진입점 하나"·"루트에서 한 번"은 팩 결정으로 표기. R-18-07에 실행 OS 조건(Android 15 기기에서는 opt-out 유효) 추가. R-18-10 공개 범위를 `theme/` 패키지로 좁혀 R-17-14(공통 컴포넌트 공개)와의 충돌 해소.
+
+## 추가 확인 (2026-10-07) — 공식 edge-to-edge 스킬과의 대조
+
+- 공식 스킬(S274)과 팩을 대조해 팩에 없던 항목을 R-18-15(IME)·R-18-16(풀스크린 다이얼로그)와 R-18-07·08·09의 보강 문장으로 옮겼다.
+- 스킬의 "목록은 `contentPadding`"과 공식 인셋 가이드(S149)의 "목록 안에 TextField가 있으면 `contentPadding` 대신 `Spacer`"는 단서가 서로 달라 R-18-08에 함께 적었다.
+- `ScaffoldDefaults.contentWindowInsets`는 Material3 런타임 바이트코드에서 `systemBars ∪ displayCutout`(IME 없음)으로 확인했다.
+
+## 추가 확인 (2026-10-07) — styles·Grid 스킬
+
+- `styles` 스킬(S285)은 실험 API(Compose foundation alpha, `ExperimentalFoundationStyleApi` opt-in)이고 Material 컴포넌트 스타일은 지원하지 않는다 → R-18-10에 "범위 밖"으로 적었다.
+- Grid 가이드(S286)는 `foundation-layout`을 개별 `compose` 버전 키로 선언한다(공개 문서 `1.13.0-alpha03`, 로컬 스킬 사본 `1.12.0-rc01`) → R-33-04의 BOM 단일 원칙에 "실험 API는 사용자 확인 후 예외"를 적었다.

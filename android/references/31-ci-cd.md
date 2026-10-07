@@ -116,14 +116,14 @@ CI는 규칙 집행의 두 번째 층이다. 기계가 판정할 수 있는 규�
 - 체크: 저장소 검색에 키 문자열이 남아 있는가. 포크 PR에서 시크릿 잡이 도는가.
 
 ### R-31-09 릴리스 검증은 R8을 켠 릴리스 빌드로 별도 잡에서 한다
-- 규칙: `assembleRelease`(최적화 켬 — DSL은 R-19-04)와 성능 측정은 PR 게이트가 아니라 릴리스 준비 잡에서 돌린다. 디버그 빌드 결과로 성능이나 난독화 안정성을 판단하지 않는다.
-- 근거: 성능 측정은 디버그 모드가 비용을 얹기 때문에 릴리스 빌드에서 해야 한다 [S16](https://developer.android.com/develop/ui/compose/performance). Baseline Profile도 릴리스 변이에서 최적화를 켠 상태를 전제한다 [S37](https://developer.android.com/topic/performance/baselineprofiles/overview).
+- 규칙: `assembleRelease`(최적화 켬 — DSL은 R-19-04)와 성능 측정은 PR 게이트가 아니라 릴리스 준비 잡에서 돌린다. 디버그 빌드 결과로 성능이나 난독화 안정성을 판단하지 않는다. 릴리스 APK는 빌드에서 끝내지 않고 기기에서 실행해 시작과 핵심 흐름이 크래시 없이 도는지 확인한다(R8로만 깨지는 리플렉션 문제는 실행에서 드러난다). 과한 keep 규칙은 R8 구성 분석 리포트(AGP 9.3+: `./gradlew :app:analyzeReleaseR8Config`)로 점검한다.
+- 근거: 성능 측정은 디버그 모드가 비용을 얹기 때문에 릴리스 빌드에서 해야 한다 [S16](https://developer.android.com/develop/ui/compose/performance). Baseline Profile도 릴리스 변이에서 최적화를 켠 상태를 전제한다 [S37](https://developer.android.com/topic/performance/baselineprofiles/overview). "Since R8's optimizations update your app's code, it's important to strongly test your app's behavior"이고 최적화 뒤 크래시는 대개 깨진 리플렉션이다 [S273](https://developer.android.com/topic/performance/app-optimization/troubleshoot-the-optimization). 구성 분석 리포트는 AGP 9.3.0 이상에서 `./gradlew :app:analyzeReleaseR8Config`로 만든다 [S272](https://developer.android.com/topic/performance/app-optimization/r8-configuration-analyzer).
 - 예시:
   ```yaml
   # Good: release 잡에서 ./gradlew assembleRelease 와 매크로벤치마크
   # Bad: PR 마다 assembleRelease 를 돌려 게이트 시간을 늘린다
   ```
-- 체크: 릴리스 잡이 R8을 켠 변이를 빌드하는가. 성능 수치를 디버그 빌드에서 재지 않았는가.
+- 체크: 릴리스 잡이 R8을 켠 변이를 빌드하는가. 성능 수치를 디버그 빌드에서 재지 않았는가. 릴리스 APK를 기기에서 실행해 확인했는가.
 
 ## 실행 위치 (R-31-18, R-31-19)
 

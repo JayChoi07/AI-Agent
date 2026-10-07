@@ -2,7 +2,9 @@ package {{package}}.feature.{{feature}}.ui
 
 import android.content.res.Configuration
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
@@ -14,7 +16,8 @@ import {{package}}.core.designsystem.theme.AppTheme
 import {{package}}.feature.{{feature}}.model.{{Feature}}Error
 
 /**
- * 순수 UI. 상태와 콜백만 받는다 (R-17-01). Modifier는 첫 선택 파라미터.
+ * 순수 UI. 상태와 콜백만 받는다 (R-17-01). Modifier는 첫 선택 파라미터. `contentPadding`은 상태가 아닌 레이아웃 값이라 함께 받는다 —
+ * 목록이 있는 화면은 이것을 `LazyColumn`의 `contentPadding`으로 쓴다 (R-18-08).
  * `onBack`은 뼈대에서 아직 쓰이지 않는다. 실제 화면에서는 TopAppBar의 navigationIcon에 연결한다.
  */
 @Suppress("UnusedParameter")
@@ -24,9 +27,13 @@ fun {{Feature}}Screen(
     onEvent: ({{Feature}}Event) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(),
 ) {
     val error = uiState.error
-    Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+    Box(
+        modifier = modifier.fillMaxSize().padding(contentPadding),
+        contentAlignment = Alignment.Center,
+    ) {
         when {
             uiState.isLoading -> CircularProgressIndicator()
             error != null ->

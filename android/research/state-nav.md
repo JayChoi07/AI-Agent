@@ -239,3 +239,22 @@ Hilt 연동으로 확인된 것은 모듈화 패턴뿐이다 — `@IntoSet`으�
 - Orbit·Circuit·FlowRedux·Molecule의 KMP/Android 최소 지원 버전, Compose 버전 호환 매트릭스는 확인하지 않았다.
 - Circuit이 0.x 버전 정책상 API 안정성을 어떻게 약속하는지(semver 적용 여부) 공식 문장을 찾지 못했다. 비교표의 "여전히 0.x" 지적은 버전 번호에서만 나온 관찰이다.
 - S1·S3·S4·S5 및 Nav3 하위 페이지 대부분은 페이지 하단 최종 갱신일을 확보하지 못했다(S2 2026-07-21, S6 2026-09-01, S15 2026-08-26만 확인).
+
+## 추가 확인 (2026-10-07) — 키 인자를 받는 ViewModel
+
+- 공식 navigation-3 스킬 `recipes/passingarguments.md`(= https://developer.android.com/guide/navigation/navigation-3/recipes/passingarguments, S268)가 Hilt ViewModel에 내비게이션 키를 넘기는 방법으로 `@HiltViewModel(assistedFactory = ...)` + `@AssistedInject constructor(@Assisted key)` + `@AssistedFactory` + `hiltViewModel<VM, VM.Factory>(creationCallback = { it.create(key) })`를 보인다. 같은 레시피가 `rememberViewModelStoreNavEntryDecorator()`를 넣어야 엔트리마다 새 ViewModel이 만들어진다고 적는다.
+- 팩의 R-14-01·Konsist(`primaryConstructors`에 `@Inject` 요구)는 이 패턴을 막고 있었다 → `@AssistedInject`를 허용하도록 고쳤다.
+
+## 추가 확인 (2026-10-07) — Scene 전략과 다중 창
+
+- 다이얼로그 레시피(S275)는 `NavDisplay(sceneStrategies = listOf(dialogStrategy))`로 전략을 등록해야 하고, 팩 템플릿의 `NavDisplay`에는 등록이 없었다 → R-13-04에 등록 의무를 적었다.
+- 바텀시트는 코어에 전략이 없어 레시피 코드를 복사해 써야 하고(S25) 등록 순서가 중요하다(S276).
+- 다중 창은 공식 adaptive 스킬(S279)이 `SceneStrategy`만 쓰라고 하고 `ListDetailPaneScaffold`를 금지한다 → R-13-09를 신설했다. 레시피(S278)의 API: `rememberListDetailSceneStrategy<NavKey>()`, `ListDetailSceneStrategy.listPane()/detailPane()/extraPane()`.
+
+## 추가 확인 (2026-10-07) — 인증 게이트·멀티 백스택·@IntoSet
+
+- NavEntryDecorator 문서(S23)가 드는 용도는 엔트리별 의존성·결과 전달·공유 객체 스코프·로깅/디버깅/트레이싱·정리이고 인증 게이트는 없다. 팩 R-13-05 근거의 "인증 게이트도 NavEntryDecorator" 문구는 출처가 뒷받침하지 않아 지웠고, 공식 conditional 레시피(S280)대로 R-13-10을 신설했다.
+- 멀티 백스택 레시피(S281)는 `NavDisplay(entries = navigationState.toDecoratedEntries(...))` 오버로드를 쓰므로 팩 템플릿 `Navigator.kt`의 "이 클래스만 바꾸면 된다"는 틀렸다(NavDisplay 호출부도 바뀐다). 레시피는 스택마다 SaveableStateHolder 데코레이터만 두고 ViewModel store 데코레이터는 없다.
+- 모듈화 레시피(S282)의 `EntryProviderInstaller`+`@IntoSet`+`@JvmSuppressWildcards` 형태를 R-13-04에 옮겼다. 그 레시피의 `Navigator`는 `mutableStateListOf`라 프로세스 사망을 넘기지 못하므로(R-13-03은 `rememberNavBackStack`) 그대로 복사하지 않는다.
+- `lifecycle-viewmodel-navigation3`는 Google Maven에 2.11.0 stable이 있어(2026-10-07 확인) 팩 카탈로그의 `lifecycle = "2.11.0"` 핀은 유효하다. 공식 마이그레이션 가이드의 2.10.0-rc01은 예시 버전일 뿐이다.
+- 공식 레시피가 클릭마다 `dropUnlessResumed { }`로 감싸지만 이유를 문서가 적지 않아 규칙으로 올리지 않았다(출처가 침묵하는 관행은 규칙으로 만들지 않는다).

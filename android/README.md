@@ -1,7 +1,7 @@
 # android — Android 그린필드 표준 팩
 
-Kotlin·Compose·Navigation 3·Hilt·멀티모듈 기준의 Android 개발 표준을 **규칙 296개**(출처 267건) · **유형별 체크리스트 8개** · **코드 템플릿 42개**(치환 안내 포함 43파일) · **빌드 강제 장치** · **라우터 스킬**로 묶은 팩이다.
-스킬 이름은 `android-standards`이고, 진입점은 [`SKILL.md`](SKILL.md)다. 요청 유형을 먼저 분류한 뒤 그 유형의 체크리스트만 따라가는 라우터 구조라, [`references/`](references) 26개 파일을 전부 읽지 않는다.
+Kotlin·Compose·Navigation 3·Hilt·멀티모듈 기준의 Android 개발 표준을 **규칙 303개**(출처 285건) · **유형별 체크리스트 8개** · **코드 템플릿 42개**(치환 안내 포함 43파일) · **빌드 강제 장치** · **라우터 스킬**로 묶은 팩이다.
+스킬 이름은 `android-standards`이고, 진입점은 [`SKILL.md`](SKILL.md)다. 요청 유형을 먼저 분류한 뒤 그 유형의 체크리스트만 따라가는 라우터 구조라, [`references/`](references) 27개 파일을 전부 읽지 않는다.
 대상은 **그린필드**(신규 Kotlin·Compose 프로젝트)이며, 레거시 프로젝트에서는 신규 코드에만 적용한다.
 모든 규칙에는 `R-NN-MM` ID와 [`references/90-sources.md`](references/90-sources.md)의 출처 번호(S)가 붙는다. 출처 없는 규칙은 쓰지 않는다.
 
@@ -72,7 +72,7 @@ ktlintCheck → detektDebug → 테스트 → assembleDebug 순서로 게이트�
 
 1. **출처 확보** — 공식 문서·릴리즈 노트 등 인용 가능한 URL을 찾는다. 출처가 침묵하는 관행은 규칙으로 만들지 않는다. 도구 기본값을 쓸 때는 근거 줄에 "출처는 도구 기본값"이라고 명시한다.
 2. **`research/`에 기록** — 해당 주제 노트에 문서명·URL·확인 내용을 추가한다. 새 주제면 노트를 추가한다.
-3. **`references/90-sources.md`에 등록** — 전역 번호 `S###` 행을 표 맨 아래에 추가한다. 기존 번호는 재배열하지 않는다. 채택 결정은 `references/91-decisions.md`의 결정 표에 적는다.
+3. **`references/90-sources.md`에 등록** — 전역 번호 `S###` 행을 표 맨 아래에 추가한다(S280부터는 `references/92-sources-2.md`). 기존 번호는 재배열하지 않는다. 채택 결정은 `references/91-decisions.md`의 결정 표에 적는다.
 4. **`references/NN-*.md`에 규칙 작성** — `### R-NN-MM` + `- 규칙:` `- 근거:`(S번호 + URL) `- 예시:`(Good/Bad) `- 체크:` 5요소를 채운다. R-ID는 파일 번호와 일치하고 전역 유일해야 한다. 파일당 300줄 이하.
 5. **연동 갱신** — 규칙이 결정·검증에 걸리면 해당 `checklists/`, `templates/`, `enforcement/`(detekt.yml·Konsist)도 같이 고친다.
 6. **검사** — `bash android/scripts/check-pack.sh`가 통과해야 한다. 줄 수 한도, 5요소, 근거 URL, R-ID 중복, 체크리스트 필수 헤더, 그리고 SKILL·checklists·templates·enforcement·README 가 인용한 R-ID 가 `references/`에 실제로 있는지를 검사한다.
@@ -116,8 +116,8 @@ cmd /c mklink /J "%USERPROFILE%\.claude\skills\android-standards" "<repo>\androi
 ```
 android/
 ├── SKILL.md          # 라우터 — 유형 분류 → 체크리스트, 절차·보고 형식 (≤150줄)
-├── references/       # 규칙 26파일. 00 원칙 / 10~17 구조·아키텍처 / 18 앱 셸 / 19 빌드 설정
-│                     #             / 20~23 Kotlin·비동기·에러 / 30~32 테스트·CI·배포·리뷰 / 24 백그라운드 / 25 권한 / 26 시간 / 27 Room / 33 의존성 업데이트 / 40 성능·보안 / 90 출처(S01~S267) / 91 결정·보류
+├── references/       # 규칙·출처 27파일. 00 원칙 / 10~17 구조·아키텍처 / 18 앱 셸 / 19 빌드 설정
+│                     #             / 20~23 Kotlin·비동기·에러 / 30~32 테스트·CI·배포·리뷰 / 24 백그라운드 / 25 권한 / 26 시간 / 27 Room / 33 의존성 업데이트 / 40 성능·보안 / 90 출처(S01~S279) / 91 결정·보류 / 92 출처 이어서(S280~)
 ├── checklists/       # 유형별 파이프라인 8파일. 컨텍스트 수집 → 결정 항목 → 구현 순서 → 산출물 검증
 ├── templates/        # 치환형 코드 골격. app/(앱 셸·루트 빌드) · core/(3모듈 빌드 파일) · designsystem/ · ui/ · ui/mvi/ · domain/ · data/
 │                     #   · model/ · di/ · test/ · androidtest/ · module/

@@ -18,7 +18,7 @@
 ## 규칙
 
 ### R-17-01 Screen 컴포저블은 상태와 콜백만 받는다
-- 규칙: `XxxScreen`은 `uiState`와 이벤트 콜백(`onEvent`·`onXxxClick`)만 파라미터로 받는다. ViewModel·`MutableState`·`State<T>`를 파라미터로 넘기지 않는다. ViewModel 주입과 상태 수집은 Route/entry 컴포저블 한 곳에서만 한다.
+- 규칙: `XxxScreen`은 `uiState`와 이벤트 콜백(`onEvent`·`onXxxClick`)만 상태로 받는다. ViewModel·`MutableState`·`State<T>`를 파라미터로 넘기지 않는다. ViewModel 주입과 상태 수집은 Route/entry 컴포저블 한 곳에서만 한다. 상태가 아닌 레이아웃 값은 함께 받을 수 있다 — `modifier`, 그리고 R-18-08에 따라 `:app`의 `Scaffold`에서 받아 내려보낸 `contentPadding: PaddingValues`(목록이 없는 화면은 루트 컨테이너의 `Modifier.padding`으로 쓴다).
 - 근거: `MutableState<T>` 파라미터는 상태의 공동 소유를 부추기므로 `value: T` + `onValueChange: (T) -> Unit`을 쓴다 [S18](https://android.googlesource.com/platform/frameworks/support/+/androidx-main/compose/docs/compose-api-guidelines.md), 같은 규정의 컴포넌트 지침 [S19](https://android.googlesource.com/platform/frameworks/support/+/androidx-main/compose/docs/compose-component-api-guidelines.md), UI는 상태를 그리고 변경은 상태 홀더에 위임한다 [S08](https://developer.android.com/topic/architecture/ui-layer), 리프 컴포저블은 ViewModel을 모른다는 국내 적용 사례 [S111](https://techblog.lycorp.co.jp/ko/developing-android-ui-with-jetpack-compose)
 - 예시:
   ```kotlin
@@ -31,11 +31,11 @@
   // Bad
   @Composable fun NewsScreen(viewModel: NewsViewModel)
   ```
-- 체크: `Screen` 파라미터에 ViewModel이나 `MutableState`가 있는가. 상태 수집이 Route 밖에서 일어나는가.
+- 체크: `Screen` 파라미터에 ViewModel이나 `MutableState`가 있는가. `modifier`·`contentPadding` 외에 상태·콜백이 아닌 파라미터가 있는가. 상태 수집이 Route 밖에서 일어나는가.
 
 ### R-17-02 모든 Screen에 다크와 폰트 배율 두 종류의 `@Preview`를 붙인다
-- 규칙: 각 `XxxScreen`마다 최소 2개의 프리뷰를 둔다. 하나는 `uiMode = UI_MODE_NIGHT_YES`(다크), 하나는 `fontScale = 1.5f`(큰 글자)다. 프리뷰는 ViewModel 없이 더미 `UiState`를 넘겨 만든다. 로딩·에러 같은 주요 상태가 있으면 상태별 프리뷰를 추가한다.
-- 근거: 컴포저블의 상태별 미리보기와 라이트/다크(`uiMode = UI_MODE_NIGHT_YES`) 프리뷰를 규약으로 운영한 사례 [S111](https://techblog.lycorp.co.jp/ko/developing-android-ui-with-jetpack-compose), 프리뷰가 스크린샷 테스트의 입력이 된다 [S34](https://developer.android.com/studio/preview/compose-screenshot-testing), 프리뷰 캡처 기반 검증 도구 [S87](https://raw.githubusercontent.com/takahirom/roborazzi/main/README.md). 폰트 배율 변형은 접근성 회귀를 프리뷰 단계에서 잡으려는 이 팩의 확정 사항이며, 출처가 뒷받침하는 범위는 프리뷰 의무화와 다크 변형까지다
+- 규칙: 각 `XxxScreen`마다 최소 2개의 프리뷰를 둔다. 하나는 `uiMode = UI_MODE_NIGHT_YES`(다크), 하나는 `fontScale = 1.5f`(큰 글자)다. 프리뷰는 ViewModel 없이 더미 `UiState`를 넘겨 만든다. 로딩·에러 같은 주요 상태가 있으면 상태별 프리뷰를 추가한다. 적응형 화면(R-18-13)은 폼팩터 프리뷰(`Devices.PHONE`·`FOLDABLE`·`TABLET`·`DESKTOP`)도 더한다.
+- 근거: 컴포저블의 상태별 미리보기와 라이트/다크(`uiMode = UI_MODE_NIGHT_YES`) 프리뷰를 규약으로 운영한 사례 [S111](https://techblog.lycorp.co.jp/ko/developing-android-ui-with-jetpack-compose), 프리뷰가 스크린샷 테스트의 입력이 된다 [S34](https://developer.android.com/studio/preview/compose-screenshot-testing), 프리뷰 캡처 기반 검증 도구 [S87](https://raw.githubusercontent.com/takahirom/roborazzi/main/README.md). 폰트 배율 변형은 접근성 회귀를 프리뷰 단계에서 잡으려는 이 팩의 확정 사항이며, 출처가 뒷받침하는 범위는 프리뷰 의무화와 다크 변형까지다. 공식 adaptive 스킬이 주요 폼팩터마다 `@Preview(device = Devices.PHONE/FOLDABLE/TABLET/DESKTOP)` 프리뷰를 만들라고 한다 [S279](https://developer.android.com/agents/skills/jetpack-compose/adaptive/skill).
 - 예시:
   ```kotlin
   // Good

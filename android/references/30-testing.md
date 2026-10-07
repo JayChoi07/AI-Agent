@@ -12,8 +12,10 @@ Google은 테스트를 실행 위치(로컬 host-side / 계측 instrumented)와 
 |---|---|---|---|
 | small | ViewModel·UseCase·Repository·매퍼 | `src/test` | JUnit4 + coroutines-test + Turbine |
 | small(스냅숏) | Composable 화면 렌더링 | `src/test` | Roborazzi + Robolectric |
-| medium | 화면 조작 + fake 데이터 계층 | `src/androidTest` | Compose Test Rule |
+| medium | 화면 조작 + fake 데이터 계층 | `src/test` (Robolectric) | Compose Test Rule |
 | big | 대표 사용자 플로우 1~2개 | `src/androidTest` | Compose Test Rule |
+
+화면 조작 테스트는 Robolectric 위에서 `src/test`로 돌리고 기기가 필요한 대표 플로우만 `src/androidTest`에 둔다(R-30-12). 공식 testing-setup 스킬이 "Espresso or Compose UI tests live in the `test` sourceset because they will be run with Robolectric. If instrumented (emulator or device) tests are requested, put them in the `androidTest` sourceset"라고 안내한다 [S283](https://developer.android.com/agents/skills/testing/testing-setup/skill).
 
 ## 결정 매트릭스 — 스크린샷 도구
 
@@ -22,6 +24,8 @@ Google은 테스트를 실행 위치(로컬 host-side / 계측 instrumented)와 
 | 안정 릴리스 | 있음 [S87](https://raw.githubusercontent.com/takahirom/roborazzi/main/README.md) | 없음(alpha, "pre-AGP 9.0 consumers") [S88](https://raw.githubusercontent.com/cashapp/paparazzi/master/README.md) | A |
 | Android 프레임워크·Hilt 주입 | Robolectric으로 동작 [S87](https://raw.githubusercontent.com/takahirom/roborazzi/main/README.md) | 미실행 | A |
 | 공식 대안 `com.android.compose.screenshot` | 0.0.1-alpha15라 관찰만 [S34](https://developer.android.com/studio/preview/compose-screenshot-testing) | — | A |
+
+공식 `testing-setup`(Step 3 "follow it strictly")과 `adaptive` 스킬은 스크린샷 도구로 Compose Preview Screenshot Testing을 따르라고 안내하지만 이 팩은 위 결정(SCREENSHOT_LIB = Roborazzi)이 우선한다. 스킬의 크기·테마 행렬 같은 나머지 지침은 R-30-03에 따라 Roborazzi로 구현한다.
 
 ## 규칙
 
@@ -59,8 +63,8 @@ Google은 테스트를 실행 위치(로컬 host-side / 계측 instrumented)와 
 - 체크: 모킹 라이브러리를 쓴 테스트의 대상이 외부 경계이거나 인터랙션 검증인가. fake로 대체 가능한데 mock을 쓰지 않았는가.
 
 ### R-30-03 Composable Screen마다 스크린샷 테스트를 1개 이상 둔다
-- 규칙: 상태를 파라미터로 받는 `*Screen` Composable마다 대표 상태 1개 이상을 캡처하는 `<Screen 이름>ScreenshotTest`를 `src/test`에 둔다. 로딩·비어 있음·에러처럼 눈에 띄게 다른 분기 상태가 있으면 상태마다 1건씩 늘린다.
-- 근거: Roborazzi 1.74.0은 JVM 단위 테스트에서 Compose 화면을 캡처한다 [S87](https://raw.githubusercontent.com/takahirom/roborazzi/main/README.md). NiA는 `verifyRoborazziDemoDebug`를 CI 게이트에 넣는다 [S56](https://raw.githubusercontent.com/android/nowinandroid/main/.github/workflows/Build.yaml). Compose 테스트는 시맨틱 기반 상호작용을 다루지만 렌더링 회귀 자체는 잡지 못한다 [S33](https://developer.android.com/develop/ui/compose/testing).
+- 규칙: 상태를 파라미터로 받는 `*Screen` Composable마다 대표 상태 1개 이상을 캡처하는 `<Screen 이름>ScreenshotTest`를 `src/test`에 둔다. 로딩·비어 있음·에러처럼 눈에 띄게 다른 분기 상태가 있으면 상태마다 1건씩 늘린다. 화면 단위 스크린샷은 창 크기 9종(너비 400·610·900dp × 높이 400·500·1000dp)과, 400x500dp 기준의 대체 테마·글꼴 배율 1.5 변형을 찍는다. 크기와 글꼴 배율은 `DeviceConfigurationOverride`(`ForcedSize`·`FontScale`)로 바꾼다.
+- 근거: Roborazzi 1.74.0은 JVM 단위 테스트에서 Compose 화면을 캡처한다 [S87](https://raw.githubusercontent.com/takahirom/roborazzi/main/README.md). NiA는 `verifyRoborazziDemoDebug`를 CI 게이트에 넣는다 [S56](https://raw.githubusercontent.com/android/nowinandroid/main/.github/workflows/Build.yaml). Compose 테스트는 시맨틱 기반 상호작용을 다루지만 렌더링 회귀 자체는 잡지 못한다 [S33](https://developer.android.com/develop/ui/compose/testing). 공식 testing-setup 스킬은 "each screen is tested in nine different sizes, combining compact, medium and expanded widths (400, 610, 900 dp) and heights (400, 500 and 1000 dp)"이고 400x500 화면에서 대체 테마와 글꼴 배율 1.5를 더하라고 한다 [S283](https://developer.android.com/agents/skills/testing/testing-setup/skill). `DeviceConfigurationOverride`는 창 크기·글꼴 배율·다크 모드 등을 흉내 내는 테스트 전용 API다 [S284](https://developer.android.com/develop/ui/compose/testing/common-patterns).
 - 예시:
   ```kotlin
   // Good
@@ -76,7 +80,7 @@ Google은 테스트를 실행 위치(로컬 host-side / 계측 instrumented)와 
   }
   // Bad: Screen을 추가하고 스냅숏은 Preview로만 확인한다
   ```
-- 체크: 새 Screen이 들어온 PR에 스크린샷 테스트가 있는가. 화면의 에러·로딩 상태가 캡처 대상에 포함됐는가.
+- 체크: 새 Screen이 들어온 PR에 스크린샷 테스트가 있는가. 화면의 에러·로딩 상태가 캡처 대상에 포함됐는가. 화면 스크린샷이 창 크기 9종과 테마·글꼴 배율 변형을 덮는가.
 
 ### R-30-04 스크린샷 기준 이미지는 record 태스크로만 갱신하고 저장소에 커밋한다
 - 규칙: Roborazzi 테스트 클래스에는 `@GraphicsMode(GraphicsMode.Mode.NATIVE)`와 `@Config(sdk = [35])`를 붙이고 `captureRoboImage()`로 캡처한다. 기준 이미지는 로컬에서 `./gradlew recordRoborazziDebug`로만 갱신해 PNG를 커밋하고, CI는 `verifyRoborazziDebug`로 검증만 한다. 골든 출력 경로는 컨벤션 플러그인이 `<모듈>/src/test/screenshots/`로 옮겨 둔다 — 기본값 `build/outputs/roborazzi`는 커밋 대상이 아니라 CI 체크아웃마다 골든이 없어진다. CI가 기준 이미지를 다시 기록하게 두지 않는다.
@@ -222,8 +226,8 @@ Google은 테스트를 실행 위치(로컬 host-side / 계측 instrumented)와 
 - 체크: `testInstrumentationRunner`가 Hilt 러너를 가리키는가. `kspAndroidTest`가 선언돼 있는가(kapt 금지 — R-14 계열).
 
 ### R-30-15 계측 테스트의 데이터 계층은 `@TestInstallIn`으로 fake에 바꿔 끼운다
-- 규칙: 계측 테스트에서 프로덕션 모듈을 대체할 때는 `@TestInstallIn` 모듈을 쓴다. `@UninstallModules`·`@BindValue`는 테스트 하나에만 필요한 교체로 한정한다. 테스트 전용 동작을 위해 프로덕션 코드에 실행 인자·플래그 분기를 넣지 않는다. 교체 모듈은 `:app`의 `src/androidTest`에 두고, fake는 R-30-05대로 `:core:testing`에서 `androidTestImplementation`으로 받는다.
-- 근거: "The recommendation is to use @TestInstallIn whenever possible." [S172](https://developer.android.com/training/dependency-injection/hilt-testing). 그래프 교체를 계측 테스트에만 쓴다는 R-14-10과 같은 방향이다.
+- 규칙: 계측 테스트에서 프로덕션 모듈을 대체할 때는 `@TestInstallIn` 모듈을 쓴다. `@UninstallModules`·`@BindValue`는 테스트 하나에만 필요한 교체로 한정한다. 테스트 전용 동작을 위해 프로덕션 코드에 실행 인자·플래그 분기를 넣지 않는다. 교체 모듈은 `:app`의 `src/androidTest`에 두고, fake는 R-30-05대로 `:core:testing`에서 `androidTestImplementation`으로 받는다. Robolectric 테스트는 `testImplementation`·`kspTest`로 받은 의존성으로 같은 `@TestInstallIn` 모듈을 `src/test`에 둔다.
+- 근거: "The recommendation is to use @TestInstallIn whenever possible." [S172](https://developer.android.com/training/dependency-injection/hilt-testing). 그래프 교체를 계측·Robolectric 테스트에만 쓴다는 R-14-10과 같은 방향이다. 공식 Hilt 테스트 가이드는 두 환경을 같은 문서에서 다루고 "Once Hilt is ready to use in your tests, you can use several features"로 `@TestInstallIn` 같은 기능을 구분 없이 설명한다 [S172](https://developer.android.com/training/dependency-injection/hilt-testing).
 - 예시:
   ```kotlin
   // Good
@@ -249,11 +253,48 @@ Google은 테스트를 실행 위치(로컬 host-side / 계측 instrumented)와 
   ```
 - 체크: `androidTest` 소스셋에 `Thread.sleep`이 있는가. `animationsDisabled`가 켜져 있는가.
 
+### R-30-17 Screen은 Hilt 없이 테스트하고, Hilt가 주입하는 Route를 띄우는 테스트만 Hilt 테스트 환경 위에서 돌린다
+- 규칙: Screen 컴포저블은 UiState와 콜백만 받으므로 `createComposeRule()`(R-30-11)로 Hilt 없이 테스트한다(R-13-06). `hiltViewModel()`을 부르는 Route를 직접 띄우는 테스트는 Hilt 테스트 애플리케이션 위에서 돌린다. 계측은 R-30-14의 러너를 쓰고 화면 호스트로 `androidTest` 소스셋의 빈 `@AndroidEntryPoint` `HiltTestActivity`(`createAndroidComposeRule<HiltTestActivity>()`)를 쓰되 R-30-12의 대표 플로우 한도 안에서만 둔다. Robolectric(`src/test`)은 `@Config(application = HiltTestApplication::class)`(또는 `robolectric.properties`의 `application`)로 Hilt 테스트 애플리케이션을 지정하고 의존성은 `testImplementation(hilt-android-testing)`과 `kspTest(hilt 컴파일러)`로 넣는다. Robolectric에서 `@AndroidEntryPoint` 호스트 Activity를 어떻게 등록하는지는 공식 가이드가 적지 않았다.
+- 근거: "To let Hilt inject dependencies, you must create an empty activity named `HiltTestActivity` in your `androidTest` source set and annotate it with `@AndroidEntryPoint`. `createAndroidComposeRule` then uses this activity as the host for your composable content." Robolectric은 `@Config(application = HiltTestApplication::class)`로 애플리케이션을 지정하고 의존성은 `testImplementation`·`kspTest`다 [S172](https://developer.android.com/training/dependency-injection/hilt-testing). Screen이 ViewModel을 받지 않는 경계는 R-13-06이 정한다.
+- 예시:
+  ```kotlin
+  // Good — Screen: Hilt 없이 UiState 만 넘긴다
+  composeRule.setContent { SettingsScreen(uiState = SettingsUiState(), onEvent = {}, onBack = {}) }
+  // Good — 계측: Hilt 가 주입하는 Route (대표 플로우 한도 안에서)
+  @HiltAndroidTest
+  class SettingsRouteTest {
+      @get:Rule(order = 0) val hiltRule = HiltAndroidRule(this)
+      @get:Rule(order = 1) val composeRule = createAndroidComposeRule<HiltTestActivity>()
+  }
+  // Good — Robolectric(src/test): Hilt 테스트 애플리케이션 지정
+  @HiltAndroidTest
+  @Config(application = HiltTestApplication::class)
+  class SettingsRouteRobolectricTest { @get:Rule var hiltRule = HiltAndroidRule(this) }
+  // Bad: Hilt 주입이 필요한 Route 를 프로덕션 Application 으로 올린다
+  ```
+- 체크: Screen 테스트가 Hilt 없이 도는가. Route를 띄우는 테스트가 `HiltTestActivity`(계측) 또는 `HiltTestApplication`(Robolectric) 위에서 도는가. `HiltTestActivity` 테스트가 R-30-12의 한도를 넘지 않는가.
+
+### R-30-18 화면 상태 복원은 `StateRestorationTester`로 검증한다
+- 규칙: `rememberSaveable`로 화면 상태를 직접 쥔 Compose 화면은 `StateRestorationTester(composeTestRule)`로 상태를 바꾼 뒤 `emulateSavedInstanceStateRestore()`로 재생성을 흉내 내 복원을 검증한다. Activity 재생성에 기대지 않는다.
+- 근거: 공식 가이드는 "Perform such checks without relying on activity recreation with the `StateRestorationTester` class"라고 하고, testing-setup 스킬도 "Always verify state restoration"이라고 한다 [S284](https://developer.android.com/develop/ui/compose/testing/common-patterns), [S283](https://developer.android.com/agents/skills/testing/testing-setup/skill).
+- 예시:
+  ```kotlin
+  // Good
+  val restorationTester = StateRestorationTester(composeTestRule)
+  restorationTester.setContent { MainScreen() }
+  // 상태를 바꾸는 동작을 수행한다
+  restorationTester.emulateSavedInstanceStateRestore()
+  // 복원된 상태를 검증한다
+  // Bad: 복원 검증 없이 rememberSaveable 만 믿는다
+  ```
+- 체크: `rememberSaveable` 상태가 있는 화면에 복원 테스트가 있는가.
+
 ## 출처가 침묵하는 것 (규칙으로 쓰지 않음)
 
 - **Compose 테스트 v2 API**: 공식 가이드는 v1 `createComposeRule` 계열을 deprecated라고 하면서 v2는 알파라고 적는다(2026-09-30 확인, `research/e2e-testing.md`). R-30-11·R-30-13은 v1을 유지하고, v2가 안정되면 두 규칙을 함께 고친다.
 - **전체 플로우 테스트에 쓸 Activity**: Hilt 가이드는 화면 단위 테스트용으로 빈 `HiltTestActivity`를 안내하고 전체 플로우에 무엇을 쓰라는 문장은 없다. R-30-13이 루트 Activity를 고른 것은 팩 결정이다.
 
 - **피라미드 비율(70/20/10 등)**: [S30](https://developer.android.com/training/testing/fundamentals)에 그림만 있고 수치가 없다. 출처가 비율을 정하지 않으므로 계층별 비율을 규칙화하지 않는다.
+- **Jacoco 도입**: 공식 testing-setup 스킬은 테스트가 있는 모듈마다 Jacoco 플러그인을 넣어 로컬 커버리지를 보라고 안내하지만 [S283](https://developer.android.com/agents/skills/testing/testing-setup/skill) 이 팩은 도입 여부를 정하지 않았다 — 도입은 사용자 결정이다.
 - **커버리지 임계값 %**: NiA는 커버리지 리포트를 만들지만 임계값 게이트가 없다 [S56](https://raw.githubusercontent.com/android/nowinandroid/main/.github/workflows/Build.yaml). 임계값을 정할 근거 출처가 없어 숫자를 쓰지 않는다. 커버리지는 리포트로만 본다.
 - **백틱 문장형 테스트 이름**: 허용 문구를 조사 출처에서 확인하지 못해 R-30-06에서 판단을 열어 뒀다.

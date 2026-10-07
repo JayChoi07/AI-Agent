@@ -36,7 +36,7 @@ class AndroidLibraryComposeConventionPlugin : Plugin<Project> {
             add("implementation", libs.findLibrary("androidx.compose.material3").get())
             add("implementation", libs.findLibrary("androidx.compose.ui.tooling.preview").get())
             add("debugImplementation", libs.findLibrary("androidx.compose.ui.tooling").get())
-            // createComposeRule() 이 JVM 테스트에서 동작하려면 manifest 가 debug 소스셋에 있어야 한다(R-30-07).
+            // createComposeRule() 이 JVM 테스트에서 동작하려면 manifest 가 debug 소스셋에 있어야 한다(R-30-11).
             add("debugImplementation", libs.findLibrary("androidx.compose.ui.test.manifest").get())
             add("testImplementation", platform(bom))
             add("testImplementation", libs.findLibrary("androidx.compose.ui.test.junit4").get())

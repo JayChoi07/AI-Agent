@@ -28,6 +28,7 @@ convention plugin · detekt · ktlint · Konsist · GitHub Actions 로 옮긴 �
    플러그인 적용 시점에 `NoClassDefFoundError`(예: `com/android/build/api/dsl/ApplicationExtension`)가 난다.
    실제 적용과 설정은 컨벤션 플러그인과 `Quality.kt` 의 `configureQuality()` 가 하고,
    R-10-11("`subprojects {}` / `allprojects {}` 로 설정을 주입하지 않는다")을 지키기 위한 구조다.
+   AGP 9 보다 높은 Kotlin 은 같은 파일의 `buildscript { dependencies { classpath(libs.kotlin.gradlePlugin) } }` 로 명시한다(R-19-15).
    ```kotlin
    plugins {
        alias(libs.plugins.android.application) apply false

@@ -14,6 +14,7 @@ import com.lemonappdev.konsist.api.ext.list.withoutAnnotationOf
 import com.lemonappdev.konsist.api.ext.list.withoutNameContaining
 import com.lemonappdev.konsist.api.verify.assertFalse
 import com.lemonappdev.konsist.api.verify.assertTrue
+import dagger.assisted.AssistedInject
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.HiltAndroidApp
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -69,7 +70,10 @@ class ArchitectureTest {
 
         viewModels.assertTrue { it.hasAnnotationOf(HiltViewModel::class) }
         viewModels.assertTrue { it.hasPrimaryConstructor }
-        viewModels.primaryConstructors.assertTrue { it.hasAnnotationOf(Inject::class) }
+        // 내비게이션 키 같은 인자가 필요한 ViewModel 은 @AssistedInject 를 쓴다 (R-14-01).
+        viewModels.primaryConstructors.assertTrue {
+            it.hasAnnotationOf(Inject::class) || it.hasAnnotationOf(AssistedInject::class)
+        }
     }
 
     @Test
