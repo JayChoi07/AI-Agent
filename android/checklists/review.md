@@ -1,5 +1,5 @@
 # review — 표준 준수 검증
-읽을 references: [32-code-review, 00-principles, 11-architecture-layers, 12-state-management, 13-navigation, 14-di, 16-domain-layer, 17-compose-ui, 30-testing, 31-ci-cd]
+읽을 references: [32-code-review, 00-principles, 11-architecture-layers, 12-state-management, 13-navigation, 14-di, 16-domain-layer, 17-compose-ui, 28-interaction-motion, 30-testing, 31-ci-cd]
 함께 로드할 공식 스킬: [없음]
 
 ## 결정 항목
@@ -18,6 +18,7 @@
 | 9 | Screen 컴포저블이 상태·콜백과 레이아웃 값(`modifier`·`contentPadding`)만 받음 | R-17-01 | | |
 | 10 | 화면 ViewModel마다 로컬 단위 테스트 존재 | R-30-01 | | |
 | 11 | Composable Screen마다 스크린샷 테스트 1개 이상 | R-30-03 | | |
+| 12 | 모션 값이 `Motion` 토큰만 쓰고 화면 전환이 `NavTransitions`로 꽂혀 있음 | R-28-13, R-28-01 | | |
 
 UseCase를 만들지 않은 화면의 8번, feature 모듈이 아닌 변경의 6번처럼 대상이 없는 행은 "해당 없음"으로 적고 이유를 근거 칸에 한 줄 남긴다.
 
@@ -30,7 +31,7 @@ UseCase를 만들지 않은 화면의 8번, feature 모듈이 아닌 변경의 6
 3. `testDebugUnitTest` 실행 → 검증: 전부 통과. Konsist 아키텍처 테스트도 이 단계에서 함께 돈다 (R-11-01, R-11-02, R-30-01)
 4. `verifyRoborazziDebug` 실행 → 검증: 골든 이미지 비교 통과. 스크린샷 테스트가 있다는 사실이나 단위 테스트 통과는 골든 비교 통과가 아니다. 기준 이미지 재기록(`recordRoborazziDebug`) 없이 통과해야 한다 (R-30-03, R-30-04)
 5. `assembleDebug` 실행 → 검증: 빌드 성공 (R-31-01)
-6. 위 검증 항목 표 11행을 채운다 → 검증: 빈 칸 없음, 근거에 실제 이름이 있음
+6. 위 검증 항목 표 12행을 채운다 → 검증: 빈 칸 없음, 근거에 실제 이름이 있음
 7. 어긴 규칙과 사유를 적는다 → 검증: 우회한 규칙을 숨기지 않음, 각 지적에 규칙 ID를 붙임 (R-32-01, R-32-06)
 
 리뷰 코멘트를 쓸 때: 선택적 지적은 `Nit:`을 붙여 머지를 막지 않는다 (R-32-03). 포맷·스타일은 코멘트가 아니라 도구 설정으로 해결한다 (R-32-04). 동등하게 타당한 설계 대안이면 작성자 선택을 존중한다 (R-32-05). 승인 기준은 완벽함이 아니라 코드 건강도 개선이다 (R-32-02).

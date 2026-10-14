@@ -132,6 +132,7 @@ plugins {
 | R-14-01 | ViewModel 은 `@HiltViewModel` + 생성자 주입 | Konsist `hasAnnotationOf` / `primaryConstructors` | `konsist/ArchitectureTest.kt` |
 | R-14-02 | 필드 주입 금지(프레임워크 진입점 제외) | Konsist `withoutAnnotationOf` + `properties().assertFalse` | `konsist/ArchitectureTest.kt` |
 | R-16-01 | UseCase 는 public 함수 `operator invoke` 하나 | Konsist `hasOperatorModifier` | `konsist/ArchitectureTest.kt` |
+| R-28-13 | 모션 값은 `:core:designsystem` 밖에서 `tween`·`spring` 숫자 리터럴로 쓰지 않음 | Konsist `scopeFromProduction().files` 텍스트 정규식(문자열·주석을 지운 뒤 첫 인자·이름 인자의 숫자 리터럴을 잡는 정적 검사) | `konsist/ArchitectureTest.kt` |
 | R-20-01 | `!!` 금지 | detekt `potential-bugs: UnsafeCallOnNullableType` | `config/detekt/detekt.yml` |
 | R-20-02 | 와일드카드 import 금지 | detekt `WildcardImport` + ktlint | `config/detekt/detekt.yml`, `.editorconfig` |
 | R-20-04 | 줄 길이 100자 | detekt `MaxLineLength.maxLineLength` + `.editorconfig max_line_length` | `config/detekt/detekt.yml`, `.editorconfig` |
@@ -206,7 +207,11 @@ AGP 9 는 convention plugin 을 깨뜨리는 변경이 여러 개 있다. 근거
    `withoutNameContaining`, `primaryConstructors`(List 확장 val), `properties()`, `hasDataModifier`,
    `hasOperatorModifier` 모두 `api` 패키지의 공개 선언이다. import 경로는 전부 `…api.ext.list`.
 3. ~~`hasAnnotationOf` vs `hasAnnotation`~~ — **해소됨.** 팩이 쓰는 `hasAnnotationOf(Inject::class)` 로
-   `ArchitectureTest` 6개가 스크래치 빌드에서 통과한다(R-14-01·R-14-02 포함).
+   `ArchitectureTest` 6개가 스크래치 빌드에서 통과한다(R-14-01·R-14-02 포함). 2026-10-14에 추가한 R-28-13 테스트는
+   그 6개와 함께가 아니라 `InfocarEV_Android` 스크래치 복제본에서 **단독으로** 확인했다(Konsist 0.17.3, 실제 모듈 배치
+   `core/designsystem/src/main/…`) — 깨끗한 코드 통과, 위치 인자·이름 인자 숫자 리터럴 실패, 문자열 리터럴 앞에 `//`가
+   있어도 뒤의 위반을 잡음, 주석·문자열 안의 `tween(300)` 문구는 통과, `:app` 안 `core/designsystem` **패키지 폴더**의 위반 실패.
+   중첩된 블록 주석과 문자 리터럴 `'"'`은 처리하지 못한다.
 4. **`dependsOn` 은 금지 방향을 잡지 못한다** — 스크래치 빌드로 확인한 **정정 사항**. `strict = false` 가
    기본이라 "의존해도 된다"는 허용 선언일 뿐이고, `data` 가 `ui` 를 import 해도 통과한다(실측).
    그래서 `ArchitectureTest.kt` 에 `data.doesNotDependOn(ui, domain)` · `domain.doesNotDependOn(ui)` 를 넣었고,

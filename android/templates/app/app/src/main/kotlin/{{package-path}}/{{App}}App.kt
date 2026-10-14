@@ -12,6 +12,7 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import androidx.window.core.layout.WindowSizeClass
+import {{package}}.core.designsystem.motion.NavTransitions
 import {{package}}.feature.{{feature}}.ui.{{Feature}}Key
 import {{package}}.feature.{{feature}}.ui.{{feature}}Entry
 
@@ -46,6 +47,11 @@ fun {{App}}App(
             // Scaffold 는 인셋을 소비하지 않으므로 여기서 소비를 표시한다 (R-18-08).
             modifier = Modifier.consumeWindowInsets(innerPadding),
             onBack = { navigator.goBack() },
+            // 화면 전환은 designsystem 의 토큰 전환만 쓴다. 모달·최상위 목적지는 엔트리 metadata 로 덮어쓴다
+            // (R-28-01~03).
+            transitionSpec = { NavTransitions.push },
+            popTransitionSpec = { NavTransitions.pop },
+            predictivePopTransitionSpec = { NavTransitions.predictivePop },
             // 첫 항목이 SaveableStateHolder 여야 엔트리 상태가 복원되고, 둘째 줄이 있어야
             // ViewModel 이 NavEntry 단위로 살고 정리된다 (R-13-05).
             entryDecorators = listOf(

@@ -35,6 +35,7 @@ Repository는 인터페이스와 구현 모두 data에 있고, 다른 계층은 
 | `app/app/src/main/**` | `app/src/main/**` | 매니페스트·themes·strings·Kotlin 4파일. 경로의 `{{package-path}}`가 패키지 디렉터리가 된다 |
 | `core/<모듈>/build.gradle.kts` | `core/common`·`core/testing`·`core/designsystem`의 `build.gradle.kts` | 플러그인 조합 + 모듈별 `namespace` + 최소 의존 (R-19-03) |
 | `designsystem/*.kt` | `core/designsystem/src/main/kotlin/…/core/designsystem/theme/` | `Color`·`Type`·`Shape`·`Theme`. `theme/` 진입점은 `AppTheme` 하나 |
+| `designsystem/motion/*.kt` | `core/designsystem/src/main/kotlin/…/core/designsystem/motion/` | `Motion`(곡선·시간·spring 토큰)·`NavTransitions`(화면 전환)·`Feedback`(눌림 축소·햅틱 전역 스위치). 화면은 `tween`·`spring`에 숫자를 쓰지 않는다 (R-28-13) |
 | `module/build.gradle.kts` | `feature/{{feature}}/build.gradle.kts` | convention 플러그인 사용 |
 | `ui/*.kt` | `feature/{{feature}}/src/main/kotlin/…/ui/` | Key·Route·UiState·ViewModel·Screen |
 | `ui/mvi/{{Feature}}ViewModel.kt` | 위 ViewModel을 **대체** | MVI를 고른 경우만 |
@@ -200,7 +201,8 @@ PKG_DIR="${PKG//./\/}"   # {{package-path}} — 디렉터리 이름에만 쓰인
 
 APP_PKG="app/src/main/kotlin/$PKG_DIR"
 DS_PKG="core/designsystem/src/main/kotlin/$PKG_DIR/core/designsystem/theme"
-mkdir -p "$APP_PKG" app/src/main/res/values "$DS_PKG"
+MOTION_PKG="core/designsystem/src/main/kotlin/$PKG_DIR/core/designsystem/motion"
+mkdir -p "$APP_PKG" app/src/main/res/values "$DS_PKG" "$MOTION_PKG"
 
 subst_app() { # $1=템플릿 파일, $2=대상 파일 경로
   sed -e "s/{{App}}/$APP/g" -e "s/{{app}}/$APP_LOWER/g" \
@@ -228,6 +230,9 @@ done
 
 # :core:designsystem 테마 4파일 — 파일 이름에는 플레이스홀더가 없다
 for f in "$SRC"/designsystem/*.kt; do subst_app "$f" "$DS_PKG/$(basename "$f")"; done
+
+# :core:designsystem 모션 3파일 — 토큰·화면 전환·눌림 피드백 (R-28-13). 패키지가 theme 가 아니라 motion 이다
+for f in "$SRC"/designsystem/motion/*.kt; do subst_app "$f" "$MOTION_PKG/$(basename "$f")"; done
 
 # :core:* 3개의 빌드 파일 — namespace 가 모듈마다 다르다 (R-19-03)
 mkdir -p core/common core/testing core/designsystem

@@ -103,4 +103,29 @@ class ArchitectureTest {
             .withNameEndingWith("UiState")
             .assertTrue { it.hasDataModifier && it.resideInPackage("..ui..") }
     }
+
+    @Test
+    fun `R-28-13 모션 값은 core designsystem 밖에서 tween·spring 숫자 리터럴로 쓰지 않는다`() {
+        // 정적 텍스트 검사다. 문자열 리터럴과 주석은 지우고 검사하며, 호출의 첫 인자 또는
+        // durationMillis·delayMillis·dampingRatio·stiffness 이름 인자가 숫자 리터럴인 경우를 잡는다.
+        // 못 잡는 것: 같은 호출에서 먼저 나온 괄호(`easing = foo()`) 뒤의 이름 인자, 상수 산술
+        // (`Motion.X + 10`), import 별칭, keyframes, 중첩된 블록 주석, 문자 리터럴 `'"'`.
+        val positional = Regex("""\b(tween|spring)\s*(<[^>]*>)?\s*\(\s*[0-9]""")
+        val named = Regex(
+            """\b(tween|spring)\s*(<[^>]*>)?\s*\([^()]*\b""" +
+                """(durationMillis|delayMillis|dampingRatio|stiffness)\s*=\s*[0-9]""",
+        )
+        // 문자열이 주석보다 먼저 나오면 문자열로, 주석이 먼저 나오면 주석으로 한 번에 처리한다
+        // (문자열 안의 `//`가 뒤의 코드까지 지우지 않게 하려는 것이다).
+        val skipped = Regex("""\"{3}[\s\S]*?\"{3}|"(?:\\.|[^"\\\n])*"|/\*[\s\S]*?\*/|//[^\n]*""")
+        Konsist.scopeFromProduction().files
+            .filterNot { it.path.replace('\\', '/').contains("/core/designsystem/src/") }
+            .assertFalse { file ->
+                // 주석은 빈 문자열로, 문자열 리터럴은 빈 문자열 리터럴로 바꾼다.
+                val code = file.text.replace(skipped) {
+                    if (it.value.startsWith("/")) "" else "\"\""
+                }
+                positional.containsMatchIn(code) || named.containsMatchIn(code)
+            }
+    }
 }

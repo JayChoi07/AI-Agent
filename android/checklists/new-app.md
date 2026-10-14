@@ -1,5 +1,5 @@
 # new-app — 0에서 새 앱 만들기
-읽을 references: [10-project-structure, 18-app-shell, 19-build-config, 13-navigation, 14-di, 31-ci-cd, 33-dependency-updates]
+읽을 references: [10-project-structure, 18-app-shell, 19-build-config, 13-navigation, 14-di, 28-interaction-motion, 31-ci-cd, 33-dependency-updates]
 함께 로드할 공식 스킬: [android-cli(프로젝트 생성·기기 실행), edge-to-edge, navigation-3]
 
 "빈 폴더 → 첫 화면이 뜨는 앱"까지만 다룬다. 로그인·네트워크·DB·다국어는 이 유형의 범위가 아니다.
@@ -28,8 +28,9 @@
 | 10 | 의존성 자동 업데이트 | R-33-01, R-33-02 | 저장소가 GitHub에 있는지. 있으면 Dependabot 설정은 골격 그대로이고 자동 병합은 하지 않는다 |
 | 11 | 배포 | R-31-10, R-31-11, R-31-13, R-31-14 | Play 계정이 개인인지 조직인지, 첫 업로드를 Play Console에서 끝냈는지. 업로드는 사람이 한다 |
 | 12 | 전체 플로우(계측) 테스트 | R-30-12, R-30-13, R-31-18 | 여러 화면을 지나는 대표 플로우가 이미 있는지. 첫 화면 하나뿐이면 "나중"이 답이다 |
+| 13 | 모션 토큰·화면 전환 — `:core:designsystem` `motion/` 3파일, `NavDisplay` 전환 3종 | R-28-01, R-28-03, R-28-13, R-28-14 | 없음(확정값). 브랜드가 다른 시간·곡선을 요구할 때만 묻는다 |
 
-2·3은 규칙이 값을 이미 정했으므로 묻지 않는다. 1·7과 6의 브랜드 값은 사용자만 정할 수 있으므로 임의로 고르지 않는다.
+2·3·13은 규칙이 값을 이미 정했으므로 묻지 않는다. 1·7과 6의 브랜드 값은 사용자만 정할 수 있으므로 임의로 고르지 않는다.
 4는 "언젠가 쓸 것 같아서" 모듈을 미리 만들지 않는다 — 두 번째 사용처가 생길 때 올린다 (R-10-04).
 5는 `references/18-app-shell.md`의 "초기화 배치 결정 매트릭스" 세 행을 그대로 채워 보여 준다. 세 행이 모두 "지연"을
 가리키면 시작 경로에 아무것도 넣지 않는 것이 답이고, `Application.onCreate`를 열지 않는다 (R-18-01).
@@ -43,13 +44,14 @@
    → 검증: convention plugin id가 6종 목록 안 (R-10-10), 카탈로그 별칭↔`findLibrary` 문자열 1:1 (R-19-07, R-10-12)
 3. 루트 3파일 — `templates/app/settings.gradle.kts`·`build.gradle.kts`·`gradle.properties`
    → 검증: 루트에 `subprojects {`·`allprojects {`가 없다 (R-10-11), `org.gradle.jvmargs`와 configuration cache 2줄이 있다 (R-19-09, R-19-10)
-4. `:core:*` 3개 — 빌드 파일은 `templates/core/{common,testing,designsystem}/build.gradle.kts`(모듈별 `namespace`·최소 의존 포함). `:core:common`에 `templates/di/Dispatchers.kt`, `:core:testing`에 `templates/test/MainDispatcherRule.kt`, `:core:designsystem`에 `templates/designsystem/Color.kt`·`Type.kt`·`Shape.kt`·`Theme.kt`
+4. `:core:*` 3개 — 빌드 파일은 `templates/core/{common,testing,designsystem}/build.gradle.kts`(모듈별 `namespace`·최소 의존 포함). `:core:common`에 `templates/di/Dispatchers.kt`, `:core:testing`에 `templates/test/MainDispatcherRule.kt`, `:core:designsystem`에 `templates/designsystem/Color.kt`·`Type.kt`·`Shape.kt`·`Theme.kt`와 `motion/` 패키지의 `templates/designsystem/motion/Motion.kt`·`NavTransitions.kt`·`Feedback.kt`
    → 검증: 세 모듈의 `namespace`가 서로 다르고 `applicationId`가 없다 (R-19-03), `:core:testing`은 프로덕션 소스셋에서 참조되지 않는다 (R-10-03)
    → 검증: `theme/` 패키지의 공개 API가 `AppTheme` 하나, `Color(0x…)` 리터럴이 이 모듈 밖에 없다 (R-18-10, R-18-11)
+   → 검증: `tween`·`spring`의 숫자 리터럴이 `:core:designsystem` 밖에 없다 — Konsist `ArchitectureTest`의 R-28-13 테스트가 잡는다 (R-28-13)
 5. `:app` 빌드 파일 — `templates/app/app/build.gradle.kts`
    → 검증: `targetSdk` 명시 (R-19-01), `namespace`+`applicationId` 둘 다 (R-19-03), release `optimization { enable = true }`·debug `applicationIdSuffix` (R-19-04, R-19-05), `productFlavors` 없음 (R-19-06), 안 쓰는 `buildFeatures`가 꺼져 있음 (R-19-13)
 6. 앱 셸 — `templates/app/app/src/main/`의 `AndroidManifest.xml`·`res/values/themes.xml`·`strings.xml`, `{{App}}Application.kt`·`MainActivity.kt`·`Navigator.kt`·`{{App}}App.kt`
-   → 검증: `onCreate` 순서가 `installSplashScreen()`→`super.onCreate()`→`enableEdgeToEdge()`→`setContent` (R-18-03, R-18-06, R-18-07), `<activity>` 1개·`launchMode`·`configChanges` 없음 (R-18-05, R-18-14), Hilt 진입점 2개 (R-14-03), 인셋 소비 1회 (R-18-08), `currentWindowAdaptiveInfoV2()` 호출이 앱 루트뿐 (R-18-13), XML 테마에 색·타이포 없음 (R-18-12)
+   → 검증: `onCreate` 순서가 `installSplashScreen()`→`super.onCreate()`→`enableEdgeToEdge()`→`setContent` (R-18-03, R-18-06, R-18-07), `<activity>` 1개·`launchMode`·`configChanges` 없음 (R-18-05, R-18-14), Hilt 진입점 2개 (R-14-03), 인셋 소비 1회 (R-18-08), `currentWindowAdaptiveInfoV2()` 호출이 앱 루트뿐 (R-18-13), XML 테마에 색·타이포 없음 (R-18-12), `NavDisplay`의 전환 3종이 `NavTransitions`로 꽂혀 있음 (R-28-01, R-28-03)
 7. 첫 화면 — `checklists/new-feature-module.md` 실행 후 `checklists/new-screen.md`
    → 검증: `{{Feature}}Key`가 feature 모듈 소유 (R-13-01), `rememberNavBackStack` 호출이 앱 전체에 하나 (R-13-03), `entryProvider` DSL에 등록되고 데코레이터 첫 항목이 SaveableStateHolder (R-13-04, R-13-05)
    → 검증: 화면이 생겼으므로 `enforcement/README.md` 설치 8단계(`recordRoborazziDebug` 골든 png 커밋)를 여기서 끝낸다 (R-30-04)

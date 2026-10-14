@@ -4,6 +4,8 @@
 
 기준선은 Navigation 3 stable 1.1.7이다(NAV3_VERSION). 이 버전에는 결과 반환 API(`ResultEventBus`·`ResultEffect`, 1.2.0-alpha02 이상)와 딥링크 API(`DeepLinkRequest`·`UriDeepLinkMatcher`, 1.2.0-alpha03 이상)가 없으므로 R-13-07·R-13-08의 대체 방식을 쓴다. 공식 navigation-3 스킬의 `results-event`·`results-state`·`deeplinks-staticuri`·`deeplinks-uriarguments`·`deeplinks-custommatcher` 레시피는 이 API를 쓰므로 그대로 옮기지 않는다. 모듈 분할 조건은 R-10-13이 소유한다. Nav3를 쓰는 모듈은 compileSdk 36 이상이어야 하고 Fragment·View 혼용 화면에는 쓰지 않는다 [S25](https://developer.android.com/guide/navigation/navigation-3/migration-guide), [S26](https://developer.android.com/guide/navigation/navigation-3/get-started) — 36은 출처가 말하는 하한이고, 이 팩의 확정값은 **compileSdk 37**이다(실빌드 실증 2026-09-09: 확정 버전 조합의 의존성 15개가 API 37을 요구한다). 구현 방법(코드 배치·마이그레이션 절차)은 로컬 navigation-3 스킬을 참조한다.
 
+화면 전환 애니메이션·예측형 뒤로가기·뒤로가기 정책·오버레이(다이얼로그·바텀시트·스낵바)의 종류와 닫힘 규칙은 [28-interaction-motion.md](28-interaction-motion.md)가 소유한다(R-28-01~R-28-12). 이 문서의 R-13-04는 다이얼로그·시트를 엔트리로 만드는 배선만 다룬다.
+
 ### R-13-01 목적지 키는 `NavKey`를 구현하고 `@Serializable`을 붙여 그 화면을 소유한 feature 모듈에 둔다
 - 규칙: 백스택에 들어가는 모든 키는 `NavKey`를 구현하고 `@Serializable`을 붙인다. 키는 화면을 소유한 `:feature:*` 모듈이 정의하고, 화면에 필요한 인자만 프로퍼티로 갖는다.
 - 근거: "Every key in the back stack must implement the `NavKey` interface"이고 "must be marked with the `@Serializable` annotation" — 직렬화가 있어야 구성 변경과 프로세스 사망을 넘겨 백스택이 복원된다 [S22](https://developer.android.com/guide/navigation/navigation-3/save-state). 키는 피처가 소유하는 공개 표면이다 [S24](https://developer.android.com/guide/navigation/navigation-3/modularize)
