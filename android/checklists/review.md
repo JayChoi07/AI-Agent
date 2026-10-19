@@ -1,5 +1,5 @@
 # review — 표준 준수 검증
-읽을 references: [32-code-review, 00-principles, 11-architecture-layers, 12-state-management, 13-navigation, 14-di, 16-domain-layer, 17-compose-ui, 28-interaction-motion, 30-testing, 31-ci-cd]
+읽을 references: [32-code-review, 00-principles, 11-architecture-layers, 12-state-management, 13-navigation, 14-di, 16-domain-layer, 17-compose-ui, 28-interaction-motion, 30-testing, 31-ci-cd, 41-rendering-memory]
 함께 로드할 공식 스킬: [없음]
 
 ## 결정 항목
@@ -19,8 +19,14 @@
 | 10 | 화면 ViewModel마다 로컬 단위 테스트 존재 | R-30-01 | | |
 | 11 | Composable Screen마다 스크린샷 테스트 1개 이상 | R-30-03 | | |
 | 12 | 모션 값이 `Motion` 토큰만 쓰고 화면 전환이 `NavTransitions`로 꽂혀 있음 | R-28-13, R-28-01 | | |
+| 13 | 프레임 — 통과선(동결 프레임 0·P95·P99) 대비 측정 결과와 기기·OS·변이·컴파일 상태, 못 쟀으면 미실행. 변형 비교는 번갈아 설치·2라운드 이상·렌더 프레임 수 병기 | R-41-01, R-41-02, R-41-03, R-41-18 | | |
+| 14 | 화면 첫 프레임 — 화면 밖 무거운 내용이 lazy, `key`·`contentType`·고정 크기, `BoxWithConstraints` 남용 없음 | R-41-05, R-41-06 | | |
+| 15 | Compose 안정성 — 릴리스 컴파일러 리포트의 `unstable` 근거, 같은 내용인데 매 방출 새 컬렉션을 만들지 않음, 큰 컬렉션의 `@Immutable`·`ImmutableList`·설정 파일 근거 | R-41-07, R-41-08, R-41-09 | | |
+| 16 | 고빈도 갱신·레이어 — 빠르게 바뀌는 값이 UiState에서 분리, 상태 표현용 `alpha`·`shadow`·`drawBehind` 비용, 그리기 객체 캐시, 요소별 상태 벌·포맷터 생성(효과를 재지 않았으면 개선이라 쓰지 않음) | R-41-10, R-41-11, R-41-12, R-41-19 | | |
+| 17 | 메모리 — 이미지 크기 지정, 탭 ViewModel 상주 범위 문서화, 상한 없는 컬렉션 없음, StrictMode·LeakCanary 디버그 한정, PSS 예산 | R-41-13, R-41-14, R-41-15, R-41-16 | | |
 
 UseCase를 만들지 않은 화면의 8번, feature 모듈이 아닌 변경의 6번처럼 대상이 없는 행은 "해당 없음"으로 적고 이유를 근거 칸에 한 줄 남긴다.
+13~17행은 화면 진입·렌더링·고빈도 갱신·이미지·메모리에 닿은 변경에만 판정하고 그 밖은 "해당 없음"으로 적는다. 프레임·메모리 측정(R-41-03)은 게이트 밖이라 돌리지 못했으면 통과가 아니라 미실행으로 적는다.
 
 ## 구현 순서
 게이트는 R-31-01의 순서 그대로 돌린다: `ktlintCheck` → `detektDebug` → `testDebugUnitTest verifyRoborazziDebug` → `assembleDebug`.
@@ -31,7 +37,7 @@ UseCase를 만들지 않은 화면의 8번, feature 모듈이 아닌 변경의 6
 3. `testDebugUnitTest` 실행 → 검증: 전부 통과. Konsist 아키텍처 테스트도 이 단계에서 함께 돈다 (R-11-01, R-11-02, R-30-01)
 4. `verifyRoborazziDebug` 실행 → 검증: 골든 이미지 비교 통과. 스크린샷 테스트가 있다는 사실이나 단위 테스트 통과는 골든 비교 통과가 아니다. 기준 이미지 재기록(`recordRoborazziDebug`) 없이 통과해야 한다 (R-30-03, R-30-04)
 5. `assembleDebug` 실행 → 검증: 빌드 성공 (R-31-01)
-6. 위 검증 항목 표 12행을 채운다 → 검증: 빈 칸 없음, 근거에 실제 이름이 있음
+6. 위 검증 항목 표 17행을 채운다 → 검증: 빈 칸 없음, 근거에 실제 이름이 있음
 7. 어긴 규칙과 사유를 적는다 → 검증: 우회한 규칙을 숨기지 않음, 각 지적에 규칙 ID를 붙임 (R-32-01, R-32-06)
 
 리뷰 코멘트를 쓸 때: 선택적 지적은 `Nit:`을 붙여 머지를 막지 않는다 (R-32-03). 포맷·스타일은 코멘트가 아니라 도구 설정으로 해결한다 (R-32-04). 동등하게 타당한 설계 대안이면 작성자 선택을 존중한다 (R-32-05). 승인 기준은 완벽함이 아니라 코드 건강도 개선이다 (R-32-02).

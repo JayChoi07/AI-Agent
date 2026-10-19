@@ -102,8 +102,8 @@
 - 체크: `ResultEventBus`·`ResultEffect` 참조가 있는가. 결과 값이 프로세스 사망 후에도 필요한데 메모리에만 있는가.
 
 ### R-13-08 딥링크는 `DeepLinkPattern`+`KeyDecoder`를 직접 구현하고 매핑 표는 `:app`에 둔다
-- 규칙: 1.1.7에는 딥링크 API가 없으므로 URI 패턴과 키 디코더를 직접 정의한다. 매핑 표는 `:app`이 소유하고, 목적지가 하위 화면이면 부모 키를 거슬러 합성 백스택을 만든 뒤 `rememberNavBackStack(*syntheticBackStack.toTypedArray())`로 시드한다. feature 모듈에는 URI 문자열을 두지 않는다.
-- 근거: `DeepLinkRequest`·`DeepLinkMatcher`·`UriDeepLinkMatcher`는 1.2.0-alpha03에 도입돼 1.1.7에 없다 [S43](https://developer.android.com/jetpack/androidx/releases/navigation3). Nav3 마이그레이션 가이드도 딥링크를 미지원 기능으로 명시한다 [S25](https://developer.android.com/guide/navigation/navigation-3/migration-guide). 1.1.x용 수동 구현 레시피가 `DeepLinkPattern`+`KeyDecoder`와 합성 백스택 시드를 제시한다 [S57](https://github.com/android/nav3-recipes/blob/main/docs/deeplink-guide.md)
+- 규칙: 1.1.7에는 딥링크 API가 없으므로 URI 패턴과 키 디코더를 직접 정의한다. 매핑 표는 `:app`이 소유하고, 목적지가 하위 화면이면 부모 키를 거슬러 합성 백스택을 만든 뒤 `rememberNavBackStack(*syntheticBackStack.toTypedArray())`로 시드한다. feature 모듈에는 URI 문자열을 두지 않는다. 외부에서 온 링크 문자열은 **입구에서** 먼저 자기 스킴(또는 등록한 호스트)과 길이 상한(예: 256자, 해석기와 같은 상수)을 검사해 어긋나면 해석도 보류도 하지 않고 버린다 — 검사가 없으면 다른 앱이 보낸 긴 문자열이 보류 링크로 `onSaveInstanceState`에 실리거나(`TransactionTooLargeException`) 다른 스킴의 링크가 백스택을 지운다. 인텐트의 `extras`는 읽지 않고 데이터 URI의 경로·id만 화이트리스트로 비교한다. 웜 스타트(`onNewIntent`)의 링크는 보던 화면 위에 쌓지 않고 그 탭의 백스택을 합성 목록으로 교체한다(`Navigator.replaceWith`).
+- 근거: `DeepLinkRequest`·`DeepLinkMatcher`·`UriDeepLinkMatcher`는 1.2.0-alpha03에 도입돼 1.1.7에 없다 [S43](https://developer.android.com/jetpack/androidx/releases/navigation3). Nav3 마이그레이션 가이드도 딥링크를 미지원 기능으로 명시한다 [S25](https://developer.android.com/guide/navigation/navigation-3/migration-guide). 1.1.x용 수동 구현 레시피가 `DeepLinkPattern`+`KeyDecoder`와 합성 백스택 시드를 제시한다 [S57](https://github.com/android/nav3-recipes/blob/main/docs/deeplink-guide.md). 저장 상태는 Binder 트랜잭션으로 전달돼 "When the size limit is exceeded, a `TransactionTooLargeException` is thrown"이고 "We recommend that you keep saved state to less than 50KB of data"다 [S345](https://developer.android.com/guide/components/activities/parcelables-and-bundles). 길이 상한 256자는 InfocarEV의 값이다(프로젝트 사례, 공식 수치 없음). `singleTask` 루트 Activity에서 두 번째 링크는 `onNewIntent`로 들어온다(R-18-05 예외) [S344](https://developer.android.com/guide/navigation/design/deep-link)
 - 예시:
   ```kotlin
   // Good: :app 이 패턴과 디코더를 소유
@@ -112,7 +112,7 @@
   // Bad: feature 안에 URI 문자열과 파싱이 흩어진다
   const val PROFILE_DEEP_LINK = "myapp://user/{id}"
   ```
-- 체크: URI 패턴 문자열이 `:app` 밖에 있는가. 하위 화면 딥링크가 부모 키를 포함한 백스택으로 시드되는가.
+- 체크: URI 패턴 문자열이 `:app` 밖에 있는가. 하위 화면 딥링크가 부모 키를 포함한 백스택으로 시드되는가. 링크 문자열이 스킴·길이 검사 없이 `SavedStateHandle`·백스택 교체로 가는가. `onNewIntent` 링크가 현재 화면 위에 쌓이는가.
 
 ### R-13-09 다중 창(list-detail·supporting pane)은 Navigation 3 `SceneStrategy`로 만들고 `ListDetailPaneScaffold`를 직접 쓰지 않는다
 - 규칙: 리스트-상세나 보조 창 레이아웃은 `androidx.compose.material3.adaptive:adaptive-navigation3`의 `ListDetailSceneStrategy`(`rememberListDetailSceneStrategy`)나 `SupportingPaneSceneStrategy`를 `NavDisplay`의 `sceneStrategies`에 넘겨 만든다. 목록 엔트리에는 `ListDetailSceneStrategy.listPane(detailPlaceholder = { ... })`, 상세 엔트리에는 `ListDetailSceneStrategy.detailPane()` metadata를 붙인다. `ListDetailPaneScaffold`·`SupportingPaneScaffold`를 직접 쓰지 않는다. list-detail 레이아웃에서 상세 화면은 뒤로 가기 화살표를 그리지 않고 전체 화면 모드를 끈다. 의존성(`adaptive-navigation3`)은 Compose BOM이 버전을 관리한다(R-33-04).
@@ -135,8 +135,8 @@
 - 체크: 다중 창 화면이 `sceneStrategies`로 구성됐는가. `ListDetailPaneScaffold`·`SupportingPaneScaffold`가 직접 쓰이는가. list-detail에서 상세 화면에 뒤로 가기 화살표가 그려지는가.
 
 ### R-13-10 로그인 같은 접근 조건은 `NavEntryDecorator`가 아니라 `:app`의 `Navigator`에서 리다이렉트한다
-- 규칙: 로그인 등 조건을 만족해야 들어갈 수 있는 목적지는 마커 인터페이스(예: `RequiresLogin`)를 구현한 키로 표시하고, 판단과 리다이렉트는 `:app`(또는 `:core:navigation`)의 `Navigator` 래퍼(R-13-03)가 한다. 조건이 거짓인 채 그런 키를 추가하면 의도한 목적지를 저장하고 로그인 키를 대신 넣으며, 로그인에 성공하면 저장한 목적지를 넣고 로그인 화면을 뺀다. 로그아웃하면 조건이 필요한 목적지를 백스택에서 모두 제거한다. 마커 인터페이스는 여러 feature가 볼 수 있는 공용 모듈에 두고 feature는 서로의 키를 참조하지 않는다(R-13-02).
-- 근거: 공식 conditional 레시피는 "`RequiresLogin` interface: A marker interface"로 목적지를 표시하고, 조건이 거짓이면 "`AppBackStack` stores the intended destination and adds the `Login` route to the back stack instead"이며, 이 로직을 "centralizing the logic in a custom back stack implementation"으로 한곳에 모은다 [S280](https://developer.android.com/guide/navigation/navigation-3/recipes/conditional). `NavEntryDecorator`의 용도는 엔트리별 의존성 생성·결과 전달·공유 객체 스코프·로깅·정리다 [S23](https://developer.android.com/guide/navigation/navigation-3/naventrydecorators).
+- 규칙: 로그인 등 조건을 만족해야 들어갈 수 있는 목적지는 마커 인터페이스(예: `RequiresLogin`)를 구현한 키로 표시하고, 판단과 리다이렉트는 `:app`(또는 `:core:navigation`)의 `Navigator` 래퍼(R-13-03)가 한다. 조건이 거짓인 채 그런 키를 추가하면 의도한 목적지를 저장하고 로그인 키를 대신 넣으며, 로그인에 성공하면 저장한 목적지를 넣고 로그인 화면을 뺀다. 로그아웃하면 조건이 필요한 목적지를 백스택에서 모두 제거한다. 마커 인터페이스는 여러 feature가 볼 수 있는 공용 모듈에 두고 feature는 서로의 키를 참조하지 않는다(R-13-02). **조건이 화면 하나가 아니라 앱 전체인 것**(온보딩·로그인·약관 동의·서버 점검처럼 모든 화면에 앞서는 조건)은 `Navigator` 리다이렉트가 아니라 앱 루트의 **시작 게이트**로 한다: 루트 ViewModel이 `StartupState`(`Loading` / `Entry(step)` / `Ready`)를 내고 루트 컴포저블이 `Entry`면 진입 흐름을, `Ready`면 본 앱을 그린다(둘 사이는 `Crossfade`, R-28-17). 진입 흐름의 화면은 저장소 상태(`step`)에서 파생한 **한 장짜리 백스택**이다 — 화면은 저장소에 쓰기만 하고 다음 화면은 `step`의 변화가 정하므로 앞 단계 ViewModel이 남아 낡은 상태로 보이지 않는다. 게이트가 `Entry`로 돌아가면 본 앱 컴포저블과 백스택이 통째로 사라져 로그아웃 뒤 백스택 정리가 따로 필요 없다. 게이트 전에 온 딥링크는 `SavedStateHandle`에 **문자열로 보류**했다가 `Ready` 뒤 한 번 열고 지운다(R-13-08). 스플래시 유지 조건은 `Loading`만 본다(R-18-04).
+- 근거: 공식 conditional 레시피는 "`RequiresLogin` interface: A marker interface"로 목적지를 표시하고, 조건이 거짓이면 "`AppBackStack` stores the intended destination and adds the `Login` route to the back stack instead"이며, 이 로직을 "centralizing the logic in a custom back stack implementation"으로 한곳에 모은다 [S280](https://developer.android.com/guide/navigation/navigation-3/recipes/conditional). `NavEntryDecorator`의 용도는 엔트리별 의존성 생성·결과 전달·공유 객체 스코프·로깅·정리다 [S23](https://developer.android.com/guide/navigation/navigation-3/naventrydecorators). 앱 전체 게이트는 공식 레시피가 다루지 않는다 — 레시피는 목적지 단위 조건만 적는다(공식 근거 없음, InfocarEV 사례 2026-10-15 `docs/design/app-entry-and-links.md` §3·§8, 91-decisions ENTRY_GATE). 보류 링크를 두는 `SavedStateHandle`은 "State must be simple and lightweight"이고 `Bundle`로 저장된다 [S346](https://developer.android.com/topic/libraries/architecture/viewmodel/viewmodel-savedstate); `NavKey`를 직접 넣을 수 없어 문자열로 두고 풀 때 다시 해석한다(프로젝트 확인).
 - 예시:
   ```kotlin
   // Good: 접근 조건은 Navigator 가 한 곳에서 판단한다
@@ -144,6 +144,8 @@
   fun Navigator.navigate(key: NavKey) {
       if (key is RequiresLogin && !session.isLoggedIn) { pendingKey = key; push(LoginKey) } else push(key)
   }
-  // Bad: 각 화면이나 데코레이터가 로그인 여부를 따로 확인한다
+  // Good: 조건이 앱 전체면 루트의 시작 게이트 — 진입 흐름은 step 에서 파생한 한 장짜리 백스택
+  when (val s = startup) { Loading -> Unit; is Entry -> EntryApp(step = s.step); Ready -> MainApp(pendingLink) }
+  // Bad: 각 화면이나 데코레이터가 로그인 여부를 따로 확인한다 / 온보딩·약관을 목적지 마커로 흉내 낸다
   ```
-- 체크: 로그인 필요 여부 판단이 `Navigator` 밖에 흩어져 있는가. 로그아웃 뒤 조건이 필요한 목적지가 백스택에 남는가.
+- 체크: 로그인 필요 여부 판단이 `Navigator` 밖에 흩어져 있는가. 로그아웃 뒤 조건이 필요한 목적지가 백스택에 남는가. 온보딩·로그인·약관처럼 앱 전체 조건을 목적지 키 마커로 만들고 있는가(그렇다면 시작 게이트로). 게이트 전에 온 링크가 버려지거나 게이트를 건너뛰는가.

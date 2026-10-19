@@ -62,15 +62,15 @@
 - 체크: detekt 설정의 `MaxLineLength.maxLineLength`가 100인가.
 
 ### R-20-05 포맷은 손이 아니라 포맷터가 정한다
-- 규칙: 포맷터는 ktlint-gradle 단독으로 두고 `ktlintCheck`를 CI 게이트에 넣는다. 스타일 설정은 `.editorconfig`(`ktlint_code_style = android_studio`)에 두고 엔진 버전은 빌드 스크립트에서 `ktlint { version.set("1.8.0") }`으로 고정한다. 리뷰에서 포맷을 손으로 지적하지 않는다.
-- 근거: ktlint-gradle이 `ktlintCheck`/`ktlintFormat` 태스크와 엔진 버전 고정을 제공한다 [S85](https://raw.githubusercontent.com/JLLeitschuh/ktlint-gradle/main/README.md). 코드 스타일 선택지와 `.editorconfig` 설정 키는 ktlint 문서에 있다 [S83](https://raw.githubusercontent.com/pinterest/ktlint/master/documentation/release-latest/docs/rules/code-styles.md), [S84](https://raw.githubusercontent.com/pinterest/ktlint/master/documentation/release-latest/docs/rules/configuration-ktlint.md). 포맷터 단일화는 91-decisions `FORMATTER` 결정이다.
+- 규칙: 포맷터는 ktlint-gradle 단독으로 두고 `ktlintCheck`를 CI 게이트에 넣는다. 스타일 설정은 `.editorconfig`(`ktlint_code_style = android_studio`)에 두고 엔진 버전은 빌드 스크립트에서 `ktlint { version.set("1.8.0") }`으로 고정한다. 리뷰에서 포맷을 손으로 지적하지 않는다. ktlint 1.7부터 `no-unused-imports`가 기본으로 꺼져 있으므로 `.editorconfig`에 `ktlint_standard_no-unused-imports = enabled`를 둔다(`enforcement/.editorconfig`). 오탐이 나면 그 자리만 `@Suppress("ktlint:standard:no-unused-imports")`로 남기고 규칙을 끄지 않는다.
+- 근거: ktlint-gradle이 `ktlintCheck`/`ktlintFormat` 태스크와 엔진 버전 고정을 제공한다 [S85](https://raw.githubusercontent.com/JLLeitschuh/ktlint-gradle/main/README.md). 코드 스타일 선택지와 `.editorconfig` 설정 키는 ktlint 문서에 있다 [S83](https://raw.githubusercontent.com/pinterest/ktlint/master/documentation/release-latest/docs/rules/code-styles.md), [S84](https://raw.githubusercontent.com/pinterest/ktlint/master/documentation/release-latest/docs/rules/configuration-ktlint.md). 포맷터 단일화는 91-decisions `FORMATTER` 결정이다. 미사용 import — "Starting from KtLint `1.7.0` this rule no longer runs by default"이고 이유는 "In some cases the rule marks imports as unused, while after removal of the import the code no longer compiles"이며 켜는 키는 `ktlint_standard_no-unused-imports = enabled`다 [S351](https://raw.githubusercontent.com/pinterest/ktlint/master/documentation/release-latest/docs/rules/standard.md). InfocarEV에서 미사용 import가 `ktlintCheck` 게이트를 통과해 리뷰에서 잡힌 뒤 켰다(2026-10-15, 91-decisions UNUSED_IMPORTS). 규칙별 suppress 문법은 [S84](https://raw.githubusercontent.com/pinterest/ktlint/master/documentation/release-latest/docs/rules/configuration-ktlint.md).
 - 예시:
   ```kotlin
   // Good: 빌드 스크립트
   ktlint { version.set("1.8.0") }
   // Bad: 포맷터 두 개(spotless + ktlint)를 동시에 걸어 서로 되돌린다
   ```
-- 체크: CI에 `ktlintCheck`가 있고 포맷 도구가 하나뿐인가.
+- 체크: CI에 `ktlintCheck`가 있고 포맷 도구가 하나뿐인가. `.editorconfig`에 `ktlint_standard_no-unused-imports = enabled`가 있는가.
 
 ### R-20-06 타입은 PascalCase, 함수·프로퍼티는 camelCase, 약어도 한 단어로 쓴다
 - 규칙: 패키지는 소문자 연속(언더스코어 금지), 타입은 PascalCase, 함수·프로퍼티·지역 변수는 camelCase. 약어는 단어로 취급해 `XmlHttpRequest`·`newCustomerId`로 적는다.

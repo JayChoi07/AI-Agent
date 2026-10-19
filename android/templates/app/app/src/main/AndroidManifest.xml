@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   루트 Activity 는 런처 하나뿐이고 launchMode 를 적지 않는다 (R-18-05).
+  딥링크를 받는 단일 Activity 앱만 singleTask 예외 — 조건은 R-18-05.
   android:exported="true" 는 인텐트 필터를 가진 이 항목에만 붙는다(기본값 false 는 R-40-07).
   android:configChanges 는 적지 않는다 — 재생성을 전제로 만들고 상태로 복원한다 (R-18-14).
   package 속성은 쓰지 않는다. namespace 는 빌드 파일이 정한다 (R-19-03).

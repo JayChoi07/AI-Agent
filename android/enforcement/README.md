@@ -51,6 +51,9 @@ convention plugin · detekt · ktlint · Konsist · GitHub Actions 로 옮긴 �
 6. **아키텍처 테스트** — `konsist/ArchitectureTest.kt` 를 `:app/src/test/java/<패키지>/` 로 복사하고
    `package` 선언을 프로젝트 패키지로 바꾼다. `:app` 에 `testImplementation(libs.konsist)` 와
    `testImplementation(libs.junit4)` 를 추가한다(`convention.android.feature` 를 쓰는 모듈은 이미 포함).
+   **Konsist 가 읽는 소스를 `:app` 테스트 태스크의 입력으로 선언한다** — Konsist 는 다른 모듈의 `src/test` 까지 저장소의 모든 `.kt` 를 Gradle 밖에서 읽는다. 선언하지 않으면
+   다른 모듈의 테스트 소스만 바뀐 경우 `:app:testDebugUnitTest` 가 UP-TO-DATE 로 건너뛰어져 게이트가 위반을 놓친다(실제 사례: domain 패키지의 테스트가 ui 를 import 했는데 가려질 뻔했다).
+   `tasks.withType<Test>().configureEach { inputs.files(rootProject.fileTree(rootDir) { include("**/src/**/*.kt"); exclude("**/build/**", "**/.gradle/**") }).withPropertyName("konsistSources").withPathSensitivity(PathSensitivity.RELATIVE) }`
 7. **로컬 스크립트와 훅** — `scripts/` 아래 셸 파일 네 개를 프로젝트의 `scripts/` 로, `scripts/hooks/pre-push` 를 `scripts/hooks/` 로 복사하고
    `chmod +x` 한 뒤 `git config core.hooksPath scripts/hooks` 를 실행한다(R-31-18, R-31-19). 루트 `.gitattributes` 에 `scripts/**/*.sh text eol=lf` 와
    `scripts/hooks/* text eol=lf` 를 넣는다. 가짜 `gradlew` 로 여덟 경우를 확인했다(2026-09-30) — 실제 Gradle 빌드로는 아직 돌려 보지 않았다.
@@ -136,6 +139,7 @@ plugins {
 | R-20-01 | `!!` 금지 | detekt `potential-bugs: UnsafeCallOnNullableType` | `config/detekt/detekt.yml` |
 | R-20-02 | 와일드카드 import 금지 | detekt `WildcardImport` + ktlint | `config/detekt/detekt.yml`, `.editorconfig` |
 | R-20-04 | 줄 길이 100자 | detekt `MaxLineLength.maxLineLength` + `.editorconfig max_line_length` | `config/detekt/detekt.yml`, `.editorconfig` |
+| R-20-05 | 미사용 import 금지(ktlint 1.7+ 기본 꺼짐) | ktlint `ktlint_standard_no-unused-imports = enabled` | `.editorconfig` |
 | R-21-01 | 함수 길이 상한 60줄 | detekt `LongMethod.allowedLines` | `config/detekt/detekt.yml` |
 | R-21-02 | 파라미터 함수 5 / 생성자 6 | detekt `LongParameterList` | `config/detekt/detekt.yml` |
 | R-22-01 | `GlobalScope` 금지 | detekt `GlobalCoroutineUsage` | `config/detekt/detekt.yml` |

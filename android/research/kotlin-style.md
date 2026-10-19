@@ -281,3 +281,9 @@
 - Arrow `https://arrow-kt.io/learn/typed-errors/` 인덱스 페이지는 응답이 얇아 타입 선택 지침을 얻지 못했고, 하위 페이지 `working-with-typed-errors/`에서만 논리적 실패 vs 예외 구분을 확보했다. `kotlin.Result`에 대한 Arrow의 비판은 **두 페이지 모두 언급 없음**.
 - S1(Google Kotlin style guide)에서 "예외를 잡고 무시하지 말라" 조항을 확인하지 못했다. Java 스타일 가이드의 동일 조항과 혼동하지 말 것.
 - 각 kotlinlang.org 페이지의 최종 갱신일은 페이지에 노출되지 않아 확인하지 못했다(S1만 2023-09-06 표기).
+
+## 추가 확인 (2026-10-15) — 영속 스트림의 오류 처리
+
+- `Flow.catch`(S352): "If the upstream flow completes with an exception, this operator catches that exception" / "After the flow has completed with an exception, it cannot emit any more values, and fallback values may be emitted downstream from the action block instead" → `catch { emit(기본값) }`은 플로우를 끝낸다. InfocarEV `:core:datastore`에서 읽기 오류 뒤 상태가 기본값(처음 설치)에 굳는 결함이 리뷰에서 잡혔다.
+- `Flow.retryWhen`(S353): predicate가 `FlowCollector` 수신자라 `emit`·`delay` 가능, `true`면 업스트림 재수집 → R-22-12에 "첫 값 없을 때만 기본값 1회 + 지연 재구독".
+- 공식 DataStore 가이드(https://developer.android.com/topic/libraries/architecture/datastore)는 2026-10-15 현재 `IOException` 처리 예시가 없고 `CorruptionException`(`ReplaceFileCorruptionHandler`)만 다룬다. 쓰기 실패의 결과 타입(`Saved`/`Failed`)은 프로젝트 사례 → R-15-11.

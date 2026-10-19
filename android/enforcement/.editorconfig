@@ -17,6 +17,8 @@ ij_kotlin_allow_trailing_comma = true
 ij_kotlin_allow_trailing_comma_on_call_site = true
 # function-signature 와 같은 이유. 프리셋이 생성자 파라미터를 한 줄로 접어 trailing comma 스타일과 충돌한다.
 ktlint_standard_class-signature = disabled
+# ktlint 1.7+ 는 no-unused-imports 를 기본으로 끈다(오탐 가능). 미사용 import 가 게이트를 통과한 사례가 있어 켠다 (R-20-05).
+ktlint_standard_no-unused-imports = enabled
 
 [*.md]
 max_line_length = off

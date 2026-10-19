@@ -175,16 +175,16 @@ Google은 테스트를 실행 위치(로컬 host-side / 계측 instrumented)와 
 - 체크: Repository 테스트가 네트워크·DB를 실제로 건드리는가. 검증 대상이 DataSource가 아니라 Repository의 로직인가.
 
 ### R-30-11 Compose 상호작용 테스트는 `createComposeRule()`을 기본으로 한다
-- 규칙: Compose 테스트는 `createComposeRule()`을 쓰고 Activity가 필요할 때만 `createAndroidComposeRule<T>()`로 올린다. 노드는 시맨틱(`onNodeWithText`·`testTag`)으로 찾는다. `ui-test-junit4`는 계측 테스트면 `androidTestImplementation`, Robolectric 위에서 도는 Roborazzi 스크린샷 테스트면 `testImplementation`으로 추가한다(그 밖의 소스셋에는 넣지 않는다). `ui-test-manifest`는 `debugImplementation`으로만 추가한다.
-- 근거: Compose 테스트 문서가 두 규칙의 사용 조건과 의존성 구성을 정하고, 시맨틱이 테스트가 요소를 찾는 수단이라고 설명한다 [S33](https://developer.android.com/develop/ui/compose/testing). 로컬 JVM 테스트로 도는 Roborazzi는 같은 규칙 API를 `test` 소스셋에서 쓰므로 `testImplementation`이 필요하다 — 이 팩의 compose convention plugin이 실제로 그렇게 넣고 스크래치 빌드로 확인했다 [S87](https://raw.githubusercontent.com/takahirom/roborazzi/main/README.md).
+- 규칙: Compose 테스트는 `createComposeRule()`을 쓰고 Activity가 필요할 때만 `createAndroidComposeRule<T>()`로 올린다. 노드는 시맨틱(`onNodeWithText`·`testTag`)으로 찾는다. `ui-test-junit4`는 계측 테스트면 `androidTestImplementation`, Robolectric 위에서 도는 Roborazzi 스크린샷 테스트면 `testImplementation`으로 추가한다(그 밖의 소스셋에는 넣지 않는다). `ui-test-manifest`는 `debugImplementation`으로만 추가한다. 노드가 여럿 잡히면 `onNode`가 실패하므로 매처는 글자와 역할·동작을 `and`로 묶어 하나만 잡히게 한다(`hasText("설정") and hasClickAction()`). **보이지 않는 컨테이너(살려 둔 숨은 탭·접힌 패널)는 `clearAndSetSemantics {}`로 의미를 비운다** — 배치하지 않아도 컴포지션에 남은 노드는 의미 트리에 남아 테스트가 다른 화면의 같은 글자를 잡는다.
+- 근거: Compose 테스트 문서가 두 규칙의 사용 조건과 의존성 구성을 정하고, 시맨틱이 테스트가 요소를 찾는 수단이라고 설명한다 [S33](https://developer.android.com/develop/ui/compose/testing). 매처는 `and`/`or`로 묶고 여럿은 `onAllNodes`로 고른다 [S355](https://developer.android.com/develop/ui/compose/testing/apis). `clearAndSetSemantics`는 "When a component needs its own and its descendant semantics cleared, use this API with an empty lambda"이고 의미는 접근성과 테스트가 함께 쓴다 [S349](https://developer.android.com/develop/ui/compose/accessibility/merging-clearing). 숨은 탭의 노드가 계측 테스트에 잡힌 것은 InfocarEV `TabHost` 사례(2026-10-15)다 — `onNode`가 여럿일 때 실패한다는 문장은 공식 페이지에서 찾지 못했다(실행으로 확인). 로컬 JVM 테스트로 도는 Roborazzi는 같은 규칙 API를 `test` 소스셋에서 쓰므로 `testImplementation`이 필요하다 — 이 팩의 compose convention plugin이 실제로 그렇게 넣고 스크래치 빌드로 확인했다 [S87](https://raw.githubusercontent.com/takahirom/roborazzi/main/README.md).
 - 예시:
   ```kotlin
   // Good
   @get:Rule val composeRule = createComposeRule()
   composeRule.onNodeWithText("로그인").performClick()
-  // Bad: 실제 Activity가 필요 없는데 createAndroidComposeRule<MainActivity>() 를 쓴다
+  // Bad: 실제 Activity가 필요 없는데 createAndroidComposeRule<MainActivity>() 를 쓴다 / 숨은 탭에 남은 "설정" 글자를 onNodeWithText 가 함께 잡는다
   ```
-- 체크: Activity 없이 되는 테스트에 Activity 규칙을 쓰지 않았는가. `ui-test-manifest`가 debug 구성에만 있는가.
+- 체크: Activity 없이 되는 테스트에 Activity 규칙을 쓰지 않았는가. `ui-test-manifest`가 debug 구성에만 있는가. 숨겨 둔 컴포지션에 `clearAndSetSemantics {}`가 있는가. 매처가 글자 하나만으로 노드를 잡는가.
 
 ### R-30-12 계측 테스트는 대표 플로우로 한정한다
 - 규칙: `src/androidTest`에는 로그인 → 홈처럼 여러 화면을 지나는 대표 플로우 1~2개만 둔다. 분기·에러 조합은 로컬 테스트로 내리고, 계측 테스트를 늘려 커버리지를 채우지 않는다. Room 마이그레이션 테스트(R-27-11·R-27-12)는 플로우 테스트가 아니라 스키마 검증이라 이 개수 한정에 넣지 않는다.

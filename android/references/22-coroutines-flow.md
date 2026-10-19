@@ -142,17 +142,23 @@
 - 체크: `flow {}` 본문 안에 `withContext`가 있는가.
 
 ### R-22-12 Flow 예외는 `catch` 연산자로 업스트림에서 처리한다
-- 규칙: 업스트림에서 나는 예외는 `catch` 연산자로 잡아 도메인 값(에러 상태)으로 바꿔 흘려보낸다. 수집부에 `try/catch`를 두르는 방식을 기본으로 삼지 않는다.
-- 근거: Kotlin flows on Android 문서가 예외 처리에 `catch` 연산자를 제시한다 [S42](https://developer.android.com/kotlin/flow). 데이터 계층 경계에서 도메인 타입으로 변환하는 규칙은 R-23-05.
+- 규칙: 업스트림에서 나는 예외는 `catch` 연산자로 잡아 도메인 값(에러 상태)으로 바꿔 흘려보낸다. 수집부에 `try/catch`를 두르는 방식을 기본으로 삼지 않는다. **끝나지 않아야 하는 구독**(DataStore `data` 같은 영속 상태 스트림)의 입출력 오류는 `catch { emit(기본값) }`로 막지 않는다 — `catch`는 예외로 끝난 업스트림을 대신해 값을 낸 뒤 플로우가 완료되므로 상태가 기본값에 굳고 이후 쓰기가 화면에 반영되지 않는다. 대신 `retryWhen { cause, _ -> cause is IOException }` 안에서 아직 첫 값이 없을 때만 기본값을 한 번 `emit`하고 `delay` 뒤 `true`로 재구독한다. 이미 읽은 값이 있으면 마지막 값을 유지한다(일시 오류가 상태를 처음 설치 상태로 되돌리지 않는다).
+- 근거: Kotlin flows on Android 문서가 예외 처리에 `catch` 연산자를 제시한다 [S42](https://developer.android.com/kotlin/flow). 데이터 계층 경계에서 도메인 타입으로 변환하는 규칙은 R-23-05. `catch`는 "If the upstream flow completes with an exception, this operator catches that exception"이고 "After the flow has completed with an exception, it cannot emit any more values, and fallback values may be emitted downstream from the action block instead"다 [S352](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/catch.html). `retryWhen`은 "Retries collection of the given flow when an exception occurs in the upstream flow and the predicate returns true"이며 predicate가 `FlowCollector` 수신자라 값을 `emit`하고 `delay`로 재시도 전 지연을 둘 수 있다 [S353](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/retry-when.html). 상태가 기본값에 굳은 결함은 InfocarEV `:core:datastore` 리뷰 사례(2026-10-15, 91-decisions DATASTORE_WRITE_RESULT)다. 공식 DataStore 가이드에는 지금 `IOException` 처리 예시가 없다(`CorruptionException`만, 확인 2026-10-15).
 - 예시:
   ```kotlin
   // Good
   repo.observeCart()
       .map { CartUiState.Loaded(it) }
       .catch { emit(CartUiState.Failed(NetworkError)) }
-  // Bad: 수집부에서 try/catch로 전부 감싼다
+  // Good: 영속 상태 스트림 — 끝내지 않고 재구독
+  dataStore.data.map { it.toFlags() }.retryWhen { cause, _ ->
+      if (cause !is IOException) return@retryWhen false
+      if (!hasValue) emit(EntryFlags()); delay(READ_RETRY_DELAY_MS); true
+  }
+  // Bad: 수집부에서 try/catch로 전부 감싼다 / 영속 스트림에 catch — 값을 낸 뒤 플로우가 끝나 이후 쓰기가 오지 않는다
+  dataStore.data.catch { emit(emptyPreferences()) }
   ```
-- 체크: `catch`가 변환 연산자 뒤, 수집 직전에 놓여 있는가.
+- 체크: `catch`가 변환 연산자 뒤, 수집 직전에 놓여 있는가. 영속 상태 스트림에 `catch { emit(기본값) }`이 있는가(끝나는 플로우).
 
 ### R-22-13 콜백 API는 `callbackFlow` + `awaitClose`로 감싼다
 - 규칙: 리스너·브로드캐스트 같은 콜백 소스는 `callbackFlow`로 감싸고 `trySend`로 값을 보내며 `awaitClose { }`에서 반드시 해제한다.

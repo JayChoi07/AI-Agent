@@ -3,26 +3,32 @@
 > 적용: 그린필드 Android(Kotlin·Compose·Navigation 3 1.1.7·Material 3). 출처 번호(S..)는 90-sources.md·92-sources-2.md.
 
 앱 전체에 깔리는 화면 이동·오버레이·피드백·모션 규칙이다. 화면 하나의 동작(어느 화면이 무엇을 띄우나)은 다루지 않는다. 근거 줄의 **공식**은 Android·Material 문서가 말하는 것이고, **사용자 결정**은 공식 문서가 정하지 않아 사용자가 정한 것이다(2026-10-14, 91-decisions의 MOTION_* 행). SEED·토스는 공식 기준이 아니라 참고 사례다.
-값은 `:core:designsystem`의 `motion/` 패키지(`templates/designsystem/motion/`)가 소유하고 화면은 그 토큰만 쓴다(R-28-13). Material의 시간·곡선·스프링 표는 Views 테마 속성이라 Compose에는 값만 옮겼고, Compose용 `MotionScheme`은 Material3 1.4.0에서 `internal`이라 쓰지 않는다. 예시에 쓴 Compose·Nav3 API는 스크래치 프로젝트에서 컴파일해 존재와 시그니처를 확인했다(예시 코드 그대로는 아니다). 슬라이드 거리·spring 3단·`pressScale`은 실기기에서 시각으로 확인하지 않았다.
+값은 `:core:designsystem`의 `motion/` 패키지(`templates/designsystem/motion/`)가 소유하고 화면은 그 토큰만 쓴다(R-28-13). Material의 시간·곡선·스프링 표는 Views 테마 속성이라 Compose에는 값만 옮겼고, Compose용 `MotionScheme`은 Material3 1.4.0에서 `internal`이라 쓰지 않는다. 예시에 쓴 Compose·Nav3 API는 스크래치 프로젝트에서 컴파일해 존재와 시그니처를 확인했다(예시 코드 그대로는 아니다). 푸시·팝·뒤로 키 전환은 S22+에서 시스템 설정 앱의 전환과 녹화로 비교해 확인했다(2026-10-15). 모달·fade through·spring 3단·`pressScale`은 실기기에서 시각으로 확인하지 않았다.
 
-### R-28-01 푸시·팝은 shared axis X, 최상위 목적지 간은 fade through로 전환한다
-- 규칙: `:app`의 `NavDisplay` 한 곳에서 `transitionSpec`·`popTransitionSpec`·`predictivePopTransitionSpec`을 `NavTransitions.push`·`pop`·`predictivePop`으로 정한다. 앞으로는 오른쪽에서 들어오며 페이드하고 나가는 화면은 왼쪽으로 밀리며 페이드한다(뒤로는 반대). 하단 탭 같은 최상위 목적지 사이 이동은 그 엔트리 metadata의 `TransitionKey`·`PopTransitionKey`를 `NavTransitions.fadeThrough`로 덮어쓴다(어느 Scene의 키가 쓰이는지 문서에 없어 둘 다). 화면은 자기 전환을 따로 만들지 않는다.
-- 근거: 공식 — Material은 관계로 패턴을 고른다: shared axis는 "spatial or navigational relationship"(온보딩 흐름은 x축), fade through는 "do not have a strong relationship"(하단 내비게이션 목적지)이고 문서가 두 패턴의 기본 시간을 300ms로 적는다 [S287](https://github.com/material-components/material-components-android/blob/master/docs/theming/Motion.md). Nav3가 전환 3종과 엔트리 metadata 덮어쓰기를 제공하고 "the appropriate scene"의 전환을 쓴다고만 적는다 [S288](https://developer.android.com/guide/navigation/navigation-3/animate-destinations). 사용자 결정 — 푸시·팝을 shared axis X로, 방향을 오른쪽 진입으로, 슬라이드 거리를 화면 폭의 1/10로 정한 것. Nav3 기본 전환의 모양은 문서에 없어 확인하지 못했다.
+### R-28-01 푸시·팝은 Activity 전환처럼 덮고 밀어내고, 하단 바는 탭 루트 화면과 함께 움직인다
+- 규칙: `:app`의 `NavDisplay` 한 곳에서 `transitionSpec`·`popTransitionSpec`·`predictivePopTransitionSpec`을 `NavTransitions.push`·`pop`·`predictivePop`으로 정한다. 앞으로는 새 화면이 오른쪽에서 폭 전체로 들어와 이전 화면을 **불투명하게 덮고**(페이드 없음) 이전 화면은 왼쪽으로 폭의 1/4 밀린다. 뒤로는 위 화면이 오른쪽으로 빠지고 아래 화면이 왼쪽에서 돌아온다. 들어오는 쪽과 나가는 쪽은 같은 곡선·시간(300ms, `Motion.enter()`)을 써서 두 화면 사이에 틈이 벌어지지 않게 하고, 푸시는 새 화면이 팝은 나가는 화면이 위에 그려지도록 `targetContentZIndex`를 정한다. 덮는 모양이 되려면 엔트리가 불투명해야 하므로 `:app`이 엔트리 데코레이터로 앱 배경색을 화면마다 깐다.
+  **하단 탭 바는 탭 루트 엔트리 안에 그려 화면의 일부로 만든다.** 상세로 푸시하면 바가 따로 접히지 않고 화면과 함께 왼쪽으로 밀리며 새 화면이 그 위를 덮고, 뒤로 가면 함께 돌아온다. 바를 숨기는 전용 애니메이션과 `Scaffold`의 `bottomBar`(`AnimatedVisibility`)는 쓰지 않는다. 아래 여백은 엔트리마다 따로 정한다 — 데코레이터가 탭 루트에는 "내비게이션 인셋 + 바 높이", 그 밖의 화면에는 "내비게이션 인셋"을 비우고, 엔트리에 내려보내는 `contentPadding`의 아래는 0이다(바가 레이아웃에 관여하지 않으므로 나가는 화면이 전환 중 흔들리지 않는다).
+  바가 각 탭 화면에 붙으므로 최상위 목적지(탭) 사이 이동은 `NavDisplay` 전환이 아니라 **탭 컨테이너가 화면을 살려 두고 바꾸는 것**으로 한다: 탭마다 `NavDisplay`·백스택을 따로 두고, 한 번 들어간 탭은 컴포지션에서 내리지 않고 숨긴다(배치하지 않고, 의미(semantics)를 비우고, 수명주기를 `CREATED` 로 내려 수집·뒤로가기 콜백을 멈춘다 — 측정은 유지해 목록 항목이 남게 한다). 전환은 즉시 교체다 — 페이드인은 매 프레임 두 화면을 알파 레이어로 합성해 측정상 득이 없었다. 탭 루트에서의 뒤로(시작 탭으로)는 앱 루트의 `BackHandler` 가 받는다. 화면은 자기 전환을 따로 만들지 않는다.
+- 근거: 사용자 결정(2026-10-15). 푸시·팝은 처음에 shared axis X(폭 1/10 슬라이드 + 페이드)로 정했으나 실기기에서 덮는 전환이 아니라 크로스페이드로 보여 Activity 전환 모양으로 바꿨다 — S22+에서 시스템 설정 앱 전환을 `screenrecord`(애니메이터 배율 5배)로 녹화해 프레임으로 본 값이다(새 화면이 오른쪽에서 폭 전체로 불투명하게, 이전 화면 왼쪽 약 1/4, 약 300ms). 하단 바는 처음에 `Scaffold`의 `bottomBar`를 `AnimatedVisibility`로 접었는데 푸시 중 나가는 화면의 `innerPadding`이 바와 함께 줄어, 목록 끝까지 스크롤한 홈이 왼쪽으로 밀리면서 아래로 내려앉았고 바도 화면과 따로 움직였다. 사용자가 토스·카카오톡은 바를 따로 내리지 않고 새 화면이 위를 덮으며 원래 화면이 바째로 밀린다고 설명했고, 그대로 구현해 S22+에서 푸시·뒤로·탭 전환을 녹화로 확인했다(바가 페이지와 함께 움직이고 탭 전환 때 바가 사라지지 않음). 토스·카카오톡은 시험 기기에 없어 직접 보지 못했다(research/interaction-motion.md). 탭을 `NavDisplay` 한 곳의 엔트리로 두면 탭을 바꿀 때마다 화면을 처음부터 다시 구성·배치해 그 비용이 느린 프레임의 대부분이었고(S22+ 트레이스, 2026-10-15) 코드 최적화로 줄지 않아 탭 화면을 살려 두는 구조로 바꿨다 — 카카오톡 APK 도 메인 화면의 탭을 `ViewPager2` 로 살려 둔다(정적 분석). 결과(S22+ 릴리스): 탭을 누른 뒤 가장 긴 프레임 36~38ms → 27~31ms, 버벅임 비율은 변화 없음, 들어오는 탭 300ms 페이드는 p90 을 올려 뺐다. 이 구조는 모양을 우선한 사용자 결정이고 성능 비용이 있었다 — S22+ 릴리스에서 설정 푸시·팝 버벅임이 구 셸 약 5.3%에서 새 셸 약 9%로(홈 팝 프레임 41~46ms → 54~65ms) 늘었다(2026-10-15, 프로젝트 보고). 하단 바 컴포지션 약 2.8ms·엔트리 레이어 추가·`applyChanges` 증가를 의심하나 셸만 되돌린 변형으로 분리하지 못했고 구 셸은 다른 시각에 쟀다(미확인, R-41-18). 공식 — 탭(하단 내비게이션 목적지)은 "do not have a strong relationship"이라 fade 계열이라는 Material 패턴 선택 기준과 기본 시간 300ms [S287](https://github.com/material-components/material-components-android/blob/master/docs/theming/Motion.md). Nav3가 전환 3종과 엔트리 metadata 덮어쓰기를 제공하고 "the appropriate scene"의 전환을 쓴다고만 적는다 [S288](https://developer.android.com/guide/navigation/navigation-3/animate-destinations). Nav3 기본 전환의 모양은 문서에 없다.
 - 예시:
   ```kotlin
-  // Good — :app 에서 한 번, 최상위 목적지만 metadata 로 덮어쓴다
-  NavDisplay(transitionSpec = { NavTransitions.push }, popTransitionSpec = { NavTransitions.pop }, ...)
-  entry<HomeKey>(metadata = metadata {
-      put(NavDisplay.TransitionKey) { NavTransitions.fadeThrough }
-      put(NavDisplay.PopTransitionKey) { NavTransitions.fadeThrough }
-  }) { }
-  // Bad — 화면이 자기 전환을 숫자로 만든다
-  transitionSpec = { slideInHorizontally(tween(250)) { it } togetherWith fadeOut() }
+  // Good — 탭 루트 엔트리 안에 바를 그린다(바가 화면과 함께 움직인다). 여백도 엔트리마다
+  NavEntryDecorator<NavKey>(decorate = { entry ->
+      val tab = entry.metadata[TOP_LEVEL_ENTRY] as? NavKey
+      Box(Modifier.fillMaxSize().background(background)) {
+          Box(Modifier.fillMaxSize().padding(bottom = navInset + if (tab != null) barBody else 0.dp)) { entry.Content() }
+          if (tab != null) TopLevelNavigationBar(selected = tab, onSelect = onSelectTab, Modifier.align(BottomCenter))
+      }
+  })
+  // 탭 전환: 탭마다 NavDisplay 를 두고 TabHost 가 살려 둔다 — 숨은 탭은 측정·의미·수명주기를 멈춘다
+  TabHost(selected = state.topLevelRoute) { tab -> AppNavDisplay(entries = state.rememberTabEntries(tab, …), onBack = navigator::goBack) }
+  // Bad — 바를 셸에 두고 숨길 때 접으면 나가는 화면의 여백이 흔들리고 바가 화면과 따로 움직인다
+  Scaffold(bottomBar = { AnimatedVisibility(visible = atRoot) { NavigationBar { } } }) { innerPadding -> NavDisplay(...) }
   ```
-- 체크: `NavDisplay` 전환 인자가 `:app` 한 곳에만 있는가. 화면·feature에 `slideIn*`·`fadeIn`이 있는가. 최상위 목적지 엔트리가 fade through인가.
+- 체크: `NavDisplay` 전환 인자가 `:app` 한 곳에만 있는가. 화면·feature에 `slideIn*`·`fadeIn`이 있는가. `NavTransitions.push`·`pop`에 `fadeIn`·`fadeOut`이 없는가. 하단 바가 `Scaffold(bottomBar)`가 아니라 탭 루트 엔트리 안에 있는가. 엔트리에 내려보내는 `contentPadding`의 아래가 0이고 아래 여백을 데코레이터가 엔트리마다 비우는가. 탭 사이 이동이 화면을 다시 만들지 않는가(탭마다 `NavDisplay`, 숨은 탭 유지). 숨은 탭이 측정·의미·수집을 멈추는가. **실기기에서 푸시·뒤로(키·제스처)·탭 전환을 한 번씩 눌러 새 화면이 덮고 바가 화면과 함께 움직이는지, 목록 끝까지 스크롤한 화면에서 푸시해도 나가는 화면이 내려앉지 않는지 눈으로 본다 — 글로 정한 값은 모양을 보장하지 않는다.**
 
 ### R-28-02 모달 전체 화면은 아래에서 위로, 스택 교체는 fade through다
-- 규칙: 흐름을 벗어나는 독립 작업 전체 화면은 엔트리 metadata의 `NavDisplay.TransitionKey`를 `{ modalPush() }`(`NavTransitions.kt`의 `AnimatedContentTransitionScope` 확장 함수)로, `PopTransitionKey`·`PredictivePopTransitionKey`를 `NavTransitions.modalPop`으로 덮어써 아래에서 올라오고 닫을 때 아래로 내려가게 한다. 모달의 예측형 뒤로가기는 R-28-03의 공식 수치 대신 `modalPop`을 쓴다. 백스택을 비우고 시작 화면으로 교체하는 이동은 `NavTransitions.fadeThrough`를 앞으로·뒤로 키에 모두 덮어쓴다. 어느 화면이 모달 성격인지는 그 화면의 설계가 정한다.
+- 규칙: 흐름을 벗어나는 독립 작업 전체 화면은 엔트리 metadata의 `NavDisplay.TransitionKey`를 `{ modalPush() }`(`NavTransitions.kt`의 `AnimatedContentTransitionScope` 확장 함수)로, `PopTransitionKey`·`PredictivePopTransitionKey`를 `NavTransitions.modalPop`으로 덮어써 아래에서 올라오고 닫을 때 아래로 내려가게 한다. 모달의 예측형 뒤로가기는 R-28-03의 `pop` 대신 `modalPop`을 쓴다. 백스택을 비우고 시작 화면으로 교체하는 이동은 `NavTransitions.fadeThrough`를 앞으로·뒤로 키에 모두 덮어쓴다. 어느 화면이 모달 성격인지는 그 화면의 설계가 정한다.
 - 근거: Nav3의 엔트리 metadata 전환 키 3종과 아래→위 슬라이드 예시 [S288](https://developer.android.com/guide/navigation/navigation-3/animate-destinations), [S289](https://developer.android.com/guide/navigation/navigation-3/recipes/animations). `ExitTransition.KeepUntilTransitionsFinished`는 companion 멤버가 internal이고 `AnimatedContentTransitionScope` 안의 확장 속성만 공개라서 `modalPush`를 그 스코프의 확장 함수로 만들었다(스크래치 컴파일로 확인, 아래 화면이 실제로 유지되는지는 화면에서 확인하지 않았다). 아래→위·스택 교체 페이드·모달에 `modalPop`을 쓰는 것은 사용자 결정이거나 템플릿의 선택이다. 스택 교체를 Nav3가 앞으로 이동으로 보는지 뒤로 이동으로 보는지는 문서에 없다.
 - 예시:
   ```kotlin
@@ -36,17 +42,18 @@
   ```
 - 체크: 모달 엔트리가 전환 키 3개를 모두 덮어쓰는가. 일반 푸시 화면에 `modalPush`가 있는가.
 
-### R-28-03 예측형 뒤로가기는 전체 화면 전환에 공식 수치를 쓴다
-- 규칙: 전체 화면 전환의 예측형 뒤로가기는 공식 수치를 따른다 — 나가는 화면 100→90% 축소, 들어오는 화면 110→100%, 진행 35% 지점에서 나가는 화면은 완전히 사라지고 들어오는 화면이 나타나기 시작(fade through), 인터폴레이터 (0.1, 0.1, 0, 1), 놓아서 취소하면 원래 크기로 복귀한다. 값은 `NavTransitions.predictivePop`이 갖는다.
-- 근거: 공식 — 전체 화면 표면의 모션 수치 표와 35% 경계 [S290](https://developer.android.com/design/ui/mobile/guides/patterns/predictive-back). 지원 API를 쓰면 Android 15 이상에서 기본 활성이고 루트에서 뒤로를 가로채면 back-to-home 애니메이션이 꺼진다 [S291](https://developer.android.com/develop/ui/compose/system/predictive-back-setup). Nav3의 `predictivePopTransitionSpec`이 이 수치를 제스처 진행에 맞춰 그대로 표현하는지는 확인하지 못했다(미확인).
+### R-28-03 예측형 뒤로가기는 pop과 같은 모양으로 둔다
+- 규칙: 앱이 예측형 뒤로가기를 켜면(지원 API를 쓰면 Android 15 이상에서 기본) **뒤로 키도** `popTransitionSpec`이 아니라 `predictivePopTransitionSpec`을 탄다. 그래서 `NavTransitions.predictivePop`은 `pop`과 같은 전환(R-28-01)으로 둔다. 공식 예측형 수치(나가는 화면 100→90% 축소, 들어오는 화면 110→100%, 35% 경계 fade through)는 쓰지 않는다 — 그 값을 쓰면 뒤로 키에서 위 화면이 오른쪽으로 빠지지 않고 아래 화면이 확대되며 나타나 R-28-01의 모양과 어긋난다. 제스처 중에는 슬라이드가 손가락 진행에 이어지고 놓으면 원래 자리로 돌아온다(제스처 중 미리보기는 실기기에서 확인하지 않았다).
+- 근거: 사용자 결정(2026-10-15)과 실기기 녹화 — 뒤로 키를 눌렀을 때 `predictivePopTransitionSpec`의 전환(확대·페이드)이 재생되고 `popTransitionSpec`은 쓰이지 않는 것을 S22+에서 확인했다(research/interaction-motion.md). 공식 수치 표와 35% 경계는 전체 화면 표면의 값이다 [S290](https://developer.android.com/design/ui/mobile/guides/patterns/predictive-back). 앱이 직접 전환을 정할 때 그 값을 따라야 하는지는 문서에서 확인하지 못했다. 지원 API를 쓰면 Android 15 이상에서 기본 활성이고 루트에서 뒤로를 가로채면 back-to-home 애니메이션이 꺼진다 [S291](https://developer.android.com/develop/ui/compose/system/predictive-back-setup).
 - 예시:
   ```kotlin
-  // Good — 수치는 NavTransitions 가 갖고 NavDisplay 는 꽂기만 한다
+  // Good — 뒤로 키도 이 경로이므로 pop 과 같은 전환을 꽂는다
+  val predictivePop: ContentTransform = pop
   predictivePopTransitionSpec = { NavTransitions.predictivePop }
-  // Bad — 화면이 수치를 다시 쓴다
-  predictivePopTransitionSpec = { scaleIn() togetherWith scaleOut(targetScale = 0.8f) }
+  // Bad — 공식 축소 수치를 쓰면 뒤로 키가 R-28-01 의 슬라이드와 달라진다
+  predictivePopTransitionSpec = { scaleIn(initialScale = 1.1f) togetherWith scaleOut(targetScale = 0.9f) }
   ```
-- 체크: `predictivePopTransitionSpec`이 `NavTransitions.predictivePop`인가. 실기기에서 뒤로 스와이프 미리보기가 위 수치와 같은가(미확인).
+- 체크: `predictivePop`이 `pop`과 같은 슬라이드인가. 실기기에서 뒤로 키를 눌렀을 때 위 화면이 오른쪽으로 빠지는가.
 
 ### R-28-04 표준 뒤로 버튼·제스처를 지원하고 상태를 보존한다
 - 규칙: 모든 화면은 시스템 뒤로 버튼과 뒤로 제스처로 이전 화면에 돌아간다. 백그라운드 복귀·화면 회전·프로세스 사망 뒤에도 사용자 입력을 복원한다(R-17-12, R-18-14). 열려 있던 오버레이는 Nav 엔트리 오버레이(R-28-09)만 프로세스 사망 뒤에도 복원되고 `UiState` 필드 오버레이는 구성 변경까지만 이어지므로, 프로세스 사망을 넘겨야 하면 엔트리로 둔다.
@@ -73,8 +80,8 @@
 - 체크: `BackHandler`의 `enabled`가 작업 중 상태에만 묶이는가. feature 모듈에서 `BackHandler`를 쓰면 `androidx.activity:activity-compose` 의존이 필요하다 — 템플릿은 `:app`에만 두었고 feature 컨벤션 플러그인에 있는지는 확인하지 못했다.
 
 ### R-28-06 이동 호출은 `dropUnlessResumed`로 감싼다
-- 규칙: 클릭으로 이동을 일으키는 콜백은 `dropUnlessResumed { }`로 감싸 생명주기가 RESUMED가 아닌 동안의 호출을 버린다. 전환 중 연타로 화면이 두 번 쌓이는 것을 막으려는 것이고(엔트리 생명주기에 기댄 기대 효과, 미확인), 같은 키 중복 push를 막는 `Navigator`(R-13-03)와 함께 쓴다.
-- 근거: 공식 Nav3 레시피가 이동 클릭을 `dropUnlessResumed`로 감싼다 [S289](https://developer.android.com/guide/navigation/navigation-3/recipes/animations). 문서가 이유를 적지 않아 규칙으로 올리는 것은 사용자 결정이다.
+- 규칙: 클릭으로 이동을 일으키는 콜백은 `dropUnlessResumed { }`로 감싸 생명주기가 RESUMED가 아닌 동안의 호출을 버린다. 전환 중 연타로 화면이 두 번 쌓이는 것을 막으려는 것이고(엔트리 생명주기에 기댄 기대 효과, 미확인), 같은 키 중복 push를 막는 `Navigator`(R-13-03)와 함께 쓴다. 그리고 **이동 자체는 `:app`의 `Navigator`가 한 번에 하나씩 적용한다** — 푸시·팝처럼 전환이 있는 이동 뒤 전환 길이(`Motion.STANDARD_MS` × 시스템 애니메이터 배율) 동안 들어온 이동(뒤로가기 포함)은 버리지 않고 줄을 세웠다가 순서대로 적용한다(상한 4). 탭 전환은 애니메이션이 없으므로 기다리지 않고 즉시 적용하며 줄을 비운다. 링크 교체도 줄을 비우고 자기만 남기며, 처리된 뒤(적용됐거나 탭 전환·새 링크로 버려졌거나)에 소비한다(줄에 넣고 바로 소비하면 회전으로 줄이 사라질 때 링크가 유실되고, 버려진 링크를 소비하지 않으면 회전 뒤 되살아난다). 줄을 푸는 쪽은 꺼내기 전에 지금의 전환이 끝났는지 다시 본다. 화면을 컴포지션에 둔 채 숨기는 컨테이너는 별도 창(다이얼로그·시트)을 따로 꺼야 한다 — 창은 화면 밖 배치·클립·의미 제거의 영향을 받지 않는다. `NavDisplay`는 전환 중 들어온 이동을 진행 중 `AnimatedContent` 위에 덮어씌워(z-index 재계산) 덮고 밀어내는 모양이 깨진다.
+- 근거: 공식 Nav3 레시피가 이동 클릭을 `dropUnlessResumed`로 감싼다 [S289](https://developer.android.com/guide/navigation/navigation-3/recipes/animations). 문서가 이유를 적지 않아 규칙으로 올리는 것은 사용자 결정이다. 큐: S22+ 녹화(2026-10-15)에서 푸시 80% 지점의 뒤로가기가 전환 위에 덮여 화면이 겹치거나 엉뚱한 탭이 보였고, 큐를 둔 뒤에는 푸시가 끝난 다음 팝이 재생됐다. 애니메이터 배율을 따르지 않으면 개발자 옵션 5배에서 큐가 전환 도중에 풀린다(같은 녹화). 공식 문서는 전환 중 이동의 겹침을 다루지 않는다(프로젝트 사례).
 - 예시:
   ```kotlin
   // Good
@@ -82,7 +89,7 @@
   // Bad — 이동 호출이 생명주기와 무관하게 실행된다
   Button(onClick = { onOpenDetail(id) }) { Text(label) }
   ```
-- 체크: 이동 콜백을 부르는 `onClick`이 `dropUnlessResumed`로 감싸져 있는가.
+- 체크: 이동 콜백을 부르는 `onClick`이 `dropUnlessResumed`로 감싸져 있는가. 이동이 `Navigator` 한 곳의 큐를 거치는가(전환 길이가 애니메이터 배율을 따르는가). 실기기에서 푸시 직후 뒤로가기·푸시/뒤로 연타를 녹화해 전환이 겹치지 않는지 본다.
 
 ### R-28-07 화면 사이 공유 요소 전환은 쓰지 않는다
 - 규칙: 화면 사이에 공유 요소 전환(`SharedTransitionLayout`)을 넣지 않는다. 한 엔트리가 두 Scene 사이를 오갈 때의 끊김을 막으려고 `NavDisplay`에 `sharedTransitionScope`를 넘기는 것(R-13-09의 list-detail 같은 Scene 전략)은 예외다. 화면 사이에 쓰려면 이 규칙을 먼저 고친다.
@@ -139,8 +146,8 @@
 - 체크: 진행 중·파괴적 오버레이에 닫힘 차단과 닫기 버튼이 있고 그 버튼이 실제로 닫는가. 오버레이가 열려 있을 때 뒤로가기가 화면을 먼저 pop하는가.
 
 ### R-28-11 스낵바는 4초·하단 중앙·한 번에 1개·액션 1개다
-- 규칙: 스낵바는 4초 표시(내용이 길면 더 길게), 하단 중앙, FAB 위(하단 바가 있으면 그 위)에 두고, 한 번에 1개만 보이며 새 것은 큐에 쌓여 순서대로 나온다(`SnackbarHostState`). `showSnackbar`는 액션 문구가 있으면 `duration` 기본값이 `Indefinite`가 되므로 4초가 되려면 `SnackbarDuration.Short`를 넘긴다. 텍스트 액션은 최대 1개이고 "되돌리기"처럼 구체적인 문구를 쓴다. 누르고 있으면 타이머가 멈추게 한다 — 타이머는 `SnackbarHost`에 있고 Material 3 기본에는 이 동작이 없어(소스 확인) `:core:designsystem`이 호스트를 직접 만든다. `showSnackbar`는 사용자 이벤트 경로에서는 `rememberCoroutineScope`, `UiState` 필드 경로(R-28-09)에서는 `LaunchedEffect`에서 부른다(R-17-08).
-- 근거: 공식 — 스낵바는 몇 초 뒤 사라진다 [S296](https://developer.android.com/develop/ui/compose/components/snackbar). Material3 1.4.0 소스에서 `SnackbarDuration.Short`=4000ms, `showSnackbar`의 기본 duration은 액션이 없으면 `Short`·있으면 `Indefinite`, `SnackbarHostState`는 Mutex로 한 번에 하나만 보이는 공정한 큐다. 참고 — SEED 스낵바의 4초·하단 중앙·1개와 큐·액션 1개·터치 유지 시 타이머 일시정지·FAB 위 [S301](https://seed-design.io/docs/components/snackbar). 값 채택(하단 바 위 포함)은 사용자 결정이다.
+- 규칙: 스낵바는 4초 표시(내용이 길면 더 길게), 하단 중앙, FAB 위(하단 바가 있으면 그 위)에 두고, 한 번에 1개만 보이며 새 것은 큐에 쌓여 순서대로 나온다(`SnackbarHostState`). `showSnackbar`는 액션 문구가 있으면 `duration` 기본값이 `Indefinite`가 되므로 4초가 되려면 `SnackbarDuration.Short`를 넘긴다. 텍스트 액션은 최대 1개이고 "되돌리기"처럼 구체적인 문구를 쓴다. 누르고 있으면 타이머가 멈추게 한다 — 타이머는 `SnackbarHost`에 있고 Material 3 기본에는 이 동작이 없어(소스 확인) `:core:designsystem`이 호스트를 직접 만든다. `showSnackbar`는 사용자 이벤트 경로에서는 `rememberCoroutineScope`, `UiState` 필드 경로(R-28-09)에서는 `LaunchedEffect`에서 부른다(R-17-08). 직접 만든 호스트는 Material 3 `SnackbarHost`처럼 의미(semantics)도 갖춘다 — `liveRegion = LiveRegionMode.Polite`와 `dismiss { }`를 **스낵바가 떠 있는 동안에만** 붙인다. 사라진 뒤에도 남겨 두면 보이지 않는 빈 노드가 TalkBack에 잡힌다.
+- 근거: 공식 — 스낵바는 몇 초 뒤 사라진다 [S296](https://developer.android.com/develop/ui/compose/components/snackbar). Material3 1.4.0 소스에서 `SnackbarDuration.Short`=4000ms, `showSnackbar`의 기본 duration은 액션이 없으면 `Short`·있으면 `Indefinite`, `SnackbarHostState`는 Mutex로 한 번에 하나만 보이는 공정한 큐다. 참고 — SEED 스낵바의 4초·하단 중앙·1개와 큐·액션 1개·터치 유지 시 타이머 일시정지·FAB 위 [S301](https://seed-design.io/docs/components/snackbar). 값 채택(하단 바 위 포함)은 사용자 결정이다. 의미 — Material3 `SnackbarHost.kt`는 항목마다 `if (isVisible) { liveRegion = LiveRegionMode.Polite }`와 `dismiss { key.dismiss(); true }`를 붙이고 표시 시간을 `accessibilityManager.calculateRecommendedTimeoutMillis`로 늘린다(소스 확인 2026-10-15) [S350](https://raw.githubusercontent.com/androidx/androidx/androidx-main/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/SnackbarHost.kt). "Alert-like components can be marked with the `liveRegion` semantics property"이고 대부분 `Polite`를 쓴다 [S348](https://developer.android.com/develop/ui/compose/accessibility/semantics). 사라진 뒤 남은 빈 노드가 TalkBack에 잡힌 것은 InfocarEV `AppSnackbarHost` 리뷰 사례(2026-10-15)다.
 - 예시:
   ```kotlin
   // Good — 액션이 있어도 4초
@@ -148,7 +155,7 @@
   // Bad — 액션이 있는데 duration 을 생략해 무기한이 된다 / 액션을 둘 두거나 "확인" 같은 모호한 문구
   scope.launch { snackbarHostState.showSnackbar("삭제했습니다", actionLabel = "되돌리기") }
   ```
-- 체크: 스낵바 액션이 1개이고 문구가 구체적인가. 액션이 있는 `showSnackbar`가 `duration`을 넘기는가. 지속 경고에 `Indefinite` 스낵바를 쓰는가.
+- 체크: 스낵바 액션이 1개이고 문구가 구체적인가. 액션이 있는 `showSnackbar`가 `duration`을 넘기는가. 지속 경고에 `Indefinite` 스낵바를 쓰는가. 직접 만든 호스트에 `liveRegion`·`dismiss`가 있고 스낵바가 없을 때는 빠지는가.
 
 ### R-28-12 오버레이는 퇴장을 등장보다 짧게 한다
 - 규칙: 직접 만드는 오버레이(`AnimatedVisibility` 등)는 등장 300ms 감속(`Motion.enter()`), 퇴장 200ms 가속(`Motion.exit()`)을 쓴다. 다이얼로그는 페이드, 시트는 아래에서 슬라이드한다. `AlertDialog`·`ModalBottomSheet`의 라이브러리 기본 모션은 억지로 바꾸지 않는다.

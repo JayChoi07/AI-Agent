@@ -98,8 +98,8 @@
 - 체크: 리시버·FCM·알람에서 서비스를 시작하는 코드마다 해당 예외가 주석으로 있는가. `BOOT_COMPLETED` 리시버가 제한된 여섯 타입 서비스를 시작하는가.
 
 ### R-24-06 타입의 사전 조건은 서비스 시작 전에 확인하고 시작 실패를 삼키지 않는다
-- 규칙: 타입이 런타임 사전 조건(위치 권한, 블루투스 권한 등)을 요구하면 서비스를 시작하기 전에 그 조건을 확인하고 충족하지 못하면 서비스를 시작하지 않는다. `startForegroundService()` 호출은 `ForegroundServiceStartNotAllowedException`을 잡아 서비스 상태(R-24-11)에 실패로 기록하고 화면이 그 상태를 보여 준다. 예외를 잡을 때 `Exception` 전체를 잡지 않는다(마지막 문장은 R-22-10의 방향을 따르는 팩 결정).
-- 근거: 사전 조건은 타입마다 다르고 승격 시점에 시스템이 검사하며 서비스를 시작하기 전에 직접 확인하라고 한다(요약) [S191](https://developer.android.com/develop/background-work/services/fgs/launch), [S192](https://developer.android.com/develop/background-work/services/fgs/service-types). 시작 제한 위반 예외는 [S193](https://developer.android.com/develop/background-work/services/fgs/restrictions-bg-start)이, 문제 해결 문서가 다루는 예외 목록은 [S197](https://developer.android.com/develop/background-work/services/fgs/troubleshooting)이 적는다. 시작 요청을 어느 계층(ViewModel·Repository·UseCase)이 맡을지는 출처가 침묵하므로 정하지 않는다.
+- 규칙: 타입이 런타임 사전 조건(위치 권한, 블루투스 권한 등)을 요구하면 서비스를 시작하기 전에 그 조건을 확인하고 충족하지 못하면 서비스를 시작하지 않는다. `startForegroundService()` 호출은 `ForegroundServiceStartNotAllowedException`을 잡아 서비스 상태(R-24-11)에 실패로 기록하고 화면이 그 상태를 보여 준다. 예외를 잡을 때 `Exception` 전체를 잡지 않는다(마지막 문장은 R-22-10의 방향을 따르는 팩 결정). minSdk가 31 미만이면 이 클래스가 없는 기기가 있으므로 상위 `IllegalStateException`으로 잡는다. 앱이 보일 때 다시 시작할 수 있는 서비스(연결 유지)는 실패로 끝내지 않고 보류한다(R-24-15).
+- 근거: 사전 조건은 타입마다 다르고 승격 시점에 시스템이 검사하며 서비스를 시작하기 전에 직접 확인하라고 한다(요약) [S191](https://developer.android.com/develop/background-work/services/fgs/launch), [S192](https://developer.android.com/develop/background-work/services/fgs/service-types). 시작 제한 위반 예외는 [S193](https://developer.android.com/develop/background-work/services/fgs/restrictions-bg-start)이, 문제 해결 문서가 다루는 예외 목록은 [S197](https://developer.android.com/develop/background-work/services/fgs/troubleshooting)이 적는다. 시작 요청을 어느 계층(ViewModel·Repository·UseCase)이 맡을지는 출처가 침묵하므로 정하지 않는다. `ForegroundServiceStartNotAllowedException`은 API 31에 추가됐고 `ServiceStartNotAllowedException` → `IllegalStateException`을 상속한다(SDK 37.2 `api-versions.xml`로 확인, 2026-10-15) [S356](https://developer.android.com/reference/android/app/ForegroundServiceStartNotAllowedException); minSdk 26에서 상위 타입으로 잡는 것은 InfocarEV 사례이고 공식 문서는 이 처리를 적지 않는다.
 - 예시:
   ```kotlin
   // Good
@@ -114,7 +114,7 @@
   // Bad: 조건 확인 없이 시작하고 예외가 앱을 죽이게 둔다
   context.startForegroundService(Intent(context, RecordingService::class.java))
   ```
-- 체크: 사전 조건이 있는 타입의 서비스 시작 앞에 권한 확인이 있는가. `ForegroundServiceStartNotAllowedException`을 처리하는가. 실패가 화면에서 보이는 상태로 이어지는가.
+- 체크: 사전 조건이 있는 타입의 서비스 시작 앞에 권한 확인이 있는가. `ForegroundServiceStartNotAllowedException`(minSdk<31이면 `IllegalStateException`)을 처리하는가. 실패가 화면에서 보이는 상태로 이어지는가.
 
 ### R-24-07 시간 제한이 있는 타입은 `onTimeout()`을 구현해 즉시 서비스를 멈춘다
 - 규칙: `dataSync`·`mediaProcessing` 타입(targetSdk 35 이상)을 쓰는 서비스는 `onTimeout(startId, fgsType)`을 구현하고 안에서 곧바로 `stopSelf()`를 부른다. 이 두 타입은 사용자 조작으로만 시작한다. 타임아웃 시 진행 상태는 서비스 상태(R-24-11)에 남겨 화면이 알 수 있게 한다(마지막 문장은 팩 결정).
@@ -230,6 +230,33 @@
   # Bad: 새 타입을 매니페스트에만 추가하고 콘솔 선언은 심사 반려 뒤에 안다
   ```
 - 체크: 릴리스에 새 `foregroundServiceType`이 들어왔는가. 그렇다면 그 타입의 설명·영향·영상이 준비됐는가.
+
+### R-24-15 연결 유지 서비스는 앱이 보일 때 시작하고 거부되면 보류해 다음 `onStart`에 재시도하며, 알림의 "끊기" 액션은 `getForegroundService`+`FLAG_IMMUTABLE`다
+- 규칙: 외부 기기 연결을 유지하는 `connectedDevice` 포그라운드 서비스는 연결이 성립한 시점에 시작하되, 그 시점에 앱이 백그라운드면(홈 버튼을 누른 사이 연결된 경우) `ForegroundServiceStartNotAllowedException`(minSdk 26이면 `IllegalStateException`)을 잡아 **보류** 플래그를 세우고 루트 Activity가 다시 보일 때(`onStart` → 컨트롤러 `onAppVisible()`) 다시 시작한다. 보류 중 연결이 끝나면 보류도 지운다. 연결 자체는 프로세스 안 싱글턴이 소유해 서비스 없이도 이어진다(R-24-11). 알림의 "끊기" 액션은 서비스로 보내는 `PendingIntent.getForegroundService(context, 0, intent, FLAG_IMMUTABLE or FLAG_UPDATE_CURRENT)`다 — Activity를 띄우지 않고 서비스가 `onStartCommand`에서 액션을 보고 연결을 끊는다. `POST_NOTIFICATIONS` 거절은 시작 조건이 아니다(R-24-09). 재시도 횟수 상한은 두지 않는다(앱이 보이면 시작은 허용된다).
+- 근거: Android 12부터 백그라운드 시작은 예외에 해당하지 않으면 `ForegroundServiceStartNotAllowedException`이다 [S193](https://developer.android.com/develop/background-work/services/fgs/restrictions-bg-start), [S197](https://developer.android.com/develop/background-work/services/fgs/troubleshooting). 앱이 보일 때 시작하는 것은 R-24-05의 팩 결정이고 "보류 → 다음 `onStart` 재시도"는 InfocarEV `ConnectionServiceController` 사례(2026-10-15, 91-decisions SERVICE_START_RETRY)다 — 공식 문서는 거부 뒤의 재시도 시점을 적지 않는다(공식 근거 없음). `getForegroundService`는 API 26부터이고 `FLAG_IMMUTABLE`은 API 23부터다(SDK 37.2 `api-versions.xml` 확인) [S357](https://developer.android.com/reference/android/app/PendingIntent). `FLAG_IMMUTABLE`은 "to prevent unfilled fields from being filled in by a malicious application"이고 Android 12 이상 타깃은 가변성을 명시해야 한다 [S354](https://developer.android.com/privacy-and-security/risks/pending-intent).
+- 예시:
+  ```kotlin
+  // Good — 거부되면 보류, 앱이 보일 때 재시도
+  override fun start() { pending = !startNow() }
+  fun onAppVisible() { if (pending) pending = !startNow() }   // MainActivity.onStart 가 부른다
+  private fun startNow() = try { context.startForegroundService(intent); true } catch (e: IllegalStateException) { false }
+  // Good — 알림 "끊기" 는 서비스로 가는 PendingIntent
+  PendingIntent.getForegroundService(context, 0, Intent(context, ConnectionService::class.java).setAction(ACTION_STOP), FLAG_IMMUTABLE or FLAG_UPDATE_CURRENT)
+  // Bad: 거부를 실패로 끝내고 연결을 버린다 / 알림 액션이 Activity 를 띄워 끊는다 / FLAG_MUTABLE
+  ```
+- 체크: 서비스 시작 거부가 보류되고 루트 Activity `onStart`에서 재시도되는가. 보류 중 연결 종료가 보류를 지우는가. 알림 액션 `PendingIntent`가 `getForegroundService`이고 `FLAG_IMMUTABLE`인가.
+
+### R-24-16 배터리 최적화 안내는 시스템 제외 목록 화면(`ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS`)만 열고 직접 요청·제조사 화면은 쓰지 않는다
+- 규칙: 백그라운드에서 끊기는 연결을 사용자에게 안내할 때는 `Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS` 인텐트로 시스템의 제외 목록 화면만 연다. `ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`(직접 요청 대화상자)와 `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` 권한은 Play 정책이 허용한 사용 사례에 해당할 때만 쓰고 이 팩의 기본은 쓰지 않는 것이다. 제조사별 전원 관리 화면을 여는 컴포넌트 이름 목록(dontkillmyapp 방식)은 만들지 않는다 — 안내 문구로 설정 → 배터리 경로를 알려 준다. 절전 모드가 켜져 있으면 끊길 수 있다는 한 줄 안내는 둔다.
+- 근거: "Most apps can invoke an intent that contains the `ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS`" / "Apps that satisfy an acceptable use case can instead invoke an intent that contains the `ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`" / "Google Play policies prohibit apps from requesting direct exemption from Power Management features—Doze and App Standby—in Android 6.0 and above unless the core function of the app is adversely affected" [S209](https://developer.android.com/training/monitoring-device-state/doze-standby). 허용 표에서 주변 기기 동반 앱은 "core function is maintaining a persistent connection with the peripheral device for the purpose of providing the peripheral device internet access"일 때만 Acceptable이고 "only needs to connect to a peripheral device periodically to sync"는 Not Acceptable이다 [S209](https://developer.android.com/training/monitoring-device-state/doze-standby) — 스캐너 연결은 인터넷 제공이 아니라 뒤 경우에 가깝다는 것이 팩 판단이다. 제조사 화면 직접 열기는 공식 문서에 없다(공식 근거 없음, InfocarEV 결정 2026-10-15).
+- 예시:
+  ```kotlin
+  // Good
+  context.startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
+  // Bad: 직접 요청 / 제조사 컴포넌트 목록
+  context.startActivity(Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).setData("package:$packageName".toUri()))
+  ```
+- 체크: `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` 권한·인텐트가 매니페스트·코드에 있는가. 제조사 패키지·컴포넌트 이름 문자열이 있는가.
 
 ## 출처가 침묵하는 것 (규칙으로 쓰지 않음)
 

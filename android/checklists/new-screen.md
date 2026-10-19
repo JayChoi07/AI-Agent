@@ -1,5 +1,5 @@
 # new-screen — 화면 추가
-읽을 references: [10-project-structure, 11-architecture-layers, 12-state-management, 13-navigation, 14-di, 16-domain-layer, 17-compose-ui, 25-runtime-permissions, 26-time-handling, 28-interaction-motion, 30-testing]
+읽을 references: [10-project-structure, 11-architecture-layers, 12-state-management, 13-navigation, 14-di, 16-domain-layer, 17-compose-ui, 25-runtime-permissions, 26-time-handling, 28-interaction-motion, 30-testing, 41-rendering-memory]
 함께 로드할 공식 스킬: [navigation-3, testing-setup(테스트 인프라가 없을 때만)]
 
 ## 컨텍스트 수집 (구현 전)
@@ -37,6 +37,7 @@
 5. `{{Feature}}Screen` + Preview — `templates/ui/{{Feature}}Screen.kt`
    → 검증: 상태+콜백(+`modifier`·`contentPadding` 같은 레이아웃 값) 파라미터만, Preview 2종(다크·폰트 배율) (R-17-01, R-17-02)
    → 검증: 이동 콜백이 `dropUnlessResumed`로 감싸져 있고 `tween`·`spring`에 숫자 리터럴이 없다 (R-28-06, R-28-13)
+   → 검증: 화면 밖으로 길어지는 내용·무거운 블록이 lazy 항목이고, 초당 여러 번 바뀌는 값이 화면 UiState에 섞이지 않았고, 큰 컨테이너의 상태 표현에 alpha<1이 쓰이지 않았다 (R-41-05, R-41-10, R-41-11)
 6. DI 바인딩 — `templates/di/{{Feature}}Module.kt`
    → 검증: 인터페이스는 `@Binds`, `di/` 패키지, 필드 주입 없음 (R-14-04, R-14-05, R-14-02)
 7. 테스트 — `templates/test/{{Feature}}ViewModelTest.kt`, `templates/test/{{Feature}}ScreenshotTest.kt`, `templates/test/Fake{{Feature}}Repository.kt`

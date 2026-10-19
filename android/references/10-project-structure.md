@@ -6,7 +6,7 @@
 
 | 모듈 | 의존해도 되는 모듈 | 의존하면 안 되는 모듈 |
 |---|---|---|
-| `:app` | 모든 `:feature:*`, 모든 `:core:*` | 없음(최상위 진입점) |
+| `:app` | 모든 `:feature:*`, 모든 `:core:*`, `baselineProfile(...)` 선언으로 `:baselineprofile` | 없음(최상위 진입점) |
 | `:feature:<name>` | `:core:domain`, `:core:data`, `:core:model`, `:core:ui`, `:core:designsystem`, `:core:common` | 다른 `:feature:*`, `:app`, `:core:network`, `:core:database`, `:core:datastore` |
 | `:core:ui` | `:core:designsystem`, `:core:model`, `:core:common` | `:feature:*`, `:app`, `:core:data`, `:core:domain` |
 | `:core:designsystem` | `:core:common` | 그 밖 전부 |
@@ -16,14 +16,15 @@
 | `:core:model` | 없음(순수 Kotlin/JVM 모듈) | 전부 |
 | `:core:common` | 없음 | 전부 |
 | `:core:testing` | 테스트 대상 모듈(`testImplementation` 전용) | 프로덕션 소스셋 어디에서도 참조 금지 |
+| `:baselineprofile`(R-10-01의 예외, R-41-17) | `:app`(`targetProjectPath`) | 그 밖 전부. 이 모듈에 의존하는 것은 `:app`의 `baselineProfile(...)` 선언 하나뿐이다 |
 
 의존은 한 방향으로만 흐른다. `:feature:*` → `:core:domain` → `:core:data` → `:core:model`이며, 도메인 계층은 선택이므로 UseCase가 없는 화면은 `:feature:*`가 `:core:data`를 바로 본다(11-architecture-layers.md `R-11-01`). Repository는 인터페이스와 구현이 모두 `:core:data`에 있고 다른 계층은 인터페이스 타입만 쓴다(`R-11-02`). 구현을 인터페이스에 붙이는 `@Binds` 모듈은 그 구현을 소유한 모듈의 `di/`에 둔다(14-di.md `R-14-04`, `R-14-05`).
 
 기능 하나를 5개 모듈로 쪼개는 방식([S115](https://toss.tech/article/slash23-iOS))은 채택하지 않는다. 700모듈 규모를 전제한 iOS 사례이고, 그린필드 기본값으로는 [S03](https://developer.android.com/topic/modularization)의 과세분화 경고에 정면으로 걸린다.
 
 ### R-10-01 모듈 유형을 `:app`·`:core:*`·`:feature:*` 셋으로 한정한다
-- 규칙: 새 모듈은 `:app`(진입점 하나), `:core:{common,model,domain,data,network,database,datastore,ui,designsystem,testing}`, `:feature:<name>` 중 하나로만 만든다. 세 유형에 안 맞는 코드는 새 모듈 대신 기존 모듈의 패키지로 둔다.
-- 근거: Google 모듈화 패턴이 app·feature·data·common(core)·test 유형을 제시한다 [S04](https://developer.android.com/topic/modularization/patterns). NiA는 core 하위를 data·database·model·network·ui·designsystem·common·testing·datastore로 둔다 [S52](https://raw.githubusercontent.com/android/nowinandroid/main/docs/ModularizationLearningJourney.md). 모델·에러·결과 타입을 담는 `:core:model`을 따로 두는 것도 같은 목록에서 왔고, 아무 계층에도 의존하지 않는 바닥 모듈이 있어야 data가 domain을 거꾸로 참조하지 않는다 [S01](https://developer.android.com/topic/architecture). 유형을 늘릴수록 모듈당 오버헤드가 쌓여 유지보수가 어려워진다 [S03](https://developer.android.com/topic/modularization).
+- 규칙: 새 모듈은 `:app`(진입점 하나), `:core:{common,model,domain,data,network,database,datastore,ui,designsystem,testing}`, `:feature:<name>` 중 하나로만 만든다. 세 유형에 안 맞는 코드는 새 모듈 대신 기존 모듈의 패키지로 둔다. 예외는 하나다 — Baseline Profile 생성과 Macrobenchmark를 돌리는 `com.android.test` 모듈 `:baselineprofile`을 최상위에 하나 둘 수 있다(R-41-17).
+- 근거: Google 모듈화 패턴이 app·feature·data·common(core)·test 유형을 제시한다 [S04](https://developer.android.com/topic/modularization/patterns). NiA는 core 하위를 data·database·model·network·ui·designsystem·common·testing·datastore로 둔다 [S52](https://raw.githubusercontent.com/android/nowinandroid/main/docs/ModularizationLearningJourney.md). 모델·에러·결과 타입을 담는 `:core:model`을 따로 두는 것도 같은 목록에서 왔고, 아무 계층에도 의존하지 않는 바닥 모듈이 있어야 data가 domain을 거꾸로 참조하지 않는다 [S01](https://developer.android.com/topic/architecture). 유형을 늘릴수록 모듈당 오버헤드가 쌓여 유지보수가 어려워진다 [S03](https://developer.android.com/topic/modularization). 예외 하나(`:baselineprofile`)의 이유는 "Macrobenchmarks require a `com.android.test` module---separate from your app code"이고 프로파일 생성 모듈도 "Create a new `com.android.test` module---for example, `:baseline-profile`"이기 때문이다 [S313](https://developer.android.com/topic/performance/benchmarking/macrobenchmark-overview), [S337](https://developer.android.com/topic/performance/baselineprofiles/create-baselineprofile). 예외 모듈의 이름 `:baselineprofile`과 하나만 허용하는 범위는 제안(사용자 위임, 2026-10-15)이다(R-41-17).
 - 예시:
   ```kotlin
   // Good — settings.gradle.kts
@@ -33,7 +34,7 @@
   // Bad — 유형 밖 모듈
   include(":util", ":helpers", ":shared")
   ```
-- 체크: 추가된 모듈 경로가 `:app`·`:core:`·`:feature:` 중 하나로 시작하는가. 이름이 `util`·`common2`·`shared`처럼 책임을 말하지 않는가.
+- 체크: 추가된 모듈 경로가 `:app`·`:core:`·`:feature:` 중 하나로 시작하는가(`:baselineprofile` 하나는 R-41-17의 예외). 이름이 `util`·`common2`·`shared`처럼 책임을 말하지 않는가.
 
 ### R-10-02 `:feature:*`끼리 직접 의존하지 않는다
 - 규칙: feature 모듈의 빌드 파일에 다른 feature 모듈을 넣지 않는다. 화면 사이 연결은 콜백 람다로 위에 올리고 `:app`이 조합해 목적지를 정한다.

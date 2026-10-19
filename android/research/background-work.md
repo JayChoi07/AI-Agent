@@ -268,3 +268,11 @@
 - Hilt 2.60.1과 `LifecycleService`의 호환은 공식 문서로 확인하지 못했고 실빌드로도 검증하지 않았다.
 - WebSearch 결과에 든 "Foreground service types are required"(https://developer.android.com/about/versions/14/changes/fgs-types-required)는 직접 열지 않았다. 같은 내용을 S26으로 확인했다.
 - 가져온 페이지 안에 에이전트에게 무언가를 하라고 지시하는 문구는 없었다. 페이지 하단의 "AI Prompt" 상자(S12)는 Android Studio용 프롬프트 예시이며 따르지 않았다.
+
+## 추가 확인 (2026-10-15) — 연결 유지 서비스의 시작 거부·알림 액션·배터리 최적화 안내
+
+- SDK 37.2 `platforms/android-37.2/data/api-versions.xml`: `ForegroundServiceStartNotAllowedException` since 31, `extends ServiceStartNotAllowedException`(since 31, `extends java/lang/IllegalStateException`); `PendingIntent.getForegroundService(...)` since 26; `FLAG_IMMUTABLE` since 23. 레퍼런스 페이지(S356·S357)는 본문이 커서 읽지 못했고 이 파일로 확인했다.
+- 문제 해결 문서(S197): Android 12부터 백그라운드 시작은 예외가 아니면 `ForegroundServiceStartNotAllowedException`. 거부 뒤 언제 재시도할지는 문서에 없다 → R-24-15의 "보류 → 다음 `onStart`"는 InfocarEV `ConnectionServiceController` 사례.
+- Pending intents 위험 문서(S354): `FLAG_IMMUTABLE`은 "to prevent unfilled fields from being filled in by a malicious application", Android 12 이상 타깃은 가변성 명시.
+- Doze 문서(S209): "Most apps can invoke … `ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS`", 직접 요청(`ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`)은 허용 사례만, "Google Play policies prohibit apps from requesting direct exemption … unless the core function of the app is adversely affected". 허용 표에서 주변 기기 동반 앱은 "providing the peripheral device internet access"일 때만 Acceptable → R-24-16. 제조사 전원 관리 화면 직접 열기는 공식 문서에 없다.
+- 권한 요청 문서(S212)의 "every time you perform an operation" 적용: 설정 앱에서 허용하고 돌아온 경우는 런처 콜백이 없으므로 `ON_RESUME` 재확인 → R-25-05 체크(프로젝트 사례).

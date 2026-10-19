@@ -87,8 +87,8 @@
 - 체크: ViewModel·UiState에 `android.*`·`androidx.activity.*` 타입이나 권한 문자열 요청 이벤트 스트림이 있는가. 런처가 Route 밖에서 만들어지는가.
 
 ### R-25-05 권한이 필요한 동작을 실행할 때마다 허용 여부를 새로 확인한다
-- 규칙: 동작 직전(클릭 처리 시점)에 `checkSelfPermission`으로 허용 여부를 확인한다. 이전 확인 결과를 `remember`·필드·저장소에 두고 이후 동작의 허용 근거로 쓰지 않는다. UiState의 권한 값은 Route가 시스템에서 읽어 넣은 값이지 저장해 둔 값이 아니다.
-- 근거: "You must check whether you have a permission every time you perform an operation that requires that permission." [S212](https://developer.android.com/training/permissions/requesting). 권한은 실행 중에도 사라진다 — "If your app targets Android 11 (API level 30) or higher and is not used for a few months, the system protects user data by automatically resetting the sensitive runtime permissions that the user had granted your app." [S212](https://developer.android.com/training/permissions/requesting). 대응은 기능을 쓸 때 필요한 권한을 확인하는 것이다(요약) [S225](https://developer.android.com/about/versions/11/privacy/permissions). 원타임 권한을 사용자가 회수하면 "your app's process terminates." 라서 복귀는 프로세스 재생성 경로다 [S212](https://developer.android.com/training/permissions/requesting). 앱 수면에서 깨어나도 권한은 자동으로 되돌아오지 않고 사용자가 다시 허용해야 한다(요약) [S226](https://developer.android.com/topic/performance/app-hibernation). 알림 권한도 언제든 회수된다 [S205](https://developer.android.com/develop/ui/views/notifications/notification-permission).
+- 규칙: 동작 직전(클릭 처리 시점)에 `checkSelfPermission`으로 허용 여부를 확인한다. 이전 확인 결과를 `remember`·필드·저장소에 두고 이후 동작의 허용 근거로 쓰지 않는다. UiState의 권한 값은 Route가 시스템에서 읽어 넣은 값이지 저장해 둔 값이 아니다. 화면이 다시 보일 때(`ON_RESUME`)도 다시 읽는다 — "다시 묻지 않음" 뒤 사용자가 설정 앱에서 허용하고 돌아오면 런처 콜백이 오지 않아 UiState의 권한 값이 낡은 채 남는다.
+- 근거: "You must check whether you have a permission every time you perform an operation that requires that permission." [S212](https://developer.android.com/training/permissions/requesting). 권한은 실행 중에도 사라진다 — "If your app targets Android 11 (API level 30) or higher and is not used for a few months, the system protects user data by automatically resetting the sensitive runtime permissions that the user had granted your app." [S212](https://developer.android.com/training/permissions/requesting). 대응은 기능을 쓸 때 필요한 권한을 확인하는 것이다(요약) [S225](https://developer.android.com/about/versions/11/privacy/permissions). 원타임 권한을 사용자가 회수하면 "your app's process terminates." 라서 복귀는 프로세스 재생성 경로다 [S212](https://developer.android.com/training/permissions/requesting). 앱 수면에서 깨어나도 권한은 자동으로 되돌아오지 않고 사용자가 다시 허용해야 한다(요약) [S226](https://developer.android.com/topic/performance/app-hibernation). 알림 권한도 언제든 회수된다 [S205](https://developer.android.com/develop/ui/views/notifications/notification-permission). `ON_RESUME` 재확인은 InfocarEV 리뷰 사례(2026-10-15)다 — 설정 앱에서 허용하고 돌아온 경우를 공식 문서는 따로 적지 않는다("every time" 문장의 적용).
 - 예시:
   ```kotlin
   // Good
@@ -96,7 +96,7 @@
   // Bad: 처음 한 번 읽은 값을 계속 믿는다
   val granted = remember { context.checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED }
   ```
-- 체크: 권한 확인 결과를 `remember`·`SharedPreferences`·DataStore에 캐시하는가.
+- 체크: 권한 확인 결과를 `remember`·`SharedPreferences`·DataStore에 캐시하는가. Route가 `ON_RESUME`마다 `checkSelfPermission`으로 UiState의 권한 값을 다시 넣는가.
 
 ### R-25-06 근거 UI는 shouldShowRequestPermissionRationale이 true일 때만 보이고 취소할 수 있게 한다
 - 규칙: 클릭 시 분기는 셋이다. 허용됨이면 기능을 실행하고, `shouldShowRequestPermissionRationale`이 true이면 근거 UI를 보이고, 그 외에는 곧바로 `launch()`한다. 근거 UI에는 무엇에 접근하고 허용하면 무엇을 얻는지 적고 취소 수단을 둔다. false일 때 근거 UI를 끼우지 않는다. 시스템 대화상자는 바꿀 수 없으므로 맥락은 버튼 문구와 주변 UI로 준다.

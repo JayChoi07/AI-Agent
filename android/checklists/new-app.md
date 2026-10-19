@@ -1,5 +1,5 @@
 # new-app — 0에서 새 앱 만들기
-읽을 references: [10-project-structure, 18-app-shell, 19-build-config, 13-navigation, 14-di, 28-interaction-motion, 31-ci-cd, 33-dependency-updates]
+읽을 references: [10-project-structure, 18-app-shell, 19-build-config, 13-navigation, 14-di, 28-interaction-motion, 31-ci-cd, 33-dependency-updates, 40-performance-security, 41-rendering-memory]
 함께 로드할 공식 스킬: [android-cli(프로젝트 생성·기기 실행), edge-to-edge, navigation-3]
 
 "빈 폴더 → 첫 화면이 뜨는 앱"까지만 다룬다. 로그인·네트워크·DB·다국어는 이 유형의 범위가 아니다.
@@ -29,8 +29,10 @@
 | 11 | 배포 | R-31-10, R-31-11, R-31-13, R-31-14 | Play 계정이 개인인지 조직인지, 첫 업로드를 Play Console에서 끝냈는지. 업로드는 사람이 한다 |
 | 12 | 전체 플로우(계측) 테스트 | R-30-12, R-30-13, R-31-18 | 여러 화면을 지나는 대표 플로우가 이미 있는지. 첫 화면 하나뿐이면 "나중"이 답이다 |
 | 13 | 모션 토큰·화면 전환 — `:core:designsystem` `motion/` 3파일, `NavDisplay` 전환 3종 | R-28-01, R-28-03, R-28-13, R-28-14 | 없음(확정값). 브랜드가 다른 시간·곡선을 요구할 때만 묻는다 |
+| 14 | Baseline Profile·벤치마크 모듈 `:baselineprofile`(`com.android.test`) — 만들 시점, 프로파일을 만들 기기, 저장·생성 방식 | R-40-03, R-41-17, R-10-01 | 첫 화면 기동 확인 뒤 바로 만들지 핵심 플로우(화면 이동·탭)가 생긴 뒤 만들지, 프로파일 생성 기기(실기기 API 33+ 또는 Gradle Managed Device), `saveInSrc`로 소스에 커밋할지 `automaticGenerationDuringBuild`로 릴리스 빌드마다 만들지 |
+| 15 | 성능 기준 — 프레임 통과선·메모리 예산(제안값) | R-41-01, R-41-16 | 기본은 제안값 그대로다. 프로젝트 지침에 다른 값이 있을 때만 묻는다 |
 
-2·3·13은 규칙이 값을 이미 정했으므로 묻지 않는다. 1·7과 6의 브랜드 값은 사용자만 정할 수 있으므로 임의로 고르지 않는다.
+2·3·13은 규칙이 값을 이미 정했으므로 묻지 않는다. 15는 공식이 정하지 않은 제안값이 기본이므로 프로젝트 지침에 다른 값이 있을 때만 묻는다. 1·7과 6의 브랜드 값은 사용자만 정할 수 있으므로 임의로 고르지 않는다.
 4는 "언젠가 쓸 것 같아서" 모듈을 미리 만들지 않는다 — 두 번째 사용처가 생길 때 올린다 (R-10-04).
 5는 `references/18-app-shell.md`의 "초기화 배치 결정 매트릭스" 세 행을 그대로 채워 보여 준다. 세 행이 모두 "지연"을
 가리키면 시작 경로에 아무것도 넣지 않는 것이 답이고, `Application.onCreate`를 열지 않는다 (R-18-01).
@@ -51,7 +53,7 @@
 5. `:app` 빌드 파일 — `templates/app/app/build.gradle.kts`
    → 검증: `targetSdk` 명시 (R-19-01), `namespace`+`applicationId` 둘 다 (R-19-03), release `optimization { enable = true }`·debug `applicationIdSuffix` (R-19-04, R-19-05), `productFlavors` 없음 (R-19-06), 안 쓰는 `buildFeatures`가 꺼져 있음 (R-19-13)
 6. 앱 셸 — `templates/app/app/src/main/`의 `AndroidManifest.xml`·`res/values/themes.xml`·`strings.xml`, `{{App}}Application.kt`·`MainActivity.kt`·`Navigator.kt`·`{{App}}App.kt`
-   → 검증: `onCreate` 순서가 `installSplashScreen()`→`super.onCreate()`→`enableEdgeToEdge()`→`setContent` (R-18-03, R-18-06, R-18-07), `<activity>` 1개·`launchMode`·`configChanges` 없음 (R-18-05, R-18-14), Hilt 진입점 2개 (R-14-03), 인셋 소비 1회 (R-18-08), `currentWindowAdaptiveInfoV2()` 호출이 앱 루트뿐 (R-18-13), XML 테마에 색·타이포 없음 (R-18-12), `NavDisplay`의 전환 3종이 `NavTransitions`로 꽂혀 있음 (R-28-01, R-28-03)
+   → 검증: `onCreate` 순서가 `installSplashScreen()`→`super.onCreate()`→`enableEdgeToEdge()`→`setContent` (R-18-03, R-18-06, R-18-07), `<activity>` 1개·`configChanges` 없음·`launchMode` 없음(딥링크를 받는 단일 Activity만 `singleTask` 예외) (R-18-05, R-18-14), Hilt 진입점 2개 (R-14-03), 인셋 소비 1회 (R-18-08), `currentWindowAdaptiveInfoV2()` 호출이 앱 루트뿐 (R-18-13), XML 테마에 색·타이포 없음 (R-18-12), `NavDisplay`의 전환 3종이 `NavTransitions`로 꽂혀 있음 (R-28-01, R-28-03)
 7. 첫 화면 — `checklists/new-feature-module.md` 실행 후 `checklists/new-screen.md`
    → 검증: `{{Feature}}Key`가 feature 모듈 소유 (R-13-01), `rememberNavBackStack` 호출이 앱 전체에 하나 (R-13-03), `entryProvider` DSL에 등록되고 데코레이터 첫 항목이 SaveableStateHolder (R-13-04, R-13-05)
    → 검증: 화면이 생겼으므로 `enforcement/README.md` 설치 8단계(`recordRoborazziDebug` 골든 png 커밋)를 여기서 끝낸다 (R-30-04)
@@ -62,6 +64,10 @@
    → 결정 10이 "예"면 `enforcement/.github/dependabot.yml` 복사. 검증: `gradle`·`github-actions` 두 생태계, 전체 묶음 없음 (R-33-01, R-33-03)
 9. `./gradlew ktlintFormat` → `./gradlew assembleDebug` → 기기·에뮬레이터에 설치해 첫 화면 기동 확인
    → 검증: `assembleDebug` 통과, 앱을 실행하면 스플래시 뒤 첫 화면이 그려지고 회전 후에도 같은 화면이 남는다 (R-18-14)
+10. 결정 14가 "지금"이면 Baseline Profile 모듈 — `templates/baselineprofile/`을 `templates/README.md`의 "Baseline Profile 모듈 치환"대로 만든다(`{{package}}` 치환 → 카탈로그 병합 → 루트·`settings`·`:app` 주석 블록 해제 → `Labels` 교체). 템플릿은 `InfocarEV_Android`의 `:baselineprofile`을 일반화한 것이고 컴파일·`ktlintCheck`·`detektNonMinifiedRelease`까지 확인했다(2026-10-15). 기기 실행(프로파일 생성·벤치마크)은 하지 않았다(미확인). `:app`의 `androidComponents.finalizeDsl` 블록은 AGP 9 + 플러그인 1.5.0 보정이라 플러그인이 새 DSL 을 따르면 지운다 (R-41-17)
+    → 검증: 최상위 모듈이 `:app`·`:core:*`·`:feature:*` 외에 `:baselineprofile` 하나뿐 (R-10-01, R-41-17), 빌드 파일이 컨벤션 플러그인 없이 직접 구성 (R-10-14), `:app` 말고 이 모듈에 의존하는 모듈이 없음 (R-41-17), 앱 프로파일 파일이 저장소에 있고 릴리스 APK의 `assets/dexopt/baseline.prof`가 생성 전보다 커졌으며(파일은 생성 전에도 라이브러리 프로파일로 있다) `buildTypes`에 `benchmarkRelease`·`nonMinifiedRelease`를 손으로 적지 않음 (R-40-03), 생성기가 시작뿐 아니라 화면 이동·탭 전환을 돈다 (R-41-17), `Journeys.kt`의 `Labels`가 자리 표시가 아니라 앱의 실제 화면 글자다, `nonMinifiedRelease` 빌드가 R8(`minify…WithR8`)을 돌지 않는다 (R-41-17)
+    → 이 모듈의 detekt·컴파일은 게이트 밖이므로 손으로 돌린다: `./gradlew :baselineprofile:ktlintCheck :baselineprofile:detektNonMinifiedRelease :baselineprofile:compileNonMinifiedReleaseKotlin`
+    → 첫 프레임 측정은 R-41-02·R-41-03 절차(릴리스 상당 변이·실기기)로 하고 못 돌렸으면 "미실행"으로 적는다
 
 템플릿 치환은 `templates/README.md`의 "앱 골격 치환"(3~6단계)과 "치환 명령"(7단계) 두 스크립트를 그 순서로 쓴다.
 `:app`이 첫 화면의 키·엔트리를 import 하므로 7단계를 끝내기 전에는 `assembleDebug`가 통과하지 않는다.

@@ -9,6 +9,8 @@ plugins {
     alias(libs.plugins.convention.android.application)
     alias(libs.plugins.convention.android.application.compose)
     alias(libs.plugins.convention.android.hilt)
+    // Baseline Profile 소비자(R-40-03, R-41-17). new-app 10단계에서 아래 주석 블록 셋과 함께 켠다.
+    // alias(libs.plugins.androidx.baselineprofile)
 }
 
 // 파일이 아직 없으면(첫 릴리스 전) versionCode 는 1 이다 (R-31-11).
@@ -57,6 +59,30 @@ android {
     // testOptions { animationsDisabled = true }
 }
 
+// Baseline Profile (R-40-03, R-41-17) — new-app 10단계에서 켠다.
+// :baselineprofile 모듈은 templates/baselineprofile/ 이다.
+//
+// AGP 9 호환 보정(2026-10-15 InfocarEV_Android 에서 확인, 플러그인 androidx.baselineprofile 1.5.0
+// + AGP 9.4.0, 팩에서 재현하지 않았다):
+// 플러그인은 nonMinifiedRelease 를 release 에서 initWith 로 만든 뒤 구형 속성 isMinifyEnabled=false 로 끈다.
+// 그런데 AGP 9 의 R8 은 새 DSL 의 optimization.enable 을 따르고 위 release 가 그것을 켜 두므로
+// nonMinifiedRelease 도 R8 으로 줄이고 난독화한다. 그러면 생성한 프로파일의 이름이 난독화된 이름이라 릴리스에 맞지 않는다.
+// 플러그인이 변이를 만든 뒤에 불려야 하므로 finalizeDsl 로 이 변이만 새 DSL 로 끈다.
+// 플러그인이 새 DSL 을 따르게 고쳐지면 이 블록을 지운다.
+// androidComponents {
+//     finalizeDsl { extension ->
+//         extension.buildTypes.findByName("nonMinifiedRelease")?.optimization?.enable = false
+//     }
+// }
+//
+// baselineProfile {
+//     // 앱 변이가 release 하나라 프로파일을 main 으로 합쳐 한 파일로 둔다. saveInSrc 라 커밋 대상이다(결정 14).
+//     mergeIntoMain = true
+//     saveInSrc = true
+//     // 릴리스를 조립할 때마다 기기에서 프로파일을 새로 만들지 않는다. 생성은 ./gradlew :app:generateBaselineProfile.
+//     automaticGenerationDuringBuild = false
+// }
+
 // 서명 자료는 루트 keystore.properties 에서 읽고 커밋하지 않는다 (R-19-12). :app 만 쓰는 설정이라
 // 컨벤션 플러그인으로 올리지 않는다 (R-10-14). 실제 릴리스를 낼 때 signingConfigs 를 여기에 추가한다.
 
@@ -76,6 +102,11 @@ dependencies {
     implementation(libs.androidx.navigation3.ui)
     // rememberViewModelStoreNavEntryDecorator (R-13-05)
     implementation(libs.androidx.lifecycle.viewmodel.navigation3)
+
+    // 릴리스 APK 의 assets/dexopt/baseline.prof 를 설치 시점에 기기에 반영한다. 매크로벤치마크도 이것을 요구한다 (R-40-03).
+    // implementation(libs.androidx.profileinstaller)
+    // 프로파일을 만드는 모듈 (R-41-17). :app 만 이 모듈을 안다.
+    // baselineProfile(projects.baselineprofile)
 
     // Konsist 아키텍처 테스트는 :app 의 test 소스셋에 둔다(enforcement/README.md 설치 6단계).
     testImplementation(libs.junit4)

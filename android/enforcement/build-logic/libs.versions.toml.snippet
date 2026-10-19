@@ -29,6 +29,15 @@ coreSplashscreen = "1.2.0"
 # — runner 1.7.0 · ext-junit 1.3.0 모두 2025-07-30 안정. 실빌드로는 아직 돌려 보지 않았다.
 androidxTestRunner = "1.7.0"
 androidxTestExtJunit = "1.3.0"
+# Baseline Profile·벤치마크(:baselineprofile 과 :app, 도입할 때만 — R-41-17). 확인일 2026-10-15,
+# https://developer.android.com/jetpack/androidx/releases/benchmark — 1.5.0 은 2026-09-09 안정이다(1.6.0-alpha01 은 알파라 쓰지 않는다).
+# 릴리스 노트에 "Baseline Profile Gradle Plugin no longer requires newDsl=false in AGP 9.0"(1.5.0-alpha01 부터)과
+# "The MacrobenchmarkScope object now extends UiAutomatorTestScope" 가 있다. 플러그인(androidx.baselineprofile)과
+# benchmark-macro-junit4 는 같은 릴리스 열차라 버전을 하나로 맞춘다.
+# profileinstaller 1.4.1(2024-10-02)이 최신 안정이다. https://developer.android.com/jetpack/androidx/releases/profileinstaller
+# 실빌드·기기 실행으로는 아직 돌려 보지 않았다.
+benchmark = "1.5.0"
+profileinstaller = "1.4.1"
 
 [libraries]
 # --- build-logic 이 compileOnly 로 참조하는 플러그인 아티팩트 ---
@@ -104,9 +113,18 @@ androidx-test-runner = { group = "androidx.test", name = "runner", version.ref =
 androidx-test-ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidxTestExtJunit" }
 hilt-android-testing = { group = "com.google.dagger", name = "hilt-android-testing", version.ref = "hilt" }
 
+# --- Baseline Profile·벤치마크(:baselineprofile 과 :app, 도입할 때만) ---
+# 컨벤션 플러그인이 붙이지 않는다. :baselineprofile/build.gradle.kts 와 :app/build.gradle.kts 가 직접 선언한다(R-10-14, R-41-17).
+# uiautomator 2.x 는 benchmark-macro-junit4 가 끌고 온다. 계측 테스트 그룹의 androidx-test-ext-junit 도 :baselineprofile 이 쓴다.
+androidx-benchmark-macro-junit4 = { group = "androidx.benchmark", name = "benchmark-macro-junit4", version.ref = "benchmark" }
+# 릴리스 APK 의 assets/dexopt/baseline.prof 를 설치 시점에 기기에 반영한다. :app 이 implementation 으로 싣는다(R-40-03).
+androidx-profileinstaller = { group = "androidx.profileinstaller", name = "profileinstaller", version.ref = "profileinstaller" }
+
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 android-library = { id = "com.android.library", version.ref = "agp" }
+# :baselineprofile 은 com.android.test 모듈이다(R-10-01 의 예외, R-41-17). 도입할 때만 루트에서 apply false 로 올린다.
+android-test = { id = "com.android.test", version.ref = "agp" }
 # AGP 9 는 Kotlin 이 built-in 이므로 org.jetbrains.kotlin.android 항목을 두지 않는다.
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
@@ -115,6 +133,8 @@ hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 detekt = { id = "dev.detekt", version.ref = "detekt" }
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlintGradle" }
 roborazzi = { id = "io.github.takahirom.roborazzi", version.ref = "roborazzi" }
+# Baseline Profile Gradle 플러그인. :app(소비자)과 :baselineprofile(생성자) 양쪽에 적용하고 루트에서 apply false 로 올린다.
+androidx-baselineprofile = { id = "androidx.baselineprofile", version.ref = "benchmark" }
 
 # build-logic 이 등록하는 컨벤션 플러그인. includeBuild 로 해석되므로 버전은 "unspecified".
 convention-android-application = { id = "convention.android.application", version = "unspecified" }

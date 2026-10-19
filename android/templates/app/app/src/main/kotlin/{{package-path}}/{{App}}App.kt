@@ -1,12 +1,18 @@
 package {{package}}
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
+import androidx.navigation3.runtime.NavEntryDecorator
+import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
@@ -48,7 +54,7 @@ fun {{App}}App(
             modifier = Modifier.consumeWindowInsets(innerPadding),
             onBack = { navigator.goBack() },
             // 화면 전환은 designsystem 의 토큰 전환만 쓴다. 모달·최상위 목적지는 엔트리 metadata 로 덮어쓴다
-            // (R-28-01~03).
+            // (R-28-01~03). 푸시·팝은 새 화면이 아래 화면을 덮는 전환이라 엔트리가 불투명해야 한다(아래 셋째 줄).
             transitionSpec = { NavTransitions.push },
             popTransitionSpec = { NavTransitions.pop },
             predictivePopTransitionSpec = { NavTransitions.predictivePop },
@@ -57,6 +63,7 @@ fun {{App}}App(
             entryDecorators = listOf(
                 rememberSaveableStateHolderNavEntryDecorator(),
                 rememberViewModelStoreNavEntryDecorator(),
+                rememberOpaqueBackgroundNavEntryDecorator(),
             ),
             // 다이얼로그·바텀시트 엔트리를 쓰면 여기에 sceneStrategies = listOf(DialogSceneStrategy<NavKey>())
             // 처럼 전략을 등록한다 (R-13-04).
@@ -66,6 +73,22 @@ fun {{App}}App(
                     onBack = { navigator.goBack() },
                     contentPadding = innerPadding,
                 )
+            },
+        )
+    }
+}
+
+/**
+ * 화면(엔트리)마다 앱 배경색을 깔아 불투명하게 만든다. 푸시·팝에서 한 화면이 다른 화면을 덮고 덮이는 동안
+ * 아래 화면이 비치지 않아야 "덮는" 모양이 된다 (R-28-01). 화면 전체를 다른 색으로 칠하는 화면은 그 위에 다시 칠한다.
+ */
+@Composable
+private fun rememberOpaqueBackgroundNavEntryDecorator(): NavEntryDecorator<NavKey> {
+    val background = MaterialTheme.colorScheme.background
+    return remember(background) {
+        NavEntryDecorator(
+            decorate = { entry ->
+                Box(modifier = Modifier.fillMaxSize().background(background)) { entry.Content() }
             },
         )
     }

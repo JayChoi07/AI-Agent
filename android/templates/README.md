@@ -13,7 +13,8 @@
 | `{{app}}` | 앱 이름 소문자. `rootProject.name` | `acme` |
 | `{{package-path}}` | `{{package}}`의 점을 슬래시로 바꾼 값. **디렉터리 이름에만** 쓴다 | `com/example/app` |
 
-이 6개 외의 `{{...}}` 토큰은 쓰지 않는다. `{{App}}`·`{{app}}`·`{{package-path}}`는 `app/` 골격 템플릿에서만 쓴다.
+이 6개 외의 `{{...}}` 토큰은 쓰지 않는다. `{{App}}`·`{{app}}`는 `app/` 골격 템플릿에서만, `{{package-path}}`는 `app/`과
+`baselineprofile/` 골격 템플릿의 디렉터리 이름에서만 쓴다.
 
 테마 컴포저블 이름은 앱 이름과 무관하게 `AppTheme`, XML 테마는 `Theme.App`·`Theme.App.Starting`이다 —
 R-18-10·R-18-12가 그 이름을 정하고, feature 템플릿(`{{Feature}}Screen.kt`·`{{Feature}}ScreenshotTest.kt`)도 그 이름을 import 한다.
@@ -46,6 +47,7 @@ Repository는 인터페이스와 구현 모두 data에 있고, 다른 계층은 
 | `di/Dispatchers.kt` | `core/common` | 프로젝트당 한 번만 복사 — **이미 있으면 건너뛴다** |
 | `test/MainDispatcherRule.kt` | `core/testing` | 프로젝트당 한 번만 복사 — **이미 있으면 건너뛴다** |
 | `test/Fake*.kt`, `test/*Test.kt` | `feature/{{feature}}/src/test/kotlin/` | fake 3종·ViewModel/Repository 단위 테스트·Roborazzi 스크린샷 |
+| `baselineprofile/**` | `baselineprofile/**` | `:baselineprofile` 모듈(`com.android.test`). Baseline Profile 생성기·매크로벤치마크 — 도입할 때만 (R-41-17, R-10-01 의 예외). 아래 "Baseline Profile 모듈 치환" 참조 |
 | `androidtest/*.kt` | `app/src/androidTest/kotlin/…/`(앱 루트 패키지) | 전체 플로우(계측) 테스트를 도입할 때만. Hilt 러너 + 플로우 테스트 골격 (R-30-13, R-30-14). 아래 치환 명령은 이 디렉터리를 복사하지 않는다 — 손으로 복사하고 `{{package}}`·`{{Feature}}`를 바꾼다 |
 
 DataSource를 인터페이스 + `Default*` 구현으로 나눈 이유는 하나다. Repository 단위 테스트가
@@ -245,6 +247,40 @@ done
 `androidx-compose-material3-adaptive`)는 `$PACK_ROOT/enforcement/build-logic/libs.versions.toml.snippet`의
 "앱 셸" 그룹에 있다 — 설치 3단계에서 카탈로그에 병합했으면 따로 할 일이 없다.
 그다음 `./gradlew ktlintFormat` → `./gradlew assembleDebug`.
+
+## Baseline Profile 모듈 치환 (도입할 때만)
+
+`checklists/new-app.md` 구현 순서 10단계에서 쓴다. 첫 화면이 기동한 **뒤**에 한다 — 프로파일을 만들 앱이 있어야 한다.
+`{{package}}`와 `{{package-path}}` 둘만 치환한다. 레포 루트에서 실행한다.
+
+```bash
+SRC="$PACK_ROOT/templates/baselineprofile"
+PKG=com.example.app
+PKG_DIR="${PKG//./\/}"
+BP_PKG="baselineprofile/src/main/kotlin/$PKG_DIR/baselineprofile"
+mkdir -p "$BP_PKG"
+sed -e "s/{{package}}/$PKG/g" "$SRC/build.gradle.kts" > baselineprofile/build.gradle.kts
+for f in "$SRC"/src/main/kotlin/'{{package-path}}'/baselineprofile/*.kt; do
+  sed -e "s/{{package}}/$PKG/g" "$f" > "$BP_PKG/$(basename "$f")"
+done
+```
+
+그다음 손으로 한다(스크립트가 건드리지 않는 파일들이다).
+
+1. 카탈로그 — `enforcement/build-logic/libs.versions.toml.snippet` 의 Baseline Profile 그룹(`benchmark`·`profileinstaller` 버전,
+   `androidx-benchmark-macro-junit4`·`androidx-profileinstaller` 라이브러리, `android-test`·`androidx-baselineprofile` 플러그인)을
+   `gradle/libs.versions.toml` 에 병합한다.
+2. 루트 `build.gradle.kts` — `android-test`·`androidx-baselineprofile` 두 줄의 주석을 푼다(`apply false`).
+3. `settings.gradle.kts` — `include(":baselineprofile")` 주석을 푼다.
+4. `:app/build.gradle.kts` — 플러그인 한 줄·`androidComponents`·`baselineProfile {}` 블록·`profileinstaller`·`baselineProfile(projects.baselineprofile)` 주석을 푼다.
+   `androidComponents.finalizeDsl` 블록은 AGP 9 + 플러그인 1.5.0 보정이다. 플러그인이 새 DSL 을 따르게 고쳐지면 지운다(R-41-17).
+5. **`Journeys.kt` 의 `Labels` 를 앱의 실제 화면 글자로 바꾼다.** 값이 전부 자리 표시라 그대로 두면 기기에서 요소를 못 찾아 실패한다.
+   하단 탭이 없는 앱은 탭 여정(`tapTab`·`TAB_*`·`otherTab*` 시험)을 지운다. 앱에 맞는 여정(목록 항목 열기·긴 작업 진행 화면 등)은 같은 모양의 함수로 더한다.
+
+게이트는 이 모듈의 `ktlintCheck` 만 돈다(`./gradlew ktlintCheck` 가 모든 모듈에 적용된다). `detektDebug`·`assembleDebug` 같은 `debug` 변이 선택자는
+이 모듈(변이가 `nonMinifiedRelease`·`benchmarkRelease` 둘뿐)에 걸리지 않는다. detekt·컴파일은 손으로 확인한다:
+`./gradlew :baselineprofile:detektNonMinifiedRelease :baselineprofile:compileNonMinifiedReleaseKotlin`.
+프로파일 생성(`:app:generateBaselineProfile`)과 벤치마크는 기기가 필요해 게이트 밖이다(R-41-03).
 
 ## 검증
 

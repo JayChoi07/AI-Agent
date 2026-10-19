@@ -13,6 +13,9 @@ buildscript {
 plugins {
     alias(libs.plugins.android.application) apply false
     alias(libs.plugins.android.library) apply false
+    // :baselineprofile 모듈을 도입할 때 켠다 (R-41-17, checklists/new-app.md 10단계).
+    // alias(libs.plugins.android.test) apply false
+    // alias(libs.plugins.androidx.baselineprofile) apply false
     alias(libs.plugins.kotlin.compose) apply false
     alias(libs.plugins.kotlin.serialization) apply false
     alias(libs.plugins.ksp) apply false

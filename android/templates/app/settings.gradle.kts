@@ -26,6 +26,8 @@ rootProject.name = "{{app}}"
 // :core:model · :core:data · :core:network · :core:database · :core:datastore · :core:domain 은
 // 두 번째 사용처가 생기는 시점에 추가한다 (R-10-01 이 정한 이름 목록 안에서만).
 include(":app")
+// Baseline Profile 모듈 — R-10-01 의 예외 한 건이다 (R-41-17, checklists/new-app.md 10단계).
+// include(":baselineprofile")
 include(":core:common")
 include(":core:designsystem")
 include(":core:testing")

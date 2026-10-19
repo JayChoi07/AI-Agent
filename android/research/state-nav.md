@@ -258,3 +258,13 @@ Hilt 연동으로 확인된 것은 모듈화 패턴뿐이다 — `@IntoSet`으�
 - 모듈화 레시피(S282)의 `EntryProviderInstaller`+`@IntoSet`+`@JvmSuppressWildcards` 형태를 R-13-04에 옮겼다. 그 레시피의 `Navigator`는 `mutableStateListOf`라 프로세스 사망을 넘기지 못하므로(R-13-03은 `rememberNavBackStack`) 그대로 복사하지 않는다.
 - `lifecycle-viewmodel-navigation3`는 Google Maven에 2.11.0 stable이 있어(2026-10-07 확인) 팩 카탈로그의 `lifecycle = "2.11.0"` 핀은 유효하다. 공식 마이그레이션 가이드의 2.10.0-rc01은 예시 버전일 뿐이다.
 - 공식 레시피가 클릭마다 `dropUnlessResumed { }`로 감싸지만 이유를 문서가 적지 않아 규칙으로 올리지 않았다(출처가 침묵하는 관행은 규칙으로 만들지 않는다).
+
+## 추가 확인 (2026-10-15) — 웨이브 5: 단일 Activity `singleTask`·시작 게이트·링크 입구 검사·`Eagerly`
+
+- `<activity>` 문서(S156): `standard`는 새 인텐트마다 새 인스턴스, `singleTop`은 대상 task 맨 위에 있을 때만 `onNewIntent`, `singleTask`는 기기에 인스턴스 하나·task 루트. "not appropriate for most applications"의 이유는 "an interaction model that is likely to be unfamiliar to users". 단일 Activity 예외는 문서에 없다 → R-18-05 예외는 InfocarEV 결정(SINGLE_TASK)으로 표기.
+- 딥링크 설계 문서(S344): 암시적 링크는 `FLAG_ACTIVITY_NEW_TASK` 유무로 task 백스택이 지워지거나 호출한 앱의 task에 남는다(Back이 그 앱으로). 호출 앱의 플래그는 우리가 정할 수 없다. `onNewIntent`에서 `handleDeepLink` 예시는 Nav2용이다.
+- Parcelables and bundles(S345): 저장 상태 50KB 미만 권고, 초과 시 `TransactionTooLargeException`(API 24+ 런타임 예외) → R-13-08의 입구 검사(스킴·길이 256자는 프로젝트 값).
+- SavedStateHandle(S346): "State must be simple and lightweight", `Bundle` 타입만 직접 지원 → 보류 링크는 문자열.
+- Nav3 conditional 레시피(S280)는 목적지 단위 조건만 다룬다. 앱 전체 게이트(`StartupState`)는 공식 근거 없음 → R-13-10에 프로젝트 사례로 추가(ENTRY_GATE).
+- `SharingStarted.Eagerly`(S347) "Sharing is started immediately and never stops". 상태 생산 가이드(S10)는 lazy 초기화를 권하므로 `Eagerly`는 구독 없이 `value`를 읽는 자리에만 → R-12-06(EAGERLY_REASON). 사유를 상태마다 적는 것은 리뷰 교훈.
+- 미확인: 플래그 없는 외부 앱 링크의 Back 동작(`adb shell am start`가 항상 NEW_TASK를 붙임).

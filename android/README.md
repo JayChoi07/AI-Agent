@@ -1,7 +1,7 @@
 # android — Android 그린필드 표준 팩
 
-Kotlin·Compose·Navigation 3·Hilt·멀티모듈 기준의 Android 개발 표준을 **규칙 324개**(출처 308건) · **유형별 체크리스트 8개** · **코드 템플릿 45개**(치환 안내 포함 46파일) · **빌드 강제 장치** · **라우터 스킬**로 묶은 팩이다.
-스킬 이름은 `android-standards`이고, 진입점은 [`SKILL.md`](SKILL.md)다. 요청 유형을 먼저 분류한 뒤 그 유형의 체크리스트만 따라가는 라우터 구조라, [`references/`](references) 28개 파일을 전부 읽지 않는다.
+Kotlin·Compose·Navigation 3·Hilt·멀티모듈 기준의 Android 개발 표준을 **규칙 345개**(출처 S01~S357) · **유형별 체크리스트 8개** · **코드 템플릿 50개**(치환 안내 포함 51파일) · **빌드 강제 장치** · **라우터 스킬**로 묶은 팩이다.
+스킬 이름은 `android-standards`이고, 진입점은 [`SKILL.md`](SKILL.md)다. 요청 유형을 먼저 분류한 뒤 그 유형의 체크리스트만 따라가는 라우터 구조라, [`references/`](references) 29개 파일을 전부 읽지 않는다.
 대상은 **그린필드**(신규 Kotlin·Compose 프로젝트)이며, 레거시 프로젝트에서는 신규 코드에만 적용한다.
 모든 규칙에는 `R-NN-MM` ID와 [`references/90-sources.md`](references/90-sources.md)의 출처 번호(S)가 붙는다. 출처 없는 규칙은 쓰지 않는다.
 
@@ -70,7 +70,7 @@ ktlintCheck → detektDebug → 테스트 → assembleDebug 순서로 게이트�
 
 ### F. 규칙 고치기·추가하기
 
-1. **출처 확보** — 공식 문서·릴리즈 노트 등 인용 가능한 URL을 찾는다. 출처가 침묵하는 관행은 규칙으로 만들지 않는다. 단 사용자가 정한 값은 공식이 정하지 않았음을 근거 줄과 `91-decisions.md`에 "사용자 결정"으로 명시하면 규칙으로 올릴 수 있다(MOTION_SCOPE). 도구 기본값을 쓸 때는 근거 줄에 "출처는 도구 기본값"이라고 명시한다.
+1. **출처 확보** — 공식 문서·릴리즈 노트 등 인용 가능한 URL을 찾는다. 출처가 침묵하는 관행은 규칙으로 만들지 않는다. 단 사용자가 정한 값은 공식이 정하지 않았음을 근거 줄과 `91-decisions.md`에 "사용자 결정"으로 명시하면 규칙으로 올릴 수 있다(MOTION_SCOPE). 도구 기본값을 쓸 때는 근거 줄에 "출처는 도구 기본값"이라고 명시한다. 사용자가 값 결정을 위임했다면 근거 줄과 `91-decisions.md`에 "제안(사용자 위임, 날짜)"으로 표시한다(41번의 값들).
 2. **`research/`에 기록** — 해당 주제 노트에 문서명·URL·확인 내용을 추가한다. 새 주제면 노트를 추가한다.
 3. **`references/90-sources.md`에 등록** — 전역 번호 `S###` 행을 표 맨 아래에 추가한다(S280부터는 `references/92-sources-2.md`). 기존 번호는 재배열하지 않는다. 채택 결정은 `references/91-decisions.md`의 결정 표에 적는다.
 4. **`references/NN-*.md`에 규칙 작성** — `### R-NN-MM` + `- 규칙:` `- 근거:`(S번호 + URL) `- 예시:`(Good/Bad) `- 체크:` 5요소를 채운다. R-ID는 파일 번호와 일치하고 전역 유일해야 한다. 파일당 300줄 이하.
@@ -116,19 +116,19 @@ cmd /c mklink /J "%USERPROFILE%\.claude\skills\android-standards" "<repo>\androi
 ```
 android/
 ├── SKILL.md          # 라우터 — 유형 분류 → 체크리스트, 절차·보고 형식 (≤150줄)
-├── references/       # 규칙·출처 28파일. 00 원칙 / 10~17 구조·아키텍처 / 18 앱 셸 / 19 빌드 설정
-│                     #             / 20~23 Kotlin·비동기·에러 / 30~32 테스트·CI·배포·리뷰 / 24 백그라운드 / 25 권한 / 26 시간 / 27 Room / 28 인터랙션·모션 / 33 의존성 업데이트 / 40 성능·보안 / 90 출처(S01~S279) / 91 결정·보류 / 92 출처 이어서(S280~)
+├── references/       # 규칙·출처 29파일. 00 원칙 / 10~17 구조·아키텍처 / 18 앱 셸 / 19 빌드 설정
+│                     #             / 20~23 Kotlin·비동기·에러 / 30~32 테스트·CI·배포·리뷰 / 24 백그라운드 / 25 권한 / 26 시간 / 27 Room / 28 인터랙션·모션 / 33 의존성 업데이트 / 40 성능·보안 / 41 렌더링·안정성·메모리·성능 측정 / 90 출처(S01~S279) / 91 결정·보류 / 92 출처 이어서(S280~)
 ├── checklists/       # 유형별 파이프라인 8파일. 컨텍스트 수집 → 결정 항목 → 구현 순서 → 산출물 검증
 ├── templates/        # 치환형 코드 골격. app/(앱 셸·루트 빌드) · core/(3모듈 빌드 파일) · designsystem/ · ui/ · ui/mvi/ · domain/ · data/
-│                     #   · model/ · di/ · test/ · androidtest/ · module/
+│                     #   · model/ · di/ · test/ · androidtest/ · module/ · baselineprofile/(`:baselineprofile` 모듈, 도입할 때만)
 │                     #   치환 규칙은 templates/README.md
 ├── enforcement/      # 강제 장치. detekt.yml · .editorconfig · build-logic 컨벤션 플러그인
 │                     #   · konsist/ArchitectureTest.kt · .github/workflows/android-ci.yml
 │                     #   · scripts/(check · instrumented · bump-version-code · release · hooks/pre-push)
 │                     #   · (선택) android-release.yml · android-instrumented.yml · .github/dependabot.yml
 ├── eval/             # 팩 자체 검증 시나리오
-├── research/         # 출처 조사 노트 15건 (architecture · state-nav · kotlin-style · testing-ci · korea
-│                     #   · app-bootstrap-build · app-bootstrap-shell · release-cd · e2e-testing · dependency-updates · background-work · runtime-permissions · time-handling · room-migrations · interaction-motion)
+├── research/         # 출처 조사 노트 16건 (architecture · state-nav · kotlin-style · testing-ci · korea
+│                     #   · app-bootstrap-build · app-bootstrap-shell · release-cd · e2e-testing · dependency-updates · background-work · runtime-permissions · time-handling · room-migrations · interaction-motion · performance-rendering-memory)
 └── scripts/
     └── check-pack.sh # 형식 검사 — 줄 수 한도, 규칙 5요소, 근거 URL, R-ID 유일성, 체크리스트 헤더,
                       #             references 밖에서 인용한 R-ID 의 실존 여부
@@ -157,6 +157,7 @@ android/
 | E2E | 전체 플로우 테스트는 Compose UI Test 단독(루트 Activity + Hilt 테스트 러너 + `@TestInstallIn`). 실행은 로컬 기기·에뮬레이터(`scripts/instrumented.sh`)가 기본이고, GitHub에서 돌리면 `android-emulator-runner`로 주 2회 예약·수동, 이번 달 Actions 사용량이 포함 분량의 95% 이상이면 건너뛴다. Maestro·UI Automator·Gradle Managed Devices·Firebase Test Lab 미채택 |
 | DEP_UPDATE | Dependabot(`gradle` + `github-actions`), 주 1회. 자동 병합 없음 — 게이트(로컬 스크립트 또는 PR 워크플로) 통과 뒤 사람이 병합. Renovate·dependency verification·의존성 잠금 미채택 |
 | MOTION | 화면 이동·오버레이·피드백·모션 규칙을 28번이 소유하고 값까지 팩에 둔다(공식 문서가 정하지 않은 값은 "사용자 결정" 표시, SEED·토스는 참고 사례). 푸시·팝 shared axis X · 최상위 목적지·스택 교체 fade through · 모달 아래→위, 예측형 뒤로가기는 공식 수치, 오버레이 4종(다이얼로그·시트·스낵바·배너) 매핑, bezier 3종 + spring 3종(Material 값)을 `:core:designsystem` `motion/`이 소유하고 Konsist가 숫자 리터럴을 막는다, 햅틱은 전역 스위치(기본 꺼짐), 제스처 정책 없음 |
+| PERF | 렌더링·안정성·메모리·성능 측정 규칙을 41번이 소유한다. 프레임 판정은 프로즌(700ms 초과) 0건(공식)과 `frameOverrunMs` P95 ≤ 0·P99 ≤ 프레임 간격(**제안**), 시작 목표 콜드 500ms·웜 200ms·핫 150ms(공식), 측정은 R8 릴리스 상당 변이를 실기기에서 동작별로 하고 게이트에는 넣지 않는다. 화면 첫 프레임은 보이는 내용만 컴포지션하고 구조를 납작하게 만들지 않는다(공식: 깊이는 성능에 영향이 없다), 불안정 파라미터는 `===` 인스턴스 비교이므로 같은 내용이면 같은 컬렉션 인스턴스를 방출하고 큰 컬렉션의 구조 비교는 정말 필요할 때만 하며(공식: O(N) `equals()`가 재구성보다 비쌀 수 있다) Compose 없는 모듈의 작은 모델만 필요할 때 안정성 설정 파일로 선언한다. 알파<1·그림자는 별도 레이어를 만들고 알파<1 레이어는 경계 밖 내용을 자른다. 메모리는 Android vitals 임계가 공식 상한이고 앱 PSS 예산 200MB는 **제안**이다. `:baselineprofile`(`com.android.test`) 하나를 R-10-01의 예외로 허용한다. 공식 문서가 값을 정하지 않은 것은 전부 "제안(사용자 위임, 2026-10-15)"이다 |
 
 확정 버전 라인은 AGP 9.4.0 · Gradle 9.7.1 · JDK 17 · compileSdk·targetSdk 37 · minSdk 26 · Kotlin 2.4.20 · Compose BOM 2026.08.00 · Hilt 2.60.1 · Navigation 3 1.1.7 · core-splashscreen 1.2.0 · activity-compose 1.13.0 · material3-adaptive 1.3.0이다(Gradle 9.7.1 · compileSdk 37은 실빌드 실증 2026-09-09 — 조사 시점 값은 각각 "9.6.x 이상"·36이었다). 전체 목록은 `enforcement/build-logic/libs.versions.toml.snippet`이 정본이고, 조사 근거는 `research/testing-ci.md`의 "확인 버전 표"에 있다.
 
@@ -168,5 +169,7 @@ android/
 - **18·19번 규칙 문서와 `new-app` 체크리스트·`templates/app/`·`templates/designsystem/`은 2026-09-16 추가분으로, 치환 스크립트 실행과 형식 검사까지만 확인했고 스크래치 실빌드로는 아직 실증하지 않았다.** 첫 실제 앱 세팅 때 `assembleDebug`가 통과하면 이 줄을 지운다.
 - **2026-09-30 추가분(R-30-13~16 · R-31-10~19 · R-33-01~05, 로컬 스크립트 5개·워크플로 2개·`dependabot.yml`·`templates/androidtest/`·카탈로그 별칭 3개)은 형식 검사와 YAML 문법 검사까지만 확인했다.** 로컬 스크립트와 pre-push 훅은 가짜 `gradlew`로 동작만 확인했고, Play 업로드·에뮬레이터 잡·Dependabot PR·계측 테스트 컴파일·실제 Gradle 빌드로는 돌려 보지 않았다. `r0adkll/upload-google-play`가 AGP 9.4.0 산출물을 올리는지도 실행으로 확인하지 않았다.
 - **2026-10-14 추가분(28번 인터랙션·모션 규칙 R-28-01~21, 모션 템플릿 3개, Konsist R-28-13, 출처 S287~S309)은 `InfocarEV_Android` 스크래치 복제본에서 컴파일·`ktlintCheck`·`detektDebug`·Konsist 단독 실행까지만 확인했다.** 화면에서 움직임을 보지 않았고(슬라이드 거리·spring 3단·`modalPush`의 하층 화면 유지·`pressScale` 체감), Nav3의 예측형 뒤로가기에 공식 수치가 그대로 표현되는지·시스템 "애니메이션 줄이기"와 Compose 배율의 연결은 확인하지 못했다(`references/91-decisions.md` 보류 표). 사용자 원안과 다르게 정리한 REDUCE_MOTION 한 건(R-28-21)은 사용자 재확인이 필요하다. 카카오·인스타그램의 공개 기준은 찾지 못했다.
+- **2026-10-15 추가분(41번 렌더링·안정성·메모리·성능 측정 R-41-01~19, 출처 S310~S343, 결정 PERF_* 6행, R-10-01 예외 한 건, `new-app` 결정 14·15와 `review` 13~17행)은 공식 원문 대조와 형식 검사까지만 확인했다.** 실기기에서 측정하지 않았다. `templates/baselineprofile/`(2026-10-15 추가)은 `InfocarEV_Android` 복제본에 치환해 `compileNonMinifiedReleaseKotlin`·`ktlintCheck`·`detektNonMinifiedRelease`까지 통과시켰고, 기기 실행(프로파일 생성·벤치마크)은 하지 않았다(미확인). 프레임 통과선(P95·P99), 반복 10회, 앱 PSS 200MB는 공식 값이 아니라 **제안**(사용자 위임)이라 첫 측정 뒤 다시 본다. `dumpsys gfxinfo` 출력 형식·PSS와 vitals 지표의 환산·`clip`·`BoxWithConstraints` 비용 수치는 확인하지 못했다(`references/91-decisions.md` 보류 표).
+- **2026-10-15 웨이브 5 반영분(InfocarEV 진입 흐름·딥링크·통신 서비스 리뷰 — R-18-05 `singleTask` 예외, R-13-08·R-13-10 시작 게이트·링크 입구 검사, R-12-06 `Eagerly` 사유, R-28-11 스낵바 의미, R-20-05 `no-unused-imports`, R-15-11·R-22-12 DataStore 쓰기 결과·`retryWhen`, R-24-15·R-24-16 서비스 보류 재시도·배터리 안내, R-25-05 `ON_RESUME` 재확인, R-30-11 `clearAndSetSemantics`, 결정 7행, 출처 S344~S357)은 프로젝트에서 동작을 확인한 사례를 규칙으로 옮긴 것이고 팩 스크래치 빌드로는 돌리지 않았다.** 공식 근거를 찾지 못해 "프로젝트 사례"로 적은 것: 단일 Activity의 `singleTask` 예외 자체, 앱 전체 시작 게이트, `Eagerly` 사유를 상태마다 적기, 서비스 시작 거부 뒤 재시도 시점, 제조사 전원 관리 화면 금지, `ON_RESUME` 권한 재확인, DataStore 쓰기 결과 타입(공식 DataStore 가이드에는 `IOException` 예시가 없다), `onNode` 다중 매치 실패 문장. 미확인: 플래그 없는 외부 링크의 Back 동작.
 - `references/90-sources.md`는 출처 목록만 두고, 채택 결정 표와 보류 표는 `references/91-decisions.md`로 분리했다(2026-09-30, 300줄 한도).
 - 20~22번 규칙 문서의 Bad 예시 약 15건은 코드가 아니라 산문 설명이고, Bad 예시가 아예 없는 규칙도 4건 있다. 리뷰에서 차단 사유가 아니라고 보고 남겨 뒀다.

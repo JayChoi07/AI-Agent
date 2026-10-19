@@ -166,10 +166,13 @@
 - 체크: 캐시 필드가 락 없이 여러 코루틴에서 수정되는가.
 
 ### R-15-11 예외는 데이터 계층 경계에서 잡아 `model` 타입으로 바꾼다
-- 규칙: `IOException`·`HttpException`·`SQLiteException` 등 구현 예외를 위 계층으로 던지지 않는다. suspend 함수는 try/catch, Flow는 `catch` 연산자로 잡아 `model` 패키지의 `sealed` 결과·에러 타입이나 nullable로 변환한다. 예외 타입은 구체 → 일반 순서로 잡는다.
-- 근거: try/catch와 Flow `catch`로 데이터 계층에서 처리한다 [S06](https://developer.android.com/topic/architecture/data-layer), 구분이 필요한 실패는 sealed 계층으로 모델링 [S65](https://github.com/Kotlin/KEEP/blob/master/proposals/stdlib/result.md), catch 블록 순서 [S63](https://kotlinlang.org/docs/exceptions.html)
+- 규칙: `IOException`·`HttpException`·`SQLiteException` 등 구현 예외를 위 계층으로 던지지 않는다. suspend 함수는 try/catch, Flow는 `catch` 연산자로 잡아 `model` 패키지의 `sealed` 결과·에러 타입이나 nullable로 변환한다. 예외 타입은 구체 → 일반 순서로 잡는다. 쓰기(저장·갱신)의 실패도 같다 — DataStore·Room 쓰기의 `IOException`을 ViewModel까지 올리지 않고 결과 타입(예: `EntryWriteResult.Saved` / `Failed`)으로 돌려주며, 화면은 `Failed`를 스낵바 같은 UiState로 보이고 다시 할 수 있게 한다. 변환은 Repository 경계 한 곳에서 하고 fake 구현도 같은 결과 타입을 돌려준다. 끝나지 않아야 하는 읽기 스트림의 오류는 `catch`가 아니라 R-22-12의 `retryWhen`이다.
+- 근거: try/catch와 Flow `catch`로 데이터 계층에서 처리한다 [S06](https://developer.android.com/topic/architecture/data-layer), 구분이 필요한 실패는 sealed 계층으로 모델링 [S65](https://github.com/Kotlin/KEEP/blob/master/proposals/stdlib/result.md), catch 블록 순서 [S63](https://kotlinlang.org/docs/exceptions.html). 쓰기 결과 타입은 InfocarEV 리뷰(2026-10-15)에서 DataStore 쓰기의 `IOException`이 ViewModel까지 올라오던 것을 고친 사례다 — 공식 데이터 계층 가이드는 읽기의 `catch`만 예시한다(쓰기 결과 타입은 프로젝트 사례, 91-decisions DATASTORE_WRITE_RESULT)
 - 예시:
   ```kotlin
+  // Good — 쓰기 실패도 결과 타입: ViewModel 은 IOException 을 모른다
+  override suspend fun signIn(): EntryWriteResult =
+      try { store.update { it.copy(signedIn = true) }; EntryWriteResult.Saved } catch (e: IOException) { EntryWriteResult.Failed }
   // Good
   override suspend fun refresh(): RefreshResult = try {
       local.upsert(remote.fetch()); RefreshResult.Success
@@ -179,7 +182,7 @@
   // Bad: Retrofit 예외를 ViewModel까지 그대로 올린다
   override suspend fun refresh() = local.upsert(remote.fetch())
   ```
-- 체크: ViewModel의 catch가 네트워크 라이브러리 예외 타입을 알고 있는가. Flow 수집부에서 try/catch로 막고 있는가.
+- 체크: ViewModel의 catch가 네트워크 라이브러리 예외 타입을 알고 있는가. Flow 수집부에서 try/catch로 막고 있는가. 저장소 쓰기 함수가 `Unit`을 돌려주며 예외로만 실패를 알리는가.
 
 ### R-15-12 데이터 계층 테스트는 fake DataSource로, 통합 테스트는 in-memory Room과 MockWebServer로 구성한다
 - 규칙: repository 단위 테스트는 인터페이스를 구현한 fake DataSource를 주입해 작성하고, DAO·직렬화까지 검증할 때만 in-memory Room + MockWebServer(또는 WireMock) 통합 테스트를 추가한다.

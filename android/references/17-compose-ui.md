@@ -6,6 +6,8 @@
 
 애니메이션·모션 토큰·누름 피드백·로딩 표현·햅틱은 [28-interaction-motion.md](28-interaction-motion.md)가 소유한다(R-28-13~R-28-21). 이 문서의 R-17-08은 애니메이션 코루틴의 스코프만 다룬다.
 
+재구성 안정성(강한 건너뛰기·안정성 설정 파일)·고빈도 값을 UiState에서 떼어 내는 규칙(람다 읽기는 R-17-11)·레이어 효과와 그리기 객체의 렌더링 비용·프레임 측정은 [41-rendering-memory.md](41-rendering-memory.md)가 소유한다(R-41-01~R-41-12). R-17-10·R-17-11·R-17-15는 그 규칙의 기본이다.
+
 ## 결정 매트릭스
 
 상태를 어디에 둘 것인가 (R-17-03·R-17-12)
@@ -210,7 +212,7 @@
 - 체크: feature에 색·모양 리터럴이 있는가. 같은 컴포넌트가 두 feature에 복사됐는가.
 
 ### R-17-15 호이스팅한 상태 타입은 `@Immutable`, 관찰 가능한 가변 타입은 `@Stable`로 선언한다
-- 규칙: UiState처럼 화면 밖으로 호이스팅한 상태 타입에 애노테이션을 붙인다. 프로퍼티가 전부 `val`이고 컬렉션이 읽기 전용이면 `@Immutable`, 가변이지만 변경을 Compose 런타임이 관찰할 수 있으면(`mutableStateOf` 위임 등) `@Stable`이다. `@Stable` 타입은 두 참조 `a`·`b`에 대해 `a.equals(b)`가 항상 같은 값을 돌려줘야 한다. 계약을 지킬 수 없으면 애노테이션을 붙이지 않는다(잘못된 선언은 화면이 갱신되지 않는 버그가 된다).
+- 규칙: UiState처럼 화면 밖으로 호이스팅한 상태 타입에 애노테이션을 붙인다. 프로퍼티가 전부 `val`이고 컬렉션이 읽기 전용이면 `@Immutable`, 가변이지만 변경을 Compose 런타임이 관찰할 수 있으면(`mutableStateOf` 위임 등) `@Stable`이다. `@Stable` 타입은 두 참조 `a`·`b`에 대해 `a.equals(b)`가 항상 같은 값을 돌려줘야 한다. 계약을 지킬 수 없으면 애노테이션을 붙이지 않는다(잘못된 선언은 화면이 갱신되지 않는 버그가 된다). 큰 컬렉션을 담은 UiState에 붙이면 `equals()`가 원소를 전부 비교하므로 R-41-07의 주의를 먼저 본다.
 - 근거: "`@Immutable` indicates a type where the value of any properties will never change", "`@Stable` … the Compose runtime will be notified if and when any public properties or method behavior would yield different results", `equals()` 일관성 요구, 그리고 "SHOULD declare hoisted state types as `@Stable`" 규정 [S18](https://android.googlesource.com/platform/frameworks/support/+/androidx-main/compose/docs/compose-api-guidelines.md) — 원문은 이 SHOULD를 프레임워크·라이브러리 개발 대상으로 적었고, UiState가 화면의 호이스팅된 상태라 이 팩은 앱 코드에도 적용한다. 안정성이 불필요한 재구성을 건너뛰게 한다는 성능 근거 [S16](https://developer.android.com/develop/ui/compose/performance)
 - 예시:
   ```kotlin

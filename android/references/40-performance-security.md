@@ -2,12 +2,12 @@
 
 > 적용: 그린필드 Android(Kotlin·Compose·Navigation 3 1.1.7·Hilt·멀티모듈). 출처 번호(S..)는 90-sources.md.
 
-여기 있는 것은 최소선이다. 재구성 최소화의 구현 규칙은 17-compose-ui.md가 소유하고, 이 문서는 그 규칙을 성능 관점에서 언제 확인할지만 정한다.
+여기 있는 것은 최소선이다. 재구성 최소화의 구현 규칙은 17-compose-ui.md가 소유하고, 이 문서는 그 규칙을 성능 관점에서 언제 확인할지만 정한다. 화면 이동·첫 진입의 프레임 통과선과 측정 절차, 렌더링 비용, Compose 안정성, 메모리, Baseline Profile 모듈은 41-rendering-memory.md가 소유한다.
 
 ## 규칙
 
 ### R-40-01 성능 측정과 벤치마크는 R8을 켠 릴리스 빌드에서만 한다
-- 규칙: 시작 시간·프레임·메모리 수치는 최적화를 켠(DSL은 R-19-04) 릴리스 변이에서 잰다. 디버그 빌드에서 얻은 수치로 회귀를 판정하거나 최적화 여부를 결정하지 않는다.
+- 규칙: 시작 시간·프레임·메모리 수치는 최적화를 켠(DSL은 R-19-04) 릴리스 변이에서 잰다. 디버그 빌드에서 얻은 수치로 회귀를 판정하거나 최적화 여부를 결정하지 않는다. 측정 대상 동작·통과선·실행 절차는 R-41-01~R-41-03이 정한다.
 - 근거: 디버그 모드는 성능 비용을 얹으므로 측정은 릴리스에서 해야 한다 [S16](https://developer.android.com/develop/ui/compose/performance).
 - 예시:
   ```bash
@@ -28,7 +28,7 @@
 - 체크: 시작 경로에 동기 I/O나 네트워크 대기가 들어갔는가. TTFD 지점이 코드로 표시돼 있는가.
 
 ### R-40-03 릴리스 빌드에 Baseline Profile과 profileinstaller를 포함하고 생성·벤치마크 변이는 플러그인이 만든 것을 쓴다
-- 규칙: 릴리스 빌드에 Baseline Profile을 생성해 포함하고 `androidx.profileinstaller` 의존성을 넣는다. 프로파일 생성용 변이(`nonMinifiedRelease`, 난독화·최적화를 끔)와 릴리스 설정을 이어받는 벤치마크용 변이(`benchmarkRelease`)는 Baseline Profile Gradle 플러그인이 `release`에서 자동으로 만들어 주므로 `buildTypes`에 R8 설정까지 손으로 적지 않는다(서명 같은 일부 속성만 지정할 수 있다). 배포 릴리스는 R8을 켠다(DSL 형태는 R-19-04가 소유한다).
+- 규칙: 릴리스 빌드에 Baseline Profile을 생성해 포함하고 `androidx.profileinstaller` 의존성을 넣는다. 프로파일 생성용 변이(`nonMinifiedRelease`, 난독화·최적화를 끔)와 릴리스 설정을 이어받는 벤치마크용 변이(`benchmarkRelease`)는 Baseline Profile Gradle 플러그인이 `release`에서 자동으로 만들어 주므로 `buildTypes`에 R8 설정까지 손으로 적지 않는다(서명 같은 일부 속성만 지정할 수 있다). 배포 릴리스는 R8을 켠다(DSL 형태는 R-19-04가 소유한다). 프로파일을 만드는 `:baselineprofile` 모듈의 구성과 이행 절차는 R-41-17이 정한다.
 - 근거: Baseline Profile은 첫 실행부터 시작 성능을 개선하며(Startup Profile·R8 규칙 재작성이 추가 개선), 산출물은 `assets/dexopt/baseline.prof`이고 `androidx.profileinstaller`가 필요하다. 프로파일 생성 변이는 난독화·최적화를 꺼야 하고 "The Baseline Profile Gradle Plugin automatically handles this configuration for you"이며 릴리스는 `isMinifyEnabled = true`다 [S37](https://developer.android.com/topic/performance/baselineprofiles/overview). 플러그인이 `release`용으로 `benchmarkRelease`와 `nonMinifiedRelease`를 만들고 "These build types are automatically configured for the specific use case and don't generally need any customization"이다 [S269](https://developer.android.com/topic/performance/baselineprofiles/configure-baselineprofiles).
 - 예시:
   ```kotlin
@@ -37,7 +37,7 @@
   // Bad: 측정용 변이까지 R8을 꺼 실제 릴리스와 다른 코드를 잰다 (R-40-01 위반)
   benchmarkRelease { initWith(release); optimization { enable = false } }
   ```
-- 체크: 릴리스 APK에 `assets/dexopt/baseline.prof`가 있는가. `buildTypes`에 `benchmarkRelease`·`nonMinifiedRelease`의 R8 설정을 손으로 적지 않았는가.
+- 체크: 앱의 프로파일 파일(`saveInSrc` 위치, 기본 `src/<변이>/generated/baselineProfiles/`)이 저장소에 있고 릴리스 APK의 `assets/dexopt/baseline.prof`가 생성 전보다 커졌는가 — 이 파일은 프로파일 생성 전에도 있다(AGP가 라이브러리가 싣고 온 프로파일을 합쳐 넣는다, 사례: 8,484바이트, 2026-10-15), 그러므로 파일 유무만으로는 앱 프로파일 포함을 알 수 없다. `buildTypes`에 `benchmarkRelease`·`nonMinifiedRelease`의 R8 설정을 손으로 적지 않았는가.
 
 ### R-40-04 릴리스 빌드는 R8을 켠다
 - 규칙: 배포용 릴리스 변이는 최적화를 켠다(DSL 형태는 R-19-04가 소유한다). 크래시가 난다고 R8을 끄지 않고 keep 규칙으로 좁혀 해결하며, 규칙을 추가하면 왜 필요한지 주석으로 남긴다. keep 규칙은 `src/<variant>/keepRules`의 `.keep` 파일(예: `src/main/keepRules/app.keep`)에 둔다 — 새 DSL에서는 이 위치가 필수다. 패키지 전체를 잡는 keep(`pkg.**`)은 쓰지 않고 특정 클래스·멤버로 좁힌다. `-dontobfuscate`·`-dontoptimize`·`-dontshrink`는 디버깅 중에만 쓰고 릴리스에서는 뺀다. 의존 라이브러리는 R8과 호환되는 것을 고른다.
@@ -57,7 +57,7 @@
 - 체크: 릴리스 변이의 minify가 켜져 있는가. 새로 추가된 keep 규칙에 이유가 적혀 있는가. `.keep` 파일이 `keepRules` 소스셋에 있는가. `pkg.**` 같은 넓은 keep이나 `-dontobfuscate`·`-dontoptimize`·`-dontshrink`가 릴리스에 남아 있는가.
 
 ### R-40-05 재구성 비용을 늘리는 패턴을 넣지 않는다
-- 규칙: 이미 읽은 상태에 되쓰기(backwards write)를 하지 않고, lazy 레이아웃에는 안정적인 `key`를 주며, 자주 바뀌는 값은 람다 기반 modifier(`Modifier.offset { }`)로 읽기를 미룬다. 구체적인 Composable 작성 규칙은 17-compose-ui.md를 따른다.
+- 규칙: 이미 읽은 상태에 되쓰기(backwards write)를 하지 않고, lazy 레이아웃에는 안정적인 `key`를 주며, 자주 바뀌는 값은 람다 기반 modifier(`Modifier.offset { }`)로 읽기를 미룬다. 구체적인 Composable 작성 규칙은 17-compose-ui.md를 따르고, 안정성·고빈도 갱신은 R-41-07~R-41-10이 정한다.
 - 근거: "Never write to state that has already been read in a composable", lazy `key`·`derivedStateOf`·람다 modifier로 재구성 범위를 줄이라는 안내다 [S16](https://developer.android.com/develop/ui/compose/performance), [S17](https://developer.android.com/develop/ui/compose/performance/bestpractices).
 - 예시:
   ```kotlin
@@ -165,4 +165,4 @@
 ## 출처가 침묵하는 것 (규칙으로 쓰지 않음)
 
 - **런타임 권한 요청 흐름**: **해소됨(2026-09-30).** 요청 시점·코드 위치·거부 처리는 25 런타임 권한(R-25-01·R-25-03·R-25-04)이 정한다. R-40-12는 매니페스트에 넣을 권한의 최소화만 소유한다.
-- **메모리 사용량 상한 수치**: 앱 메모리 예산을 정한 출처가 없어 숫자를 규칙으로 쓰지 않는다. R-40-06의 참조 보관 금지와 R-40-01의 릴리스 측정으로 대신한다.
+- **메모리 사용량 상한 수치**: **일부 해소됨(2026-10-15).** 공식 상한은 Android vitals의 bad behavior 임계(Anonymous RSS+Swap·비트맵 메모리)가 정하고, 앱 메모리 예산을 정한 공식 출처는 여전히 없다. 예산 숫자는 공식이 아니라 제안(사용자 위임)으로 R-41-16이 두고, 측정은 R-41-02·R-41-16이 정한다. R-40-06의 참조 보관 금지와 R-40-01의 릴리스 측정은 그대로다.

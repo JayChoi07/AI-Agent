@@ -307,3 +307,9 @@ Konsist.scopeFromProject().functions().withAnnotationOf(Preview::class)
 - Step 9 "Always verify state restoration" + 공식 가이드의 `StateRestorationTester`(S284) → R-30-18.
 - 공식 스킬은 스크린샷 도구로 Compose Preview Screenshot Testing을 따르라고 하나 팩은 SCREENSHOT_LIB=Roborazzi 결정이 우선한다.
 - 미해결: `templates/test/{{Feature}}ScreenshotTest.kt`는 `junit4.v2.createComposeRule`을 import하고 R-30-11·R-30-13과 `AppFlowTest.kt`는 v1이다. 컴파일 검증을 못 해 템플릿은 고치지 않았다.
+
+## 추가 확인 (2026-10-15) — 숨은 컴포지션의 의미 트리·미사용 import
+
+- Merging/clearing semantics(S349): `clearAndSetSemantics {}`는 자기와 자손의 의미를 비우며, 의미는 접근성과 테스트가 함께 쓴다. `hideFromAccessibility`는 테스트에는 남긴다. InfocarEV `TabHost`가 살려 둔 숨은 탭(배치 안 함)의 노드가 계측 테스트에서 다른 화면의 같은 글자와 함께 잡혔다 → R-30-11에 `clearAndSetSemantics {}`와 `and` 매처 결합을 추가.
+- Testing APIs(S355): 매처는 `and`/`or`로 묶고(`or` 예시만 있음) 여럿은 `onAllNodes`. `onNode`가 여럿일 때 실패한다는 문장은 없다(실행 확인).
+- ktlint Standard rules(S351): `no-unused-imports`는 1.7.0부터 기본 꺼짐("In some cases the rule marks imports as unused, while after removal of the import the code no longer compiles"), 켜는 키 `ktlint_standard_no-unused-imports = enabled`. InfocarEV 게이트가 미사용 import를 통과시킨 뒤 켰다 → `enforcement/.editorconfig`, R-20-05.

@@ -78,18 +78,21 @@
 - 체크: 공개 프로퍼티 타입이 `MutableStateFlow`인 곳이 있는가. 컴포저블이 `collectAsState()`를 쓰는가.
 
 ### R-12-06 스트림 기반 상태는 `stateIn(viewModelScope, WhileSubscribed(5_000), initialValue)`를 기본값으로 한다
-- 규칙: 데이터 계층 Flow를 상태로 바꿀 때는 `stateIn`을 쓰고 `initialValue`를 반드시 명시한다. 백스택이나 오프스크린 탭에서 되돌아올 가능성이 큰 화면만 `SharingStarted.Lazily`를 검토하고 이유를 남긴다.
-- 근거: 스트림 기반 파이프라인의 권장 형태가 `stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), initialValue)`다 [S02](https://developer.android.com/topic/architecture/recommendations). `WhileSubscribed`는 UI가 보일 때만 활성이고 `Lazily`는 되돌아올 가능성이 있을 때이며, `initialValue`가 있어야 "the UI always has a UI state to display" [S10](https://developer.android.com/topic/architecture/ui-layer/state-production)
+- 규칙: 데이터 계층 Flow를 상태로 바꿀 때는 `stateIn`을 쓰고 `initialValue`를 반드시 명시한다. 백스택이나 오프스크린 탭에서 되돌아올 가능성이 큰 화면만 `SharingStarted.Lazily`를 검토하고 이유를 남긴다. `Eagerly`는 **구독자 없이 `value`를 읽어야 하는 상태**에만 쓴다 — 예: 스플래시 유지 조건(`setKeepOnScreenCondition { viewModel.startup.value is Loading }`)이 수집 없이 `value`를 읽는 시작 게이트(R-13-10). 사유는 **상태마다 따로** 적는다: 같은 ViewModel의 다른 상태가 `WhileSubscribed`로 충분하면 함께 `Eagerly`로 묶지 않는다(예: 링크 목적지 `destination`은 화면이 구독할 때만 계산한다).
+- 근거: 스트림 기반 파이프라인의 권장 형태가 `stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), initialValue)`다 [S02](https://developer.android.com/topic/architecture/recommendations). `WhileSubscribed`는 UI가 보일 때만 활성이고 `Lazily`는 되돌아올 가능성이 있을 때이며, `initialValue`가 있어야 "the UI always has a UI state to display" [S10](https://developer.android.com/topic/architecture/ui-layer/state-production). `Eagerly`는 "Sharing is started immediately and never stops"다 [S347](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/-sharing-started/-companion/-eagerly.html); `WhileSubscribed`로 두면 구독자가 없는 동안 업스트림이 멈춰 `value`가 `initialValue`에 머문다. 공식 가이드는 "initialize the state production pipeline lazily … waiting until there is a consumer of the output"이라 `Eagerly`를 권하지 않으므로 [S10](https://developer.android.com/topic/architecture/ui-layer/state-production) 예외는 구독 없이 `value`를 읽는 자리가 실제로 있을 때로 좁힌다. 사유를 상태마다 적는 것은 InfocarEV 리뷰(2026-10-15)에서 두 상태를 한 사유로 묶었다가 걸린 사례에서 나온 팩 결정이다(공식 근거 없음, 91-decisions EAGERLY_REASON)
 - 예시:
   ```kotlin
   // Good
   val uiState = repository.newsStream()
       .map(::toUiState)
       .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), NewsUiState(isLoading = true))
-  // Bad: initialValue 없이 Eagerly
+  // Good: 구독자 없이 value 를 읽는 상태만 Eagerly — 사유는 그 상태 옆에
+  /** Eagerly 인 이유 — MainActivity 의 스플래시 유지 조건이 구독 없이 value 를 읽는다. destination 은 WhileSubscribed. */
+  val startup = entryRepository.state.map(::toStartupState).stateIn(viewModelScope, SharingStarted.Eagerly, initial)
+  // Bad: initialValue 없이 Eagerly / 두 상태를 "시작 게이트라서" 한 사유로 묶어 Eagerly
   val uiState = repository.newsStream().stateIn(viewModelScope, SharingStarted.Eagerly, null)
   ```
-- 체크: `stateIn` 호출에 `initialValue`가 있는가. `Lazily`·`Eagerly`를 썼다면 이유가 적혀 있는가.
+- 체크: `stateIn` 호출에 `initialValue`가 있는가. `Lazily`·`Eagerly`를 썼다면 이유가 적혀 있는가 — `Eagerly` 사유가 상태마다 따로 있고 구독 없이 `value`를 읽는 자리를 가리키는가.
 
 ### R-12-07 ViewModel의 `init` 블록과 생성자에서 비동기 작업을 시작하지 않는다
 - 규칙: 생성 시점에 데이터를 불러야 하면 `init`에서 `launch`하지 말고, UI가 부르는 멱등 `initialize()`를 두거나 상태 스트림으로 전환한다.
