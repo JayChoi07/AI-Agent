@@ -106,3 +106,19 @@ SEED·토스 문서는 공식 기준이 아니라 사례다. 토스 TDS Mobile �
 ## 스낵바 호스트의 의미(semantics) (2026-10-15)
 
 Material3 `SnackbarHost.kt`(S350) 소스: 항목마다 `if (isVisible) { liveRegion = LiveRegionMode.Polite }`, `dismiss { key.dismiss(); true }`, 표시 시간은 `accessibilityManager.calculateRecommendedTimeoutMillis`. 항목은 퇴장 애니메이션이 끝날 때까지 남는다. Semantics 문서(S348)는 alert 성격 컴포넌트에 `liveRegion`(대부분 `Polite`)을 쓰라고 한다. InfocarEV `AppSnackbarHost`는 호스트 `Box`에 의미를 붙였다가 스낵바가 사라진 뒤 빈 노드가 TalkBack에 잡혀 `current != null`일 때만 붙이도록 고쳤다 → R-28-11.
+
+
+## 2026-10-20 사고 기록 — 전역 푸시 움직임이 모달에 걸려 대각선으로 들어왔다
+
+- **무엇이 있었나**: 푸시 첫 프레임의 컴포지션·레이아웃 비용 때문에 끊긴다는 트레이스(S22+ Perfetto, 2026-10-19)에 따라 푸시를 "새 화면의 첫 배치가 끝난 다음 프레임부터 움직이기"로 바꿨다. `Navigator.navigate`가 모든 푸시에 `PushMotion`(새 화면 오른쪽에서 들어옴 + 이전 화면 1/4 밀림)을 걸고 엔트리 데코레이터가 `graphicsLayer.translationX`로 그렸다.
+- **무엇이 깨졌나**: 영구소장(`SubscriptionKey`)·스캐너 연결(`ScannerSearchKey`)은 `NavDisplay.TransitionKey = modalPush()`(아래→위)로 전환을 따로 지정한 모달인데, 그 위에 푸시 움직임이 겹쳐 5시→11시 방향 대각선으로 들어오고 아래 화면까지 왼쪽으로 밀렸다. 사용자가 실기기에서 발견했다. 10배 느린 캡처(`animator_duration_scale`·`transition_animation_scale` 10)의 중간 프레임에서 재현했다.
+- **같은 날 앞서 있었던 사고**: 푸시 붙들기를 알파 1→1(`fadeIn(initialAlpha=1) togetherWith fadeOut(targetAlpha=1)`)로 만들었더니 Compose가 값이 안 바뀌는 애니메이션을 돌리지 않아 이전 화면이 첫 프레임에 사라지고 슬라이드 내내 빈 배경이 보였다. 해법은 새 화면 1px 슬라이드 + `KeepUntilTransitionsFinished`였다.
+- **원인(공통)**: 전역 메커니즘(`Navigator`의 모든 푸시에 거는 움직임)을 추가하면서 **그 메커니즘을 거치는 예외 경로가 몇 개이고 어떻게 건너뛰는지**를 먼저 나열하지 않았다. 코드에는 이미 "엔트리 metadata로 따로 지정한 전환이 기본보다 우선한다"는 규칙(R-28-02)이 있었지만, 새 움직임은 전환이 아니라 데코레이터 상태로 그려 그 우선순위를 타지 않았다.
+- **고침**: 새 화면 엔트리가 `NavDisplay.TransitionKey`를 가지면(`hasOwnTransition(metadata)`) 푸시 움직임을 주지 않고 바로 비운다(이전 화면은 진행도 0이라 밀리지 않는다). 판정은 화면 목록이 아니라 metadata다. 시험은 모달 엔트리가 쓰는 것과 같은 방식으로 만든 metadata로 한다.
+- **교훈**: ① 전환 위에 앱이 얹는 모션은 전환 metadata를 보고 비켜야 한다(R-28-01). ② 횡단 변경은 소비자·예외 경로를 grep으로 전수 나열하고 변형마다 느린 배율 캡처로 본다(`checklists/bugfix.md`). ③ 값이 바뀌지 않는 애니메이션은 Compose가 돌리지 않는다.
+- 출처 상태: 위는 공식 문서가 다루지 않는 것이라 이 프로젝트의 재현과 수정으로만 뒷받침된다. 엔트리 metadata 전환 계약은 S288이다.
+
+## 출처 조사 기록 (2026-10-20)
+
+- **S358 `androidx.compose.ui.graphics.lerp(Color, Color, Float)`**: androidx `Color.kt` 소스의 KDoc "Interpolation is done in the [ColorSpaces.Oklab] color space"와 구현(두 색을 Oklab으로 변환해 L·a·b와 알파를 **각각** 선형 보간, 결과는 `stop` 색 공간으로 변환, 알파 별도 성분이라 premultiplied 가정 없음)을 읽어 확인했다. 확인하지 못한 것: `animateColorAsState` 의 내부 구현(색 보간에 이 `lerp` 를 쓴다는 문서·소스는 직접 읽지 않았다), 점멸의 크기. 점멸 자체는 이 프로젝트 S22+ 화면 녹화 프레임의 픽셀로만 확인했다(2026-10-19).
+- **긴 Column + Crossfade 레이어(R-28-17)**: 프로젝트 관찰값 — `drawLayer [graphicsLayer] 990 x 14940`(기록 탭 본문 항목 하나 안의 Column 약 5,300dp), 프레임 20~50ms, 항목으로 쪼갠 뒤 전환 6회 프레임 430→226개·버벅임 프레임 26~28→13~14개·p99 61→40ms(S22+ 릴리스, 2026-10-19). 공식 문서는 레이어 크기가 효과를 건 컴포저블의 측정 경계라는 것(S325)까지만 말한다.
