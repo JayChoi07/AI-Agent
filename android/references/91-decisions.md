@@ -84,6 +84,8 @@
 | SERVICE_START_RETRY | 연결 유지 서비스의 백그라운드 시작 거부·배터리 최적화 안내 | 거부: 실패로 끝냄 / 보류·재시도 · 안내: 시스템 목록 화면 / 직접 요청 / 제조사 화면 | **보류 → 루트 Activity `onStart`에서 재시도, 알림 "끊기"는 `getForegroundService`+`FLAG_IMMUTABLE`, 안내는 `ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS`만**(R-24-15·R-24-16). 직접 요청은 Play 정책의 허용 사례에만, 제조사 화면은 만들지 않는다 | S193, S209, S354, S356, S357 | 사용자(2026-10-15) |
 | UNUSED_IMPORTS | 미사용 import 검사 | ktlint 기본값(1.7+ 꺼짐) / 켬 / detekt | **ktlint `no-unused-imports` 켬**(`.editorconfig`, R-20-05). 오탐은 그 자리만 suppress | S351 | 사용자 승인 기본값(2026-10-15) |
 | EAGERLY_REASON | `SharingStarted.Eagerly` 허용 범위 | 금지 / 구독 없이 `value`를 읽는 상태만 · 사유: 뷰모델 단위 / 상태마다 | **구독 없이 `value`를 읽는 상태만(예: 스플래시 유지 조건이 읽는 시작 게이트), 사유는 상태마다 따로**(R-12-06). 두 상태를 한 사유로 묶은 것이 리뷰에서 걸렸다 | S347, S10 | 사용자 승인 기본값(2026-10-15) |
+| STICKY_INSET | `stickyHeader`가 있는 목록의 위 인셋 | `contentPadding.top`(R-18-08 기본형) / 목록 `Modifier.padding(top)` | **목록 `Modifier.padding(top)`** — `stickyHeader`가 `contentPadding`의 위 여백을 무시하고 뷰포트 맨 위에 붙어(Foundation 1.9.4 소스) 기본형이 고정 항목을 상태 바 뒤로 보낸다. 콘텐츠는 상태 바 아래 경계에서 잘린다(보호막 구성에서는 눈에 띄는 차이 없음). R-18-08에 예외를 달았다 | S359, S306, S159 | 제안(오류 수정 교훈, 사용자 요청 "팩에 저장", 2026-10-20) |
+| SHEET_MAX_HEIGHT | 화면을 채울 수 있는 바텀시트의 최대 높이 | 기본값 / `Modifier.statusBarsPadding()` | **`statusBarsPadding()`** — Material3 1.4.0 기본값에서는 열림 애니메이션 뒤 윗면이 약 2.2초 동안 상태 바 영역까지 올라가는 것을 기기에서 쟀고, 이 modifier로 y=87에서 멈췄다. 긴 시트는 상태 바 아래에서 멈춘다 | S360, S297 | 제안(오류 수정 교훈, 사용자 요청 "팩에 저장", 2026-10-20) |
 
 ## R-ID 중복·겹침 정리
 
@@ -161,3 +163,5 @@
 | 플래그 없이 온 외부 앱 링크(브라우저)에서 `singleTask` 루트 Activity의 Back 동작 | InfocarEV 진입 설계(S344) | 실기기로 보지 못했다. `adb shell am start`는 항상 `FLAG_ACTIVITY_NEW_TASK`를 붙여 재현하지 못한다. R-18-05 예외 근거에 미확인으로 적었다 |
 | `onNode`가 여럿 잡힐 때 실패한다는 공식 문장, DataStore 읽기 `IOException` 처리의 공식 예시, 서비스 시작 거부 뒤 재시도 시점 | 테스트·DataStore·서비스 조사(S355, S352, S193) | 공식 페이지에서 찾지 못했다(DataStore 가이드는 2026-10-15 현재 `CorruptionException`만 다룬다). 실행으로 확인한 동작만 R-30-11·R-22-12·R-24-15에 적었다 |
 | 눌림 상태 정리(4벌 → 1개)·`PaddingValues` 읽기 단계·포맷터 캐시·빈 호스트 지연의 성능 효과 | InfocarEV_Android 트레이스(S22+, 2026-10-15) | 호출 횟수·시간은 측정했으나 전후 jank 차이가 오차(±1.5%p) 안이라 개선은 측정하지 못했다. R-41-19는 "낭비를 줄였다, 효과는 측정 못 했다"로 쓰게 한다. 화면을 여러 프레임에 나눠 구성하는 변형과 노드 수를 줄이는 구조 변경의 효과도 재지 않았다 |
+| `ModalBottomSheet` 기본값에서 열린 뒤 윗면이 서서히 올라가는 단계별 메커니즘(프레임마다 한 칸씩 도는 이유) | InfocarEV_Android 녹화(S22+, 2026-10-20), Material3 1.4.0 소스(S360) | "인셋 패딩 → 시트 높이 → 위치 → 패딩" 되먹임이라는 설명은 소스와 측정에서 추론했고 Compose 내부를 추적해 확인하지 않았다. `statusBarsPadding()`으로 현상이 사라진 것은 기기에서 확인했다. 이후 소스는 인셋 처리가 달라 새 버전에서도 같은지는 미확인 |
+| `LazyRow`의 시작 쪽 `stickyHeader`가 `contentPadding`을 무시하는지 | Foundation 1.9.4 소스(S359) | 같은 코드 경로(`StickToTopPlacement`·`beforeContentPadding`)이나 `LazyRow`로 시험하지 않았다 |

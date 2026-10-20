@@ -122,3 +122,13 @@ Material3 `SnackbarHost.kt`(S350) 소스: 항목마다 `if (isVisible) { liveReg
 
 - **S358 `androidx.compose.ui.graphics.lerp(Color, Color, Float)`**: androidx `Color.kt` 소스의 KDoc "Interpolation is done in the [ColorSpaces.Oklab] color space"와 구현(두 색을 Oklab으로 변환해 L·a·b와 알파를 **각각** 선형 보간, 결과는 `stop` 색 공간으로 변환, 알파 별도 성분이라 premultiplied 가정 없음)을 읽어 확인했다. 확인하지 못한 것: `animateColorAsState` 의 내부 구현(색 보간에 이 `lerp` 를 쓴다는 문서·소스는 직접 읽지 않았다), 점멸의 크기. 점멸 자체는 이 프로젝트 S22+ 화면 녹화 프레임의 픽셀로만 확인했다(2026-10-19).
 - **긴 Column + Crossfade 레이어(R-28-17)**: 프로젝트 관찰값 — `drawLayer [graphicsLayer] 990 x 14940`(기록 탭 본문 항목 하나 안의 Column 약 5,300dp), 프레임 20~50ms, 항목으로 쪼갠 뒤 전환 6회 프레임 430→226개·버벅임 프레임 26~28→13~14개·p99 61→40ms(S22+ 릴리스, 2026-10-19). 공식 문서는 레이어 크기가 효과를 건 컴포저블의 측정 경계라는 것(S325)까지만 말한다.
+
+## 2026-10-20 사고 기록 — 긴 바텀시트가 열린 뒤 윗면이 서서히 올라갔다
+
+- **무엇이 있었나**: 사용자가 대시보드 "배터리 건강" ⓘ 도움말 시트가 "슝 떴다가 화면 전체로 조금씩 올라간다"고 물었다. 시트는 프로토타입 때(2026-10-19) `AppBottomSheet` 래퍼로 만들었고 Material3 1.4.0 기본값을 그대로 썼다.
+- **측정(S22+ 화면 녹화 약 66fps, 프레임별 윗면 y·제목 y)**: 열림 300ms tween으로 윗면이 y=84에 닿은 뒤 약 2.2초 동안 y=13까지 올라갔다. 그동안 제목 행(y=191)과 마지막 줄(y=1986)은 프레임 33 이후 1px 안에서 움직이지 않았다 — 내용은 그대로이고 면만 위로 늘어났다. 고친 뒤(`statusBarsPadding()`)는 y=87에서 멈췄다.
+- **원인(소스 추론)**: Material3 1.4.0 `ModalBottomSheetContent`가 안쪽 `Column`에 `windowInsetsPadding(contentWindowInsets())`(기본값 `safeDrawing`의 위·아래)를 걸고 바깥 `Surface`에 `consumeWindowInsets(WindowInsets(top = sheetState.offset))`를 건다. 시트가 화면 높이만큼 커지면 위 인셋 패딩이 시트 위치에서 정해지고, 시트 높이는 패딩을 포함하며, `Expanded` 앵커는 `fullHeight - sheetSize.height`다 — 서로 물린 되먹임이라 열린 뒤에도 윗면이 계속 올라간다는 추론이다. 내용 위치가 그대로인 것과 `statusBarsPadding()`으로 사라진 것은 측정했지만 단계별 동작은 추적해 확인하지 않았다(미확인).
+- **왜 만들었고 왜 안 걸렸나**: 래퍼를 짤 때 "시트의 최대 높이가 어디서 정해지나"를 보지 않고 라이브러리 기본값을 믿었다. 시트는 별도 창이라 스크린샷 테스트가 내용(`HelpSheetContent`를 고정 높이 1100dp 상자에 담아)만 찍어 시트 자체의 높이 계산은 시험 밖이었다. 열리는 순간을 녹화해 윗면을 재는 절차가 없었다.
+- **고침**: `AppBottomSheet`가 `modifier.statusBarsPadding()`을 건다(InfocarEV_Android 워킹트리, 커밋 전). 짧은 시트(단위 선택)는 그대로 아래에 붙는 것을 확인했다. 사용처 13곳 중 긴 시트(도움말)와 짧은 시트(단위)만 기기로 보았다.
+- **교훈**: 별도 창 컴포넌트를 감싼 래퍼는 내용뿐 아니라 컨테이너의 높이·위치를 긴 내용으로 열어 보고 열린 뒤 몇 초를 지켜본다(R-28-22, `checklists/bugfix.md`).
+- 출처 상태: 공식 시트 문서는 이 상호작용을 적지 않는다. 근거는 Material3 1.4.0 소스(S360)와 이 프로젝트의 측정이다.

@@ -169,3 +169,12 @@
 
 - `styles` 스킬(S285)은 실험 API(Compose foundation alpha, `ExperimentalFoundationStyleApi` opt-in)이고 Material 컴포넌트 스타일은 지원하지 않는다 → R-18-10에 "범위 밖"으로 적었다.
 - Grid 가이드(S286)는 `foundation-layout`을 개별 `compose` 버전 키로 선언한다(공개 문서 `1.13.0-alpha03`, 로컬 스킬 사본 `1.12.0-rc01`) → R-33-04의 BOM 단일 원칙에 "실험 API는 사용자 확인 후 예외"를 적었다.
+
+## 2026-10-20 사고 기록 — `stickyHeader` 배너가 상태 바 뒤로 들어가 잘렸다
+
+- **무엇이 있었나**: 사용자가 "홈에서 스크롤을 내리면 '스캐너가 연결되지 않았어요' 배너가 잘린 채 위에 남는다"고 물었다. 배너는 프로토타입 때(2026-10-19) `LazyColumn`의 `stickyHeader`로 만들었고 목록의 `contentPadding.top`에는 상태 바 높이(74px)를 줬다 — R-18-08의 기본형 그대로다.
+- **원인(소스 확인)**: Foundation 1.9.4 `StickToTopPlacement.calculateStickingItemOffset`가 고정 항목 오프셋을 `maxOf(-beforeContentPadding, itemOffset)`로 계산한다. 고정 항목은 위 `contentPadding`이 아니라 뷰포트 맨 위에 붙는다(S359). 그래서 배너 윗부분 74px가 상태 바 보호막(R-18-09) 뒤로 들어갔다.
+- **같은 구조의 다른 곳**: 충전소 지도(`stickyHeader`, 높이 280dp=787.5px)도 같았다 — 내렸을 때 맨 아래가 y=788에 붙어 윗면이 y=0이었다. 코드에서 `stickyHeader`를 쓰는 곳은 이 두 곳뿐이다(grep).
+- **왜 만들었고 왜 안 걸렸나**: 팩 R-18-08의 예시가 "스크롤 목록은 `innerPadding`을 `contentPadding`으로 받는다"여서 그대로 따랐고, 규칙에 `stickyHeader` 예외가 없었다. 스크린샷 테스트는 `contentPadding.top`을 24dp로 주지만 스크롤하지 않은 화면이라 보이지 않았다. 목록 맨 위(스크롤 전)에서는 고정 항목이 원래 자리에 있어 기기에서도 스크롤하기 전에는 보이지 않는다. 공식 목록 문서(S306)는 `stickyHeader`와 `contentPadding`을 따로 설명할 뿐 둘의 상호작용을 적지 않는다.
+- **고침**: 위 여백을 `LazyColumn`의 `Modifier.padding(top = …)`으로 옮기고 `contentPadding`에는 아래만 둔다(InfocarEV_Android 워킹트리, 커밋 전). 배너와 지도 윗면이 상태 바 바로 아래(y=74)에 오는 것을 S22+에서 확인했다. 스크린샷 골든은 바뀌지 않았다(정지 화면이라 고정 항목이 원래 자리에 있다).
+- **교훈**: ① 팩 규칙의 기본형에 예외가 있으면 규칙에 적는다(R-18-08에 R-17-16 예외를 달았다). ② 인셋에 걸리는 고정 요소는 인셋이 있는 기기에서 스크롤한 상태로 본다(R-17-16, `checklists/bugfix.md`). ③ `LazyRow`는 같은 코드 경로이나 확인하지 않았다(미확인).

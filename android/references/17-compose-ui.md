@@ -226,3 +226,18 @@
   data class NewsUiState(var items: MutableList<News>)
   ```
 - 체크: `@Immutable`을 붙인 타입에 `var`나 가변 컬렉션이 있는가. `@Stable` 타입의 변경이 `mutableStateOf` 같은 관찰 가능한 경로로 일어나는가.
+
+### R-17-16 `stickyHeader`가 있는 목록은 위 여백을 `contentPadding`이 아니라 목록의 `Modifier.padding`으로 받는다
+- 규칙: `LazyColumn`의 `stickyHeader`(와 그것으로 만든 "상단 고정" 배너·지도)는 `contentPadding`의 위 여백을 따르지 않고 뷰포트 맨 위에 붙는다. 시스템 바 인셋을 `contentPadding.top`으로 받는 기본형(R-18-08)에 `stickyHeader`를 넣으면 고정된 항목이 상태 바 보호막(R-18-09) 뒤로 들어가 윗부분이 잘린다. `stickyHeader`가 있는 목록은 위 여백을 목록의 `Modifier.padding(top = …)`으로 걸고 `contentPadding`에는 아래 여백만 둔다. 이 구성에서 콘텐츠는 상태 바 뒤로 스크롤되지 않고 상태 바 아래 경계에서 잘리는데, 보호막이 그 영역을 이미 가리는 구성이면 눈에 띄는 차이가 없다. 이 결함은 스크롤하지 않은 정지 화면(고정 항목이 원래 자리에 있다)을 찍는 스크린샷 테스트에 보이지 않으므로(R-30-03) 고정 항목은 실기기에서 스크롤한 채로 확인한다. `LazyRow`의 시작 쪽도 같은 코드 경로이나 확인하지 않았다.
+- 근거: Foundation 1.9.4 소스에서 `StickToTopPlacement.calculateStickingItemOffset`는 고정 항목의 시작 오프셋을 `maxOf(-beforeContentPadding, itemOffset)`로 계산하고, 측정 코드가 뷰포트 시작을 `viewportStartOffset = -beforeContentPadding`로 나타낸다 — 고정 항목은 콘텐츠 패딩 영역의 바깥 가장자리(뷰포트 맨 위)에 붙는다 [S359](https://dl.google.com/dl/android/maven2/androidx/compose/foundation/foundation-android/1.9.4/foundation-android-1.9.4-sources.jar). 공식 목록 문서는 `stickyHeader`와 `contentPadding`을 각각 설명하되 둘의 상호작용은 적지 않는다 [S306](https://developer.android.com/develop/ui/compose/lists). `innerPadding`을 목록의 `contentPadding`으로 주는 형태는 R-18-08이 따르는 공식 예시다 [S159](https://developer.android.com/develop/ui/compose/system/material-insets). InfocarEV_Android S22+ 실측(2026-10-20): 상태 바 74px를 `contentPadding.top`으로 준 홈 목록에서 고정 배너의 윗부분이 잘렸고, 충전소 지도(높이 280dp=787.5px)는 내리면 맨 아래가 y=788에 붙어 윗면이 y=0, 즉 상태 바 뒤에 있었다. 위 여백을 `Modifier.padding`으로 옮기자 배너가 상태 바 바로 아래(y=74)에서 온전히 보였고 지도 윗면도 y=74로 내려왔다.
+- 예시:
+  ```kotlin
+  // Good — stickyHeader 가 있으면 위 여백은 목록 자체의 padding, contentPadding 은 아래만
+  LazyColumn(
+      modifier = Modifier.fillMaxSize().padding(top = innerPadding.calculateTopPadding()),
+      contentPadding = PaddingValues(bottom = innerPadding.calculateBottomPadding()),
+  ) { stickyHeader { ConnectionBanner() } /* ... */ }
+  // Bad — 고정 항목이 contentPadding 을 무시하고 y=0 에 붙어 상태 바 뒤로 들어간다
+  LazyColumn(contentPadding = innerPadding) { stickyHeader { ConnectionBanner() } /* ... */ }
+  ```
+- 체크: `stickyHeader`가 있는 목록의 `contentPadding`에 위 인셋이 들어 있는가. 고정 항목을 실기기에서 스크롤해 윗면이 상태 바 아래에 오는지 보았는가(스크롤하지 않은 정지 화면 골든은 보여 주지 않는다).

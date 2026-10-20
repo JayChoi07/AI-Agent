@@ -279,3 +279,15 @@
   // Bad — 의미 전달을 모션에만 맡긴다 (배율 0 에서 사라진다)
   ```
 - 체크: 상태 변화를 모션으로만 알리는 곳이 있는가. 앱이 `MotionDurationScale`을 덮어쓰는가.
+
+### R-28-22 화면을 채울 수 있는 바텀시트는 시트 modifier에 `statusBarsPadding()`을 걸어 최대 높이를 상태 바 아래로 제한한다
+- 규칙: `ModalBottomSheet` 내용이 길어 시트가 화면 높이까지 커질 수 있으면(도움말·긴 목록·약관) 시트의 `modifier`에 `Modifier.statusBarsPadding()`을 건다. 기본값에서는 시트 안쪽에 상단 인셋 패딩이 들어가는데 그 크기가 시트의 현재 위치에서 정해져, 열림 애니메이션(300ms)이 끝난 뒤에도 윗면이 몇 초에 걸쳐 조금씩 더 올라가 상태 바 영역까지 덮는다. 짧은 시트는 영향이 없다. 시트는 별도 창이라 스크린샷 테스트가 내용만 찍으므로(R-28-08의 래퍼) 긴 시트는 기기에서 열고 2초 이상 지켜보거나 화면 녹화 프레임으로 윗면 위치를 잰다.
+- 근거: Material3 1.4.0 소스에서 `ModalBottomSheetContent`는 `Surface`에 `consumeWindowInsets(WindowInsets(top = sheetState.offset …))`를 걸고 안쪽 `Column`에 `windowInsetsPadding(contentWindowInsets())`를 건다. `contentWindowInsets` 기본값 `BottomSheetDefaults.windowInsets`는 `WindowInsets.safeDrawing`의 위·아래이고, `Expanded` 앵커는 `max(0f, fullHeight - sheetSize.height)`로 시트 높이에서 정해진다 [S360](https://dl.google.com/dl/android/maven2/androidx/compose/material3/material3-android/1.4.0/material3-android-1.4.0-sources.jar). 공식 시트 문서는 이 상호작용을 적지 않는다 [S297](https://developer.android.com/develop/ui/compose/components/bottom-sheets). InfocarEV_Android S22+ 녹화(약 66fps, 2026-10-20): 도움말 시트가 열림 애니메이션 뒤 윗면 y=84에서 약 2.2초 동안 y=13까지 올라가는 동안 제목(y=191)과 마지막 줄(y=1986)은 1px 안에서 움직이지 않았다 — 내용은 그대로이고 면만 위로 늘어났다. `statusBarsPadding()` 뒤에는 윗면이 y=87에서 멈췄다. 되먹임(패딩 → 높이 → 위치 → 패딩)이 프레임마다 한 칸씩 도는 단계별 메커니즘은 소스와 측정에서 추론한 것이고 Compose 내부를 추적해 확인하지는 않았다(미확인). 확인한 것은 1.4.0뿐이다 — 이후 소스는 인셋 처리가 다르다.
+- 예시:
+  ```kotlin
+  // Good — 시트의 최대 높이를 상태 바 아래로 제한한다
+  ModalBottomSheet(onDismissRequest = onDismiss, modifier = Modifier.statusBarsPadding()) { LongHelp() }
+  // Bad — 긴 내용이 기본값에서 열린 뒤 윗면이 상태 바 영역까지 서서히 올라간다
+  ModalBottomSheet(onDismissRequest = onDismiss) { LongHelp() }
+  ```
+- 체크: 긴 내용을 담을 수 있는 `ModalBottomSheet`(래퍼 포함)에 `statusBarsPadding()`이 있는가. 긴 시트가 열린 뒤 윗면이 움직이는가(녹화 프레임으로 잰다).
