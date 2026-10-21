@@ -158,23 +158,26 @@
 - 체크: 한 경로에서 인셋 패딩이 두 번 붙는가. 화면이 `WindowInsets` 값을 직접 읽어 dp 계산을 하는가. 스크롤 목록이 `innerPadding`을 `Modifier.padding`으로 받아 콘텐츠가 시스템 바 영역 안에서 잘리는가. FAB가 `Scaffold` 밖에서 인셋 없이 그려지는가. `stickyHeader`가 있는 목록이 위 인셋을 `contentPadding`으로 받아 고정 항목이 상태 바 뒤로 들어가는가(R-17-16).
 
 ### R-18-09 시스템 바 대비는 색 설정 API가 아니라 콘텐츠 계층의 보호 컴포저블로 만든다
-- 규칙: 상태 바·내비게이션 바 뒤로 콘텐츠가 지나가 아이콘이 읽히지 않으면, 인셋 높이만큼의 스크림 컴포저블을 콘텐츠 위에 그려 대비를 만든다. `window.statusBarColor`·`navigationBarColor` 같은 색 설정으로 해결하려 하지 않는다. 3버튼 내비게이션 스크림을 끌 때만 `window.isNavigationBarContrastEnforced = false`를 쓴다. `NavigationBar`·`BottomAppBar` 같은 하단 바가 있는 화면은 SDK 29 이상에서 이 설정을 꺼 하단 바 색이 화면 끝까지 이어지게 한다.
+- 규칙: 콘텐츠는 상태 바·내비게이션 바 **뒤까지 흐르게** 둔다 — 위·아래 인셋은 화면이 `contentPadding`으로 받아 목록의 끝에서만 비우고, 셸의 엔트리 데코레이터가 콘텐츠를 인셋만큼 밀어내거나 불투명 띠로 가리지 않는다. 아이콘 대비는 인셋 높이만큼의 **그라데이션 스크림**(바 가장자리에서 화면 배경색 α≈0.9, 인셋 안쪽 끝에서 투명 — 값은 사용자 결정 2026-10-21, 공식 문서는 정하지 않는다)을 콘텐츠 **위에** 그려 만든다. 하단 탭 바가 있는 탭 루트는 바 배경이 내비게이션 바 영역을 덮으므로 아래 스크림을 그리지 않는다. 화면 전체를 다른 색으로 칠하는 화면은 자기 배경색을 스크림 색으로 알린다. `window.statusBarColor`·`navigationBarColor` 같은 색 설정으로 해결하려 하지 않는다. 3버튼 내비게이션 스크림을 끌 때만 `window.isNavigationBarContrastEnforced = false`를 쓴다. `NavigationBar`·`BottomAppBar` 같은 하단 바가 있는 화면은 SDK 29 이상에서 이 설정을 꺼 하단 바 색이 화면 끝까지 이어지게 한다.
 - 근거: 시스템 기본값이 모든 경우를 덮지 않으므로 앱이 보호를 그려야 하며, 공식 예시가 `WindowInsets.statusBars` 높이만큼의 `Spacer`에 그라데이션을 깔아 콘텐츠 뒤에 배치한다. 3버튼 내비게이션 대비는 `Window.setNavigationBarContrastEnforced`로 조절한다 [S150](https://developer.android.com/develop/ui/compose/system/system-bars). `R.attr#statusBarColor`, `Window#setStatusBarColor(int)`, `Window#setNavigationBarColor(int)`(제스처 내비게이션)는 Android 15에서 deprecated + disabled라 효과가 없다 [S147](https://developer.android.com/about/versions/15/behavior-changes-15). "set `window.isNavigationBarContrastEnforced = false` ... for SDK 29+. This prevents the system from adding a translucent background to the navigation bar" [S274](https://developer.android.com/agents/skills/system/edge-to-edge/skill).
 - 예시:
   ```kotlin
-  // Good — 콘텐츠 위에 상태 바 보호를 그린다
+  // Good — 콘텐츠는 바 뒤까지 흐르고(인셋은 contentPadding), 그 위에 그라데이션 보호를 그린다
   Box {
-      AppRoot()
-      Spacer(
+      AppRoot() // 화면은 innerPadding 을 contentPadding 으로 받아 끝에서만 비운다
+      Spacer( // 상태 바 높이의 그라데이션
           Modifier.fillMaxWidth()
               .windowInsetsTopHeight(WindowInsets.statusBars)
-              .background(MaterialTheme.colorScheme.surfaceContainer),
+              .background(
+                  Brush.verticalGradient(0f to bg.copy(alpha = 0.9f), 1f to bg.copy(alpha = 0f)),
+              ),
       )
   }
-  // Bad — targetSdk 35+ 에서 무시된다
+  // Bad — 콘텐츠를 인셋만큼 밀어내 바 뒤에 아무것도 비치지 않는다 / targetSdk 35+ 에서 무시된다
+  Box(Modifier.padding(bottom = navigationBarInset)) { AppRoot() }
   window.statusBarColor = MaterialTheme.colorScheme.surface.toArgb()
   ```
-- 체크: `statusBarColor`·`navigationBarColor` 대입이 남아 있는가. 밝은 콘텐츠 위 시스템 아이콘이 읽히는가.
+- 체크: `statusBarColor`·`navigationBarColor` 대입이 남아 있는가. 밝은 콘텐츠 위 시스템 아이콘이 읽히는가. 목록을 중간쯤 스크롤한 **원본 해상도** 캡처에서 바 윗선 안쪽(`dumpsys window`의 `navigationBars frame`)까지 콘텐츠 색이 이어지는가 — 띠만 지우고 콘텐츠를 밀어내는 패딩을 남기면 모양이 그대로다(InfocarEV 2026-10-21). 불투명 띠가 아니라 그라데이션인가.
 
 ### R-18-10 테마는 `:core:designsystem`의 `Color`·`Type`·`Shape`·`Theme` 파일로 나누고 테마 진입점은 `AppTheme` 하나로 둔다
 - 규칙: 색·타이포·모양 정의는 `:core:designsystem`의 `theme/` 패키지에 `Color.kt`·`Type.kt`·`Shape.kt`·`Theme.kt`로 나눈다. `theme/` 패키지의 공개 API는 `AppTheme` 컴포저블 하나이고 팔레트 상수는 `internal`로 막는다. 버튼·카드 같은 공통 컴포넌트는 같은 모듈의 `component/` 패키지에서 따로 공개한다(R-17-14). feature나 화면에서 `MaterialTheme(...)`을 다시 호출하지 않는다. Compose Styles API(공식 `styles` 스킬)는 실험 API라 이 팩의 범위 밖이다. 도입하면 필요한 `-opt-in`은 모듈 빌드 파일이 아니라 컨벤션 플러그인(`KotlinAndroid.kt`)에서 준다(JVM 타깃을 컨벤션에서 주는 R-19-11과 같은 방식).
