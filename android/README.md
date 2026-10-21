@@ -1,6 +1,6 @@
 # android — Android 그린필드 표준 팩
 
-Kotlin·Compose·Navigation 3·Hilt·멀티모듈 기준의 Android 개발 표준을 **규칙 347개**(출처 S01~S360) · **유형별 체크리스트 8개** · **코드 템플릿 50개**(치환 안내 포함 51파일) · **빌드 강제 장치** · **라우터 스킬**로 묶은 팩이다.
+Kotlin·Compose·Navigation 3·Hilt·멀티모듈 기준의 Android 개발 표준을 **규칙 347개**(출처 S01~S362) · **유형별 체크리스트 8개** · **코드 템플릿 50개**(치환 안내 포함 51파일) · **빌드 강제 장치** · **라우터 스킬**로 묶은 팩이다.
 스킬 이름은 `android-standards`이고, 진입점은 [`SKILL.md`](SKILL.md)다. 요청 유형을 먼저 분류한 뒤 그 유형의 체크리스트만 따라가는 라우터 구조라, [`references/`](references) 29개 파일을 전부 읽지 않는다.
 대상은 **그린필드**(신규 Kotlin·Compose 프로젝트)이며, 레거시 프로젝트에서는 신규 코드에만 적용한다.
 모든 규칙에는 `R-NN-MM` ID와 [`references/90-sources.md`](references/90-sources.md)의 출처 번호(S)가 붙는다. 출처 없는 규칙은 쓰지 않는다.
