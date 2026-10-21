@@ -158,7 +158,7 @@
 - 체크: 한 경로에서 인셋 패딩이 두 번 붙는가. 화면이 `WindowInsets` 값을 직접 읽어 dp 계산을 하는가. 스크롤 목록이 `innerPadding`을 `Modifier.padding`으로 받아 콘텐츠가 시스템 바 영역 안에서 잘리는가. FAB가 `Scaffold` 밖에서 인셋 없이 그려지는가. `stickyHeader`가 있는 목록이 위 인셋을 `contentPadding`으로 받아 고정 항목이 상태 바 뒤로 들어가는가(R-17-16).
 
 ### R-18-09 시스템 바 대비는 색 설정 API가 아니라 콘텐츠 계층의 보호 컴포저블로 만든다
-- 규칙: 콘텐츠는 상태 바·내비게이션 바 **뒤까지 흐르게** 둔다 — 위·아래 인셋은 화면이 `contentPadding`으로 받아 목록의 끝에서만 비우고, 셸의 엔트리 데코레이터가 콘텐츠를 인셋만큼 밀어내거나 불투명 띠로 가리지 않는다. 아이콘 대비는 인셋 높이만큼의 **그라데이션 스크림**(바 가장자리에서 화면 배경색 α≈0.9, 인셋 안쪽 끝에서 투명 — 값은 사용자 결정 2026-10-21, 공식 문서는 정하지 않는다)을 콘텐츠 **위에** 그려 만든다. 하단 탭 바가 있는 탭 루트는 바 배경이 내비게이션 바 영역을 덮으므로 아래 스크림을 그리지 않는다. 화면 전체를 다른 색으로 칠하는 화면은 자기 배경색을 스크림 색으로 알린다. `window.statusBarColor`·`navigationBarColor` 같은 색 설정으로 해결하려 하지 않는다. 3버튼 내비게이션 스크림을 끌 때만 `window.isNavigationBarContrastEnforced = false`를 쓴다. `NavigationBar`·`BottomAppBar` 같은 하단 바가 있는 화면은 SDK 29 이상에서 이 설정을 꺼 하단 바 색이 화면 끝까지 이어지게 한다.
+- 규칙: 콘텐츠는 상태 바·내비게이션 바 **뒤까지 흐르게** 둔다 — 위·아래 인셋은 화면이 `contentPadding`으로 받아 목록의 끝에서만 비우고, 셸의 엔트리 데코레이터가 콘텐츠를 인셋만큼 밀어내거나 불투명 띠로 가리지 않는다. 아이콘 대비는 인셋 높이만큼의 **그라데이션 스크림**(바 가장자리에서 화면 배경색 α≈0.8, 인셋 안쪽 끝에서 투명 — 값은 사용자 결정 2026-10-21, 공식 문서는 정하지 않는다)을 콘텐츠 **위에** 그려 만든다. 하단 탭 바가 있는 탭 루트는 바 배경이 내비게이션 바 영역을 덮으므로 아래 스크림을 그리지 않는다. 화면 전체를 다른 색으로 칠하는 화면은 자기 배경색을 스크림 색으로 알린다. `window.statusBarColor`·`navigationBarColor` 같은 색 설정으로 해결하려 하지 않는다. 3버튼 내비게이션 스크림을 끌 때만 `window.isNavigationBarContrastEnforced = false`를 쓴다. `NavigationBar`·`BottomAppBar` 같은 하단 바가 있는 화면은 SDK 29 이상에서 이 설정을 꺼 하단 바 색이 화면 끝까지 이어지게 한다.
 - 근거: 시스템 기본값이 모든 경우를 덮지 않으므로 앱이 보호를 그려야 하며, 공식 예시가 `WindowInsets.statusBars` 높이만큼의 `Spacer`에 그라데이션을 깔아 콘텐츠 뒤에 배치한다. 3버튼 내비게이션 대비는 `Window.setNavigationBarContrastEnforced`로 조절한다 [S150](https://developer.android.com/develop/ui/compose/system/system-bars). `R.attr#statusBarColor`, `Window#setStatusBarColor(int)`, `Window#setNavigationBarColor(int)`(제스처 내비게이션)는 Android 15에서 deprecated + disabled라 효과가 없다 [S147](https://developer.android.com/about/versions/15/behavior-changes-15). "set `window.isNavigationBarContrastEnforced = false` ... for SDK 29+. This prevents the system from adding a translucent background to the navigation bar" [S274](https://developer.android.com/agents/skills/system/edge-to-edge/skill).
 - 예시:
   ```kotlin
@@ -169,7 +169,7 @@
           Modifier.fillMaxWidth()
               .windowInsetsTopHeight(WindowInsets.statusBars)
               .background(
-                  Brush.verticalGradient(0f to bg.copy(alpha = 0.9f), 1f to bg.copy(alpha = 0f)),
+                  Brush.verticalGradient(0f to bg.copy(alpha = 0.8f), 1f to bg.copy(alpha = 0f)),
               ),
       )
   }
