@@ -28,11 +28,11 @@
 | 10 | 의존성 자동 업데이트 | R-33-01, R-33-02 | 저장소가 GitHub에 있는지. 있으면 Dependabot 설정은 골격 그대로이고 자동 병합은 하지 않는다 |
 | 11 | 배포 | R-31-10, R-31-11, R-31-13, R-31-14 | Play 계정이 개인인지 조직인지, 첫 업로드를 Play Console에서 끝냈는지. 업로드는 사람이 한다 |
 | 12 | 전체 플로우(계측) 테스트 | R-30-12, R-30-13, R-31-18 | 여러 화면을 지나는 대표 플로우가 이미 있는지. 첫 화면 하나뿐이면 "나중"이 답이다 |
-| 13 | 모션 토큰·화면 전환 — `:core:designsystem` `motion/` 3파일, `NavDisplay` 전환 3종 | R-28-01, R-28-03, R-28-13, R-28-14 | 없음(확정값). 브랜드가 다른 시간·곡선을 요구할 때만 묻는다 |
+| 13 | 모션 토큰·화면 전환 — `:core:designsystem` `motion/` 3파일, `NavDisplay` 전환 3종 | R-28-01, R-28-03, R-28-13, R-28-14 | 값은 규칙에 있어도 모양은 눈으로 확인된 것이 아니다 — "어느 앱의 어느 동작처럼 보여야 하나"(참조 앱)를 먼저 묻는다. 푸시·팝·탭 전환·하단 바·시스템 바 모양은 참조 앱을 실기기에서 애니메이터 배율 5배로 녹화해 프레임으로 확인하거나 임시 빌드를 폰에서 보여 주고 "맞아?"를 받기 전에는 결정 표에 확정으로 넣지 않는다. 브랜드가 다른 시간·곡선을 요구할 때도 묻는다 |
 | 14 | Baseline Profile·벤치마크 모듈 `:baselineprofile`(`com.android.test`) — 만들 시점, 프로파일을 만들 기기, 저장·생성 방식 | R-40-03, R-41-17, R-10-01 | 첫 화면 기동 확인 뒤 바로 만들지 핵심 플로우(화면 이동·탭)가 생긴 뒤 만들지, 프로파일 생성 기기(실기기 API 33+ 또는 Gradle Managed Device), `saveInSrc`로 소스에 커밋할지 `automaticGenerationDuringBuild`로 릴리스 빌드마다 만들지 |
 | 15 | 성능 기준 — 프레임 통과선·메모리 예산(제안값) | R-41-01, R-41-16 | 기본은 제안값 그대로다. 프로젝트 지침에 다른 값이 있을 때만 묻는다 |
 
-2·3·13은 규칙이 값을 이미 정했으므로 묻지 않는다. 15는 공식이 정하지 않은 제안값이 기본이므로 프로젝트 지침에 다른 값이 있을 때만 묻는다. 1·7과 6의 브랜드 값은 사용자만 정할 수 있으므로 임의로 고르지 않는다.
+2·3은 규칙이 값을 이미 정했으므로 묻지 않는다. 13은 값이 있어도 위 "애매하면 질문할 것"대로 모양을 참조 녹화나 시제품으로 확인받은 뒤에만 확정하고, 사용자가 확인하지 않은 값은 결정자를 "사용자"가 아니라 "제안"으로 적는다(`references/91-decisions.md` "결정자 표기 기준"). 15는 공식이 정하지 않은 제안값이 기본이므로 프로젝트 지침에 다른 값이 있을 때만 묻는다. 1·7과 6의 브랜드 값은 사용자만 정할 수 있으므로 임의로 고르지 않는다.
 4는 "언젠가 쓸 것 같아서" 모듈을 미리 만들지 않는다 — 두 번째 사용처가 생길 때 올린다 (R-10-04).
 5는 `references/18-app-shell.md`의 "초기화 배치 결정 매트릭스" 세 행을 그대로 채워 보여 준다. 세 행이 모두 "지연"을
 가리키면 시작 경로에 아무것도 넣지 않는 것이 답이고, `Application.onCreate`를 열지 않는다 (R-18-01).
@@ -64,6 +64,7 @@
    → 결정 10이 "예"면 `enforcement/.github/dependabot.yml` 복사. 검증: `gradle`·`github-actions` 두 생태계, 전체 묶음 없음 (R-33-01, R-33-03)
 9. `./gradlew ktlintFormat` → `./gradlew assembleDebug` → 기기·에뮬레이터에 설치해 첫 화면 기동 확인
    → 검증: `assembleDebug` 통과, 앱을 실행하면 스플래시 뒤 첫 화면이 그려지고 회전 후에도 같은 화면이 남는다 (R-18-14)
+   → 검증: 푸시·팝·탭 전환·시스템 바 모양을 기기에서 눈으로 봤다(애니메이터 배율을 올린 녹화). 못 봤으면 "미확인"으로 보고하고 결정 13을 확정으로 올리지 않는다
 10. 결정 14가 "지금"이면 Baseline Profile 모듈 — `templates/baselineprofile/`을 `templates/README.md`의 "Baseline Profile 모듈 치환"대로 만든다(`{{package}}` 치환 → 카탈로그 병합 → 루트·`settings`·`:app` 주석 블록 해제 → `Labels` 교체). 템플릿은 `InfocarEV_Android`의 `:baselineprofile`을 일반화한 것이고 컴파일·`ktlintCheck`·`detektNonMinifiedRelease`까지 확인했다(2026-10-15). 기기 실행(프로파일 생성·벤치마크)은 하지 않았다(미확인). `:app`의 `androidComponents.finalizeDsl` 블록은 AGP 9 + 플러그인 1.5.0 보정이라 플러그인이 새 DSL 을 따르면 지운다 (R-41-17)
     → 검증: 최상위 모듈이 `:app`·`:core:*`·`:feature:*` 외에 `:baselineprofile` 하나뿐 (R-10-01, R-41-17), 빌드 파일이 컨벤션 플러그인 없이 직접 구성 (R-10-14), `:app` 말고 이 모듈에 의존하는 모듈이 없음 (R-41-17), 앱 프로파일 파일이 저장소에 있고 릴리스 APK의 `assets/dexopt/baseline.prof`가 생성 전보다 커졌으며(파일은 생성 전에도 라이브러리 프로파일로 있다) `buildTypes`에 `benchmarkRelease`·`nonMinifiedRelease`를 손으로 적지 않음 (R-40-03), 생성기가 시작뿐 아니라 화면 이동·탭 전환을 돈다 (R-41-17), `Journeys.kt`의 `Labels`가 자리 표시가 아니라 앱의 실제 화면 글자다, `nonMinifiedRelease` 빌드가 R8(`minify…WithR8`)을 돌지 않는다 (R-41-17)
     → 이 모듈의 detekt·컴파일은 게이트 밖이므로 손으로 돌린다: `./gradlew :baselineprofile:ktlintCheck :baselineprofile:detektNonMinifiedRelease :baselineprofile:compileNonMinifiedReleaseKotlin`
